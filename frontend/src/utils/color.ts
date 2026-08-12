@@ -2,16 +2,16 @@
  * client-computed colors read as part of the same system as
  * server-assigned ones (group colors). */
 const CURATED_PALETTE: readonly string[] = [
-  '#E75480',
-  '#E8785A',
-  '#DB8A3E',
-  '#C99A3B',
-  '#4E9A70',
-  '#3F9490',
-  '#627FA4',
-  '#6B82D9',
-  '#8C6FB0',
-  '#8A7F84',
+  '#F43F75',
+  '#F05252',
+  '#F97316',
+  '#F59E0B',
+  '#22C55E',
+  '#14B8A6',
+  '#06B6D4',
+  '#3B82F6',
+  '#6366F1',
+  '#A855F7',
 ]
 
 const FNV_OFFSET_BASIS = 0xcbf29ce484222325n

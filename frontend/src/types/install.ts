@@ -41,6 +41,7 @@ export type OutputStream = 'stdout' | 'stderr'
 export type InstallProgressEvent =
   | { event: 'start'; data: { total: number } }
   | { event: 'progress'; data: { current: number; total: number; skillId: string; displayName: string } }
+  | { event: 'command'; data: { skillId: string; command: string } }
   | { event: 'output'; data: { skillId: string; line: string; stream: OutputStream } }
   | { event: 'skill-success'; data: { skillId: string; displayName: string } }
   | { event: 'skill-error'; data: { skillId: string; displayName: string; message: string } }

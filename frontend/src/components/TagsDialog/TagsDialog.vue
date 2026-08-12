@@ -20,9 +20,11 @@
       <p v-if="error" class="tags-dialog__error" role="alert">{{ error }}</p>
 
       <div v-if="tags.length" class="tags-dialog__catalog" aria-label="Available Packs">
-        <button v-for="tag in managedTags" :key="tag.id" type="button" class="catalog-tag" @click="openEdit(tag)">
-          <span class="catalog-tag__dot" :style="{ backgroundColor: tag.color }" />{{ tag.name }}<span aria-hidden="true">✎</span>
-        </button>
+        <PackBadge v-for="tag in managedTags" :key="tag.id" class="catalog-tag" :name="tag.name" :color="tag.color" interactive :aria-label="`Edit ${tag.name} Pack`" @click="openEdit(tag)">
+          <template #trailing>
+            <svg class="catalog-tag__edit" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 10.4V12h1.6l6.6-6.6-1.6-1.6-6.6 6.6Zm7.4-7.4 1-1 1.6 1.6-1 1L9.9 3Z" fill="currentColor" /></svg>
+          </template>
+        </PackBadge>
       </div>
       <input v-model="query" class="tags-dialog__search" type="search" placeholder="Search skills..." aria-label="Search skills" />
 
@@ -31,22 +33,20 @@
         <article v-for="skill in filteredSkills" :key="skill.id" class="skill-row" role="listitem">
           <h3 class="skill-row__name">{{ skill.displayName }}</h3>
           <div class="skill-row__tags">
-            <button
+            <PackBadge
               v-for="tag in enabledTags"
               :key="tag.id"
-              type="button"
               class="tag-toggle"
-              :class="{ 'is-assigned': hasTag(skill, tag), 'is-pending': isPending(skill.id, tag.id) }"
-              :style="{ '--tag-color': tag.color }"
-              :aria-pressed="hasTag(skill, tag)"
+              :class="{ 'is-pending': isPending(skill.id, tag.id) }"
+              :name="tag.name"
+              :color="tag.color"
+              interactive
+              compact
+              :selected="hasTag(skill, tag)"
               :aria-label="`${hasTag(skill, tag) ? 'Unassign' : 'Assign'} ${tag.name} ${hasTag(skill, tag) ? 'from' : 'to'} ${skill.displayName}`"
               :disabled="isPending(skill.id, tag.id)"
               @click="toggleTag(skill, tag)"
-            >
-              <span class="tag-toggle__state" aria-hidden="true">{{ hasTag(skill, tag) ? '✓' : '' }}</span>
-              <span class="tag-toggle__dot" aria-hidden="true" />
-              <span>{{ tag.name }}</span>
-            </button>
+            />
             <span v-if="enabledTags.length === 0" class="skill-row__empty">No enabled Packs</span>
           </div>
         </article>
@@ -58,9 +58,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import type { Skill, SkillTag } from '../../types'
+import PackBadge from '../PackBadge/PackBadge.vue'
 const props = withDefaults(defineProps<{ open: boolean; skills?: Skill[]; tags?: SkillTag[]; pendingKeys?: string[]; busy?: boolean; error?: string | null }>(), { skills: () => [], tags: () => [], pendingKeys: () => [], busy: false, error: null })
 const emit = defineEmits<{ 'update:open': [boolean]; assign: [string,string]; unassign:[string,string]; create:[string,string]; update:[string,string,string]; delete:[string] }>()
-const palette=['#E75480','#D96C6C','#D98B45','#C79A3B','#56A37B','#4E9C9A','#5F82C9','#6870C4','#9368B7','#808089']
+const palette=['#F43F75','#F05252','#F97316','#F59E0B','#22C55E','#14B8A6','#06B6D4','#3B82F6','#6366F1','#A855F7']
 const dialogEl=ref<HTMLDialogElement|null>(null), nameInput=ref<HTMLInputElement|null>(null), query=ref('')
 const editor=ref<{id:string|null;name:string;color:string}|null>(null)
 const managedTags=computed(()=>[...props.tags].sort((a,b)=>a.order-b.order||a.name.localeCompare(b.name)))

@@ -259,6 +259,7 @@ async fn print_progress(mut rx: mpsc::UnboundedReceiver<InstallProgressEvent>, j
             InstallProgressEvent::Progress { display_name, .. } => {
                 println!("Installing {display_name}...")
             }
+            InstallProgressEvent::Command { command, .. } => println!("  $ {command}"),
             InstallProgressEvent::Output { line, .. } => println!("  {line}"),
             InstallProgressEvent::SkillSuccess { display_name, .. } => {
                 println!("✓ {display_name}\n")

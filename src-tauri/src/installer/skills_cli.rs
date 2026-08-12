@@ -225,6 +225,10 @@ impl Installer for SkillsCliInstaller {
             let preview = preview_command("skills", &args);
 
             if batch.options.dry_run {
+                let _ = progress.send(InstallProgressEvent::Command {
+                    skill_id: skill.id.clone(),
+                    command: preview.clone(),
+                });
                 result.per_skill.push(SkillInstallOutcome {
                     skill_id: skill.id.clone(),
                     display_name: skill.display_name.clone(),
@@ -245,6 +249,10 @@ impl Installer for SkillsCliInstaller {
             let resolved = match resolved_cli.as_ref().unwrap() {
                 Ok(resolved) => resolved,
                 Err(err) => {
+                    let _ = progress.send(InstallProgressEvent::Command {
+                        skill_id: skill.id.clone(),
+                        command: preview.clone(),
+                    });
                     result.failed += 1;
                     result.per_skill.push(SkillInstallOutcome {
                         skill_id: skill.id.clone(),
@@ -268,6 +276,12 @@ impl Installer for SkillsCliInstaller {
             let full_args: Vec<String> =
                 resolved.leading_args.iter().cloned().chain(args).collect();
             let program = resolved.program.clone();
+            let executed_command = preview_command(&program, &full_args);
+
+            let _ = progress.send(InstallProgressEvent::Command {
+                skill_id: skill.id.clone(),
+                command: executed_command,
+            });
 
             let (tx, mut rx) = mpsc::unbounded_channel::<crate::process::ProcessOutputLine>();
             let progress_for_output = progress.clone();
@@ -640,6 +654,13 @@ mod tests {
 
         assert_eq!(result.installed, 1);
         assert_eq!(process_runner.call_count(), 1);
+        assert!(events.iter().any(|event| {
+            matches!(
+                event,
+                InstallProgressEvent::Command { command, .. }
+                    if command.contains("skills add mattpocock/skills --skill triage")
+            )
+        }));
         assert!(events
             .iter()
             .any(|e| matches!(e, InstallProgressEvent::Output { line, .. } if line == "✓ triage installed")));

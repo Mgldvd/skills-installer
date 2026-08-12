@@ -8,49 +8,49 @@ defaults:
 groups:
   - id: workflow
     name: Development Workflow
-    color: "#E75480"
+    color: "#F43F75"
     order: 10
     enabled: true
   - id: testing
     name: Testing
-    color: "#6B82D9"
+    color: "#6366F1"
     order: 20
     enabled: true
   - id: architecture
     name: Architecture
-    color: "#4E9A70"
+    color: "#22C55E"
     order: 30
     enabled: true
   - id: design
     name: Design & Polish
-    color: "#8C6FB0"
+    color: "#A855F7"
     order: 40
     enabled: true
 
 tags:
   - id: recommended
     name: Recommended
-    color: "#E75480"
+    color: "#F43F75"
     order: 10
     enabled: true
   - id: bash
     name: Bash
-    color: "#D98B45"
+    color: "#F97316"
     order: 20
     enabled: true
   - id: frontend
     name: Frontend
-    color: "#5F82C9"
+    color: "#3B82F6"
     order: 30
     enabled: true
   - id: testing
     name: Testing
-    color: "#56A37B"
+    color: "#22C55E"
     order: 40
     enabled: true
   - id: workflow
     name: Workflow
-    color: "#9368B7"
+    color: "#A855F7"
     order: 50
     enabled: true
 

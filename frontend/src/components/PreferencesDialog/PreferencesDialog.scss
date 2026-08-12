@@ -20,6 +20,20 @@
     @include dialog.text-input;
   }
 
+  &__help {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
+    line-height: var(--line-height-normal);
+  }
+
+  &__source-actions {
+    display: flex;
+    gap: var(--space-xs);
+
+    button { @include dialog.button-base; }
+  }
+
   &__checkbox {
     display: flex;
     align-items: center;

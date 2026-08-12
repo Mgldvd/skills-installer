@@ -5,97 +5,87 @@ import SkillCard from '../src/components/SkillCard/SkillCard.vue'
 import { makeSkill } from './fixtures'
 
 describe('SkillCard', () => {
-  it('renders the Skill name and description without category metadata', () => {
+  it('renders the skill name and description in dedicated sections', () => {
     const wrapper = mount(SkillCard, {
-      props: {
-        skill: makeSkill({ displayName: 'Issue Triage', description: 'Helps triage issues.' }),
-        selected: false,
-        editMode: false,
-      },
+      props: { skill: makeSkill({ displayName: 'Issue Triage', description: 'Helps triage issues.' }), selected: false },
     })
 
-    expect(wrapper.text()).toContain('Issue Triage')
-    expect(wrapper.text()).toContain('Helps triage issues.')
-    expect(wrapper.find('.skill-card__meta').exists()).toBe(false)
+    expect(wrapper.find('.skill-card__title').text()).toBe('Issue Triage')
+    expect(wrapper.find('.skill-card__description-text').text()).toBe('Helps triage issues.')
   })
 
-  it('emits toggle on click', async () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ id: 'triage' }), selected: false, editMode: false },
-    })
+  it('selects from the title and dead card surface without hijacking description', async () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: 'triage' }), selected: false } })
 
-    await wrapper.trigger('click')
+    await wrapper.find('.skill-card__description').trigger('click')
+    expect(wrapper.emitted('toggle')).toBeUndefined()
+    expect(wrapper.emitted('description')).toEqual([['triage']])
 
+    await wrapper.find('.skill-card__selection-surface').trigger('click')
     expect(wrapper.emitted('toggle')).toEqual([['triage']])
   })
 
-  it('emits toggle on Enter and Space key presses (keyboard accessible)', async () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ id: 'triage' }), selected: false, editMode: false },
-    })
-
-    await wrapper.trigger('keydown.enter')
-    await wrapper.trigger('keydown.space')
-
-    expect(wrapper.emitted('toggle')).toEqual([['triage'], ['triage']])
-  })
-
-  it('reflects selection with both a class and aria-pressed (not color alone)', () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill(), selected: true, editMode: false },
-    })
+  it('exposes selection through aria-pressed and a clean top-right ribbon', () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill(), selected: true } })
+    const selection = wrapper.find('.skill-card__selection-surface')
 
     expect(wrapper.classes()).toContain('is-selected')
-    expect(wrapper.attributes('aria-pressed')).toBe('true')
+    expect(selection.attributes('aria-pressed')).toBe('true')
+    expect(wrapper.find('.skill-card__selection-ribbon').exists()).toBe(true)
+    expect(wrapper.find('.skill-card__selection-checkbox').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Selected for installation')
   })
 
-  it('shows Edit/More actions only in edit mode', async () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill(), selected: false, editMode: false },
-    })
-    expect(wrapper.find('.skill-card__actions').exists()).toBe(false)
+  it('disables selection for disabled skills while keeping details and editing available', () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ enabled: false }), selected: false } })
 
-    await wrapper.setProps({ editMode: true })
-    expect(wrapper.find('.skill-card__actions').exists()).toBe(true)
+    expect(wrapper.find('.skill-card__selection-surface').attributes('disabled')).toBeDefined()
+    expect(wrapper.find('.skill-card__description').attributes('disabled')).toBeUndefined()
+    expect(wrapper.find('.skill-card__edit').attributes('disabled')).toBeUndefined()
   })
 
-  it('marks local skills distinctly from remote ones', () => {
+  it('always exposes the per-skill edit action', async () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: 'triage' }), selected: false } })
+    await wrapper.find('.skill-card__edit').trigger('click')
+    expect(wrapper.emitted('edit')).toEqual([['triage']])
+  })
+
+  it('renders assigned pack names and local/install status', () => {
     const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ local: true }), selected: false, editMode: false },
+      props: {
+        skill: makeSkill({ local: true, installed: true, tags: ['workflow'] }),
+        selected: false,
+        tags: [{ id: 'workflow', name: 'Workflow', color: '#E75480', order: 1, enabled: true }],
+      },
     })
+
     expect(wrapper.text()).toContain('Local')
+    expect(wrapper.text()).toContain('Installed')
+    expect(wrapper.text()).toContain('Workflow')
   })
 
-  it('does not mark ordinary remote skills as Local or Remote', () => {
+  it('does not render raw pack ids when pack metadata is unavailable', () => {
     const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ local: false, repository: 'skills' }), selected: false, editMode: false },
+      props: { skill: makeSkill({ tags: ['secret-tag', '#E75480'] }), selected: false },
     })
-    expect(wrapper.text()).not.toContain('Local')
-    expect(wrapper.text()).not.toContain('Remote')
-  })
 
-  it('keeps Installed visible only for installed Skills', async () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ installed: true }), selected: false, editMode: false },
-    })
-    expect(wrapper.text()).toContain('✓ Installed')
-    await wrapper.setProps({ skill: makeSkill({ installed: false }) })
-    expect(wrapper.text()).not.toContain('Installed')
-  })
-
-  it('never renders the Other fallback or any configured group name', () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ groupId: 'other' }), selected: false, editMode: false },
-    })
-    expect(wrapper.text()).not.toContain('Other')
-    expect(wrapper.find('[class*="group"]').exists()).toBe(false)
-  })
-
-  it('never renders Tag or legacy Pack markers in the installation card', () => {
-    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ tags: ['secret-tag', '#E75480'] }), selected: false, editMode: false } })
     expect(wrapper.text()).not.toContain('secret-tag')
     expect(wrapper.attributes('style') ?? '').not.toContain('#E75480')
-    expect(wrapper.find('.tag-chip').exists()).toBe(false)
-    expect(wrapper.find('[class*="pack"]').exists()).toBe(false)
+    expect(wrapper.find('.pack-badge').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('No packs')
+  })
+
+  it('renders Pack markers as static compact badges with their configured color', () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ tags: ['workflow'] }),
+        selected: false,
+        tags: [{ id: 'workflow', name: 'Workflow', color: '#14B8A6', order: 1, enabled: true }],
+      },
+    })
+    const badge = wrapper.get('.pack-badge')
+    expect(badge.element.tagName).toBe('SPAN')
+    expect(badge.classes()).toContain('pack-badge--compact')
+    expect(badge.attributes('style')).toContain('--pack-color: #14B8A6')
   })
 })

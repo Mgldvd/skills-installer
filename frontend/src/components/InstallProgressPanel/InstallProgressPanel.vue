@@ -34,7 +34,7 @@
       </div>
     </header>
 
-    <div v-if="expanded" class="install-progress-panel__body scroll-x">
+    <div v-if="expanded" ref="outputElement" class="install-progress-panel__body scroll-x" aria-label="Installation command output">
       <template v-for="skillId in orderedSkillIds" :key="skillId">
         <p class="install-progress-panel__line install-progress-panel__line--heading">
           <span class="install-progress-panel__status-icon" :class="statusClass(skillId)">{{ statusIcon(skillId) }}</span>
@@ -44,8 +44,9 @@
           v-for="(line, i) in outputFor(skillId)"
           :key="i"
           class="install-progress-panel__line install-progress-panel__line--output"
+          :class="`is-${line.stream}`"
         >
-          {{ line }}
+          {{ line.line }}
         </p>
       </template>
     </div>
@@ -61,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
 import type { InstallationState } from '../../composables/useAppState'
 
@@ -75,6 +76,7 @@ const emit = defineEmits<{
 }>()
 
 const expanded = ref(true)
+const outputElement = ref<HTMLElement | null>(null)
 
 const headline = computed(() => {
   if (props.installation.isInstalling) {
@@ -102,9 +104,19 @@ function statusClass(skillId: string) {
   return 'is-pending'
 }
 
-function outputFor(skillId: string): string[] {
-  return props.installation.outputLines.filter((line) => line.skillId === skillId).map((line) => line.line)
+function outputFor(skillId: string) {
+  return props.installation.outputLines.filter((line) => line.skillId === skillId)
 }
+
+watch(
+  () => [props.installation.outputLines.length, expanded.value],
+  async () => {
+    await nextTick()
+    if (expanded.value && outputElement.value) {
+      outputElement.value.scrollTop = outputElement.value.scrollHeight
+    }
+  },
+)
 </script>
 
 <style scoped lang="scss" src="./InstallProgressPanel.scss"></style>

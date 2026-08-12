@@ -30,6 +30,22 @@
       </div>
 
       <div class="preferences-dialog__field">
+        <label class="preferences-dialog__label" for="local-skill-source">Local Skill Source</label>
+        <span class="preferences-dialog__help">This folder is a catalog of installable Skills, not an installation destination.</span>
+        <input
+          id="local-skill-source"
+          v-model="localSource"
+          class="preferences-dialog__input"
+          type="text"
+          placeholder="~/.control/skill"
+        />
+        <div class="preferences-dialog__source-actions">
+          <button type="button" :disabled="!canSaveLocalSource" @click="saveLocalSource">Change Folder</button>
+          <button type="button" @click="emit('refreshLocalSource')">Refresh</button>
+        </div>
+      </div>
+
+      <div class="preferences-dialog__field">
         <span class="preferences-dialog__label">Installation scope</span>
         <div class="preferences-dialog__segmented" role="radiogroup" aria-label="Installation scope">
           <button
@@ -69,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { useNativeDialog } from '../../composables/useNativeDialog'
 import type { AccentColor, UiPreferences } from '../../types'
@@ -85,18 +101,32 @@ const emit = defineEmits<{
   update: [partial: Partial<UiPreferences>]
   exportConfig: []
   importConfig: [content:string]
+  updateLocalSource: [path: string]
+  refreshLocalSource: []
 }>()
 
 const dialogEl = ref<HTMLDialogElement | null>(null)
 const fileInput=ref<HTMLInputElement|null>(null)
+const localSource = ref('')
 
-useNativeDialog(dialogEl, () => props.open)
+function loadLocalSource() {
+  localSource.value = props.preferences.localSourcePath ?? '~/.control/skill'
+}
+
+useNativeDialog(dialogEl, () => props.open, loadLocalSource)
+watch(() => props.preferences.localSourcePath, loadLocalSource)
 
 function close() {
   emit('update:open', false)
 }
 
-const accents:{id:AccentColor;label:string;color:string}[]=[{id:'pink',label:'Pink',color:'#E75480'},{id:'coral',label:'Coral',color:'#D96C6C'},{id:'blue',label:'Blue',color:'#5F82C9'},{id:'teal',label:'Teal',color:'#4E9C9A'},{id:'violet',label:'Violet',color:'#9368B7'},{id:'green',label:'Green',color:'#56A37B'}]
+const canSaveLocalSource = computed(() => localSource.value.trim().length > 0 && localSource.value.trim() !== props.preferences.localSourcePath)
+
+function saveLocalSource() {
+  if (canSaveLocalSource.value) emit('updateLocalSource', localSource.value.trim())
+}
+
+const accents:{id:AccentColor;label:string;color:string}[]=[{id:'pink',label:'Pink',color:'#F43F75'},{id:'coral',label:'Red / Coral',color:'#F05252'},{id:'blue',label:'Blue',color:'#3B82F6'},{id:'teal',label:'Teal',color:'#14B8A6'},{id:'violet',label:'Violet',color:'#A855F7'},{id:'green',label:'Green',color:'#22C55E'}]
 function handleCopyChange(event: Event) {
   emit('update', { copyByDefault: (event.target as HTMLInputElement).checked })
 }

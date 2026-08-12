@@ -64,15 +64,16 @@ describe('App', () => {
     expect(state.selectedSkillIds).toEqual(new Set(['a']))
   })
 
-  it('opens the Skills catalog manager from the footer', async () => {
+  it('opens Add Skill directly from the green footer action', async () => {
     mockLoadedApp()
     const wrapper = mount(App)
     await flushPromises()
 
-    const skillsButton=wrapper.findAll('.app-shell__footer-btn').find(button=>button.text()==='Skills')!
-    await skillsButton.trigger('click')
+    const addButton=wrapper.findAll('.app-shell__footer-btn').find(button=>button.text()==='Add Skill')!
+    expect(addButton.classes()).toContain('app-shell__footer-btn--add')
+    await addButton.trigger('click')
     await flushPromises()
-    expect(wrapper.find('.skills-dialog').attributes('open')).toBeDefined()
+    expect(wrapper.find('.add-skill-dialog').attributes('open')).toBeDefined()
   })
 
   it('"Clear" empties the current selection', async () => {
@@ -80,10 +81,11 @@ describe('App', () => {
     const wrapper = mount(App)
     await flushPromises()
 
-    const clearButton = wrapper.findAll('.app-shell__footer-btn').find((b) => b.text() === 'Clear')
-    await clearButton!.trigger('click')
+    const clearButton = wrapper.get('.skill-toolbar__clear')
+    await clearButton.trigger('click')
 
     expect(state.selectedSkillIds.size).toBe(0)
+    expect(wrapper.findAll('.app-shell__footer-btn').some((button) => button.text() === 'Clear')).toBe(false)
   })
 
   it('clicking Install Selected opens the install confirmation dialog when confirmBeforeInstall is enabled', async () => {

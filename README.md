@@ -233,7 +233,7 @@ defaults:
 tags:
   - id: frontend
     name: Frontend
-    color: "#E75480"
+    color: "#F43F75"
     order: 10
     enabled: true
 

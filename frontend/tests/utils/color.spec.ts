@@ -21,16 +21,16 @@ describe('deterministicColor', () => {
   it('matches the backend palette exactly, so generated colors read as one system', () => {
     // Ported 1:1 from CURATED_PALETTE in src-tauri/src/config/color.rs.
     const backendPalette = [
-      '#E75480',
-      '#E8785A',
-      '#DB8A3E',
-      '#C99A3B',
-      '#4E9A70',
-      '#3F9490',
-      '#627FA4',
-      '#6B82D9',
-      '#8C6FB0',
-      '#8A7F84',
+      '#F43F75',
+      '#F05252',
+      '#F97316',
+      '#F59E0B',
+      '#22C55E',
+      '#14B8A6',
+      '#06B6D4',
+      '#3B82F6',
+      '#6366F1',
+      '#A855F7',
     ]
     for (const id of ['a', 'b', 'c', 'ui', 'frontend', 'legacy-group', 'alpha', 'bravo-team']) {
       expect(backendPalette).toContain(deterministicColor(id))

@@ -17,8 +17,8 @@
   --text-secondary: #55494e;
   --text-muted: #82767b;
 
-  --accent: #e75480;
-  --accent-hover: #d94270;
+  --accent: #f43f75;
+  --accent-hover: #d92d63;
   --accent-soft: #fde8ef;
   --accent-soft-strong: #f8cfdd;
 
@@ -43,16 +43,16 @@
 
   // --- Curated group color palette ---------------------------------------
   // Kept in sync with `config::color::CURATED_PALETTE` in the Rust backend.
-  --palette-pink: #e75480;
-  --palette-coral: #e8785a;
-  --palette-orange: #db8a3e;
-  --palette-amber: #c99a3b;
-  --palette-green: #4e9a70;
-  --palette-teal: #3f9490;
-  --palette-blue: #627fa4;
-  --palette-indigo: #6b82d9;
-  --palette-violet: #8c6fb0;
-  --palette-muted-gray: #8a7f84;
+  --palette-pink: #f43f75;
+  --palette-coral: #f05252;
+  --palette-orange: #f97316;
+  --palette-amber: #f59e0b;
+  --palette-green: #22c55e;
+  --palette-teal: #14b8a6;
+  --palette-cyan: #06b6d4;
+  --palette-blue: #3b82f6;
+  --palette-indigo: #6366f1;
+  --palette-violet: #a855f7;
 
   // --- Typography: proportional scaling -----------------------------------
   // `--font-scale` is the only knob `usePreferences`/`FontScaleControl`
@@ -86,11 +86,11 @@
   --transition-base: 180ms ease;
 }
 
-:root[data-accent='coral'] { --accent:#d96c6c;--accent-hover:#c85a5a;--accent-soft:#fbe9e7;--accent-soft-strong:#f4d2cd; }
-:root[data-accent='blue'] { --accent:#5f82c9;--accent-hover:#4c70ba;--accent-soft:#eaf0fb;--accent-soft-strong:#d5e0f6; }
-:root[data-accent='teal'] { --accent:#4e9c9a;--accent-hover:#3c8987;--accent-soft:#e6f3f1;--accent-soft-strong:#cde6e3; }
-:root[data-accent='violet'] { --accent:#9368b7;--accent-hover:#8055a5;--accent-soft:#f1eaf7;--accent-soft-strong:#e2d3ee; }
-:root[data-accent='green'] { --accent:#56a37b;--accent-hover:#438f67;--accent-soft:#e8f4ed;--accent-soft-strong:#d1e8da; }
+:root[data-accent='coral'] { --accent:#f05252;--accent-hover:#d83f3f;--accent-soft:#fbe9e7;--accent-soft-strong:#f4d2cd; }
+:root[data-accent='blue'] { --accent:#3b82f6;--accent-hover:#2563d9;--accent-soft:#eaf0fb;--accent-soft-strong:#d5e0f6; }
+:root[data-accent='teal'] { --accent:#14b8a6;--accent-hover:#0f8f82;--accent-soft:#e6f3f1;--accent-soft-strong:#cde6e3; }
+:root[data-accent='violet'] { --accent:#a855f7;--accent-hover:#8b3ddb;--accent-soft:#f1eaf7;--accent-soft-strong:#e2d3ee; }
+:root[data-accent='green'] { --accent:#22c55e;--accent-hover:#158d42;--accent-soft:#e8f4ed;--accent-soft-strong:#d1e8da; }
 
 :root[data-theme='dark'] {
   --bg-app: #211c1e;
@@ -106,8 +106,8 @@
   --text-secondary: #cbb9bd;
   --text-muted: #9a878c;
 
-  --accent: #f2789e;
-  --accent-hover: #f591b1;
+  --accent: #f43f75;
+  --accent-hover: #fb7199;
   --accent-soft: #4a2c37;
   --accent-soft-strong: #603346;
 
@@ -142,8 +142,8 @@
     --text-secondary: #cbb9bd;
     --text-muted: #9a878c;
 
-    --accent: #f2789e;
-    --accent-hover: #f591b1;
+    --accent: #f43f75;
+    --accent-hover: #fb7199;
     --accent-soft: #4a2c37;
     --accent-soft-strong: #603346;
 

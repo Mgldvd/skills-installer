@@ -3,15 +3,15 @@
     <AppHeader :project-path="state.projectRoot" :dependency-status="state.dependencyStatus" :scope="state.preferences.defaultScope" :agents="state.preferences.defaultAgents" @update:project-path="handleProjectPathUpdate" />
 
     <main class="app-shell__main">
-      <SkillToolbar :tags="state.tags" :skills="state.skills" :selected-ids="[...state.selectedSkillIds]" :query="skillQuery" :sort-by="skillSort" @toggle-tag="toggleTagSelection" @update:query="skillQuery = $event" @update:sort-by="skillSort = $event" />
+      <SkillToolbar :tags="state.tags" :skills="state.skills" :selected-ids="[...state.selectedSkillIds]" :query="skillQuery" :sort-by="skillSort" @toggle-tag="toggleTagSelection" @clear-selection="clearSelection" @update:query="skillQuery = $event" @update:sort-by="skillSort = $event" />
 
       <SkillGrid
         :skills="displayedSkills"
+        :tags="state.tags"
         :selected-ids="state.selectedSkillIds"
-        :edit-mode="false"
         @toggle="toggleSelected"
         @edit="openEditDialog"
-        @more="requestDeleteSkill"
+        @description="openDescriptionDialog"
       />
 
       <InstallProgressPanel
@@ -24,7 +24,9 @@
 
     <footer class="app-shell__footer">
       <div class="app-shell__footer-left">
-        <button type="button" class="app-shell__footer-btn" @click="isSkillsOpen = true">Skills</button>
+        <button type="button" class="app-shell__footer-btn app-shell__footer-btn--add" @click="openAddDialog">
+          Add Skill
+        </button>
         <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
           Preferences
         </button>
@@ -33,7 +35,6 @@
         <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
       </div>
       <div class="app-shell__footer-actions">
-        <button type="button" class="app-shell__footer-btn" @click="clearSelection">Clear</button>
         <button
           type="button"
           class="app-shell__footer-btn app-shell__footer-btn--primary"
@@ -55,18 +56,12 @@
     <EditSkillDialog
       v-model:open="isEditDialogOpen"
       :skill="skillBeingEdited"
+      :tags="state.tags"
       :submit-error="editSkillError"
       @submit="handleEditSkillSubmit"
     />
 
-    <ConfirmDialog
-      v-model:open="isDeleteSkillConfirmOpen"
-      title="Remove skill from configuration?"
-      message="This only removes the configuration entry — it does not uninstall anything already installed on disk."
-      confirm-label="Remove"
-      destructive
-      @confirm="handleDeleteSkillConfirm"
-    />
+    <SkillDescriptionDialog v-model:open="isDescriptionDialogOpen" :skill="skillBeingDescribed" />
 
     <InstallConfirmDialog
       v-model:open="isInstallConfirmOpen"
@@ -76,10 +71,16 @@
       @confirm="runInstall"
     />
 
-    <PreferencesDialog v-model:open="isPreferencesOpen" :preferences="state.preferences" @update="handlePreferencesUpdate" @export-config="handleExportConfig" @import-config="handleImportConfig" />
+    <PreferencesDialog
+      v-model:open="isPreferencesOpen"
+      :preferences="state.preferences"
+      @update="handlePreferencesUpdate"
+      @update-local-source="handleLocalSourceUpdate"
+      @refresh-local-source="handleLocalRefresh"
+      @export-config="handleExportConfig"
+      @import-config="handleImportConfig"
+    />
     <AgentsDialog v-model:open="isAgentsOpen" :model-value="state.preferences.defaultAgents" :scope="state.preferences.defaultScope" @update:model-value="handleAgentsUpdate" />
-    <SkillsDialog v-model:open="isSkillsOpen" :skills="state.skills" :local-source-path="state.preferences.localSourcePath" @add="openAddFromSkills" @edit="openEditFromSkills" @remove="requestDeleteFromSkills" @refresh="handleLocalRefresh" @update-local-source="handleLocalSourceUpdate" />
-
     <TagsDialog
       v-model:open="isTagsOpen"
       :tags="state.tags"
@@ -103,14 +104,13 @@ import { computed, onMounted, ref } from 'vue'
 import AddSkillDialog from './components/AddSkillDialog/AddSkillDialog.vue'
 import AgentsDialog from './components/AgentsDialog/AgentsDialog.vue'
 import AppHeader from './components/AppHeader/AppHeader.vue'
-import ConfirmDialog from './components/ConfirmDialog/ConfirmDialog.vue'
 import EditSkillDialog from './components/EditSkillDialog/EditSkillDialog.vue'
 import InstallConfirmDialog from './components/InstallConfirmDialog/InstallConfirmDialog.vue'
 import InstallProgressPanel from './components/InstallProgressPanel/InstallProgressPanel.vue'
 import TagsDialog from './components/TagsDialog/TagsDialog.vue'
 import PreferencesDialog from './components/PreferencesDialog/PreferencesDialog.vue'
 import SkillGrid from './components/SkillGrid/SkillGrid.vue'
-import SkillsDialog from './components/SkillsDialog/SkillsDialog.vue'
+import SkillDescriptionDialog from './components/SkillDescriptionDialog/SkillDescriptionDialog.vue'
 import SkillToolbar from './components/SkillToolbar/SkillToolbar.vue'
 import ToastHost from './components/ToastHost/ToastHost.vue'
 import { resetInstallationState, useAppState } from './composables/useAppState'
@@ -131,7 +131,6 @@ const {
   toggleSelected,
   addSkill,
   updateSkill,
-  deleteSkill,
 } = useSkills()
 const tags = useTags()
 const { install, cancel, checkDependencies } = useInstallation()
@@ -139,7 +138,6 @@ const { load: loadPreferences, update: updatePreferencesPartial } = usePreferenc
 const { push: pushToast } = useToasts()
 
 const isPreferencesOpen = ref(false)
-const isSkillsOpen = ref(false)
 const isAgentsOpen = ref(false)
 const isTagsOpen = ref(false)
 const tagsError = ref<string | null>(null)
@@ -153,9 +151,11 @@ const skillBeingEditedId = ref<string | null>(null)
 const skillBeingEdited = computed<Skill | null>(
   () => state.skills.find((s) => s.id === skillBeingEditedId.value) ?? null,
 )
-
-const isDeleteSkillConfirmOpen = ref(false)
-const deleteSkillTargetId = ref<string | null>(null)
+const isDescriptionDialogOpen = ref(false)
+const skillBeingDescribedId = ref<string | null>(null)
+const skillBeingDescribed = computed<Skill | null>(
+  () => state.skills.find((skill) => skill.id === skillBeingDescribedId.value) ?? null,
+)
 
 const isInstallConfirmOpen = ref(false)
 const skillQuery = ref('')
@@ -228,9 +228,6 @@ function handlePreferencesUpdate(partial: Parameters<typeof updatePreferencesPar
 async function handleExportConfig(){try{const content=await backend.exportPortableConfiguration();const blob=new window.Blob([content],{type:'application/json'});const url=window.URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='skills-installer-config.json';link.click();window.URL.revokeObjectURL(url);pushToast('Configuration exported','success')}catch(error){pushToast(describeError(error),'error')}}
 async function handleImportConfig(content:string){try{await backend.importPortableConfiguration(content);await Promise.all([loadAll(),loadPreferences()]);pushToast('Configuration imported','success')}catch(error){pushToast(describeError(error),'error')}}
 function handleAgentsUpdate(agents:string[]){updatePreferencesPartial({defaultAgents:agents}).catch(error=>pushToast(describeError(error),'error'))}
-function openAddFromSkills(){isSkillsOpen.value=false;openAddDialog()}
-function openEditFromSkills(id:string){isSkillsOpen.value=false;openEditDialog(id)}
-function requestDeleteFromSkills(id:string){isSkillsOpen.value=false;requestDeleteSkill(id)}
 function handleLocalRefresh(){refresh().catch(error=>pushToast(describeError(error),'error'))}
 async function handleLocalSourceUpdate(path:string){try{await updatePreferencesPartial({localSourcePath:path});await refresh();pushToast('Local Skill Source updated','success')}catch(error){pushToast(describeError(error),'error')}}
 
@@ -272,6 +269,11 @@ function openEditDialog(skillId: string) {
   isEditDialogOpen.value = true
 }
 
+function openDescriptionDialog(skillId: string) {
+  skillBeingDescribedId.value = skillId
+  isDescriptionDialogOpen.value = true
+}
+
 async function handleEditSkillSubmit(payload: backend.UpdateSkillArgs) {
   try {
     await updateSkill(payload)
@@ -279,26 +281,6 @@ async function handleEditSkillSubmit(payload: backend.UpdateSkillArgs) {
     pushToast('Skill updated', 'success')
   } catch (error) {
     editSkillError.value = describeError(error)
-  }
-}
-
-// SkillCard's subtle "More" action maps to the other primary per-skill
-// action beyond editing: removing the configuration entry (never an
-// uninstall — that stays a fully separate operation, see ConfirmDialog copy).
-function requestDeleteSkill(skillId: string) {
-  deleteSkillTargetId.value = skillId
-  isDeleteSkillConfirmOpen.value = true
-}
-
-async function handleDeleteSkillConfirm() {
-  if (!deleteSkillTargetId.value) return
-  try {
-    await deleteSkill(deleteSkillTargetId.value)
-    pushToast('Skill removed from configuration', 'success')
-  } catch (error) {
-    pushToast(describeError(error), 'error')
-  } finally {
-    deleteSkillTargetId.value = null
   }
 }
 

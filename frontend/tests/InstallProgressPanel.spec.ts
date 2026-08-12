@@ -60,6 +60,24 @@ describe('InstallProgressPanel', () => {
     expect(wrapper.text()).toContain('Done.')
   })
 
+  it('distinguishes executed commands and stderr in the live output', () => {
+    const wrapper = mount(InstallProgressPanel, {
+      props: {
+        installation: baseInstallation({
+          perSkillStatus: { a: 'failed' },
+          displayNames: { a: 'Skill A' },
+          outputLines: [
+            { skillId: 'a', line: '$ npx skills add owner/repo --skill a', stream: 'command' },
+            { skillId: 'a', line: 'Error: command exited with code 1', stream: 'stderr' },
+          ],
+        }),
+      },
+    })
+
+    expect(wrapper.find('.is-command').text()).toContain('npx skills add')
+    expect(wrapper.find('.is-stderr').text()).toContain('exited with code 1')
+  })
+
   it('renders the final requested/installed/already-installed/failed summary', () => {
     const wrapper = mount(InstallProgressPanel, {
       props: {

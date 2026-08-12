@@ -8,7 +8,7 @@ export type PerSkillInstallStatus = 'pending' | 'installed' | 'alreadyInstalled'
 export interface InstallOutputLine {
   skillId: string
   line: string
-  stream: OutputStream
+  stream: OutputStream | 'command'
 }
 
 export interface InstallationState {

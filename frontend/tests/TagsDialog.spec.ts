@@ -30,7 +30,7 @@ describe('Packs assignment matrix', () => {
     expect(rows).toHaveLength(2)
     expect(wrapper.text()).not.toContain('Must not render')
     expect(wrapper.text()).not.toContain('Also hidden')
-    expect(rows.map(row => row.findAll('.tag-toggle').map(toggle => toggle.findAll('span').at(-1)?.text()))).toEqual([
+    expect(rows.map(row => row.findAll('.tag-toggle').map(toggle => toggle.find('.pack-badge__label').text()))).toEqual([
       ['Recommended', 'Frontend', 'Testing'],
       ['Recommended', 'Frontend', 'Testing'],
     ])
@@ -41,8 +41,8 @@ describe('Packs assignment matrix', () => {
     const [skillA, skillB] = matrix().findAll('.skill-row')
     expect(skillA.findAll('.tag-toggle').map(toggle => toggle.attributes('aria-pressed'))).toEqual(['true', 'false', 'false'])
     expect(skillB.findAll('.tag-toggle').map(toggle => toggle.attributes('aria-pressed'))).toEqual(['false', 'true', 'true'])
-    expect(skillA.findAll('.is-assigned')).toHaveLength(1)
-    expect(skillB.findAll('.is-assigned')).toHaveLength(2)
+    expect(skillA.findAll('.pack-badge--selected')).toHaveLength(1)
+    expect(skillB.findAll('.pack-badge--selected')).toHaveLength(2)
   })
 
   it('assigns an inactive Pack with one click and opens no assignment surface', async () => {

@@ -2,24 +2,32 @@
   <section class="skill-toolbar" aria-label="Skill preselection Packs">
     <span class="skill-toolbar__label">Preselect</span>
     <div v-if="orderedTags.length" class="skill-toolbar__tags">
-      <button
+      <PackBadge
         v-for="tag in orderedTags"
         :key="tag.id"
-        type="button"
         class="skill-toolbar__tag"
-        :class="{ 'is-active': tagState(tag.id) === 'all', 'is-partial': tagState(tag.id) === 'some' }"
-        :aria-pressed="tagState(tag.id) === 'all'"
+        :name="tag.name"
+        :color="tag.color"
+        interactive
+        :selected="tagState(tag.id) === 'all'"
+        :partial="tagState(tag.id) === 'some'"
         :disabled="tagSkillCount(tag.id) === 0"
         :title="tagTitle(tag.id, tag.name)"
-        :style="{ '--tag-color': tag.color }"
         @click="emit('toggleTag', tag.id)"
       >
-        <span class="skill-toolbar__dot" aria-hidden="true" />
-        <span>{{ tag.name }}</span>
-        <span class="skill-toolbar__count" aria-hidden="true">{{ tagSkillCount(tag.id) }}</span>
-      </button>
+        <template #trailing><span class="skill-toolbar__count" aria-hidden="true">{{ tagSkillCount(tag.id) }}</span></template>
+      </PackBadge>
     </div>
     <p v-else class="skill-toolbar__empty">Create Packs from the Packs menu to build reusable selections.</p>
+    <button
+      type="button"
+      class="skill-toolbar__clear"
+      :disabled="selectedIds.length === 0"
+      aria-label="Clear all selected Skills"
+      @click="emit('clearSelection')"
+    >
+      Clear
+    </button>
     <div class="skill-toolbar__controls">
       <label class="skill-toolbar__search">
         <span class="sr-only">Filter Skills</span>
@@ -41,6 +49,7 @@
 import { computed } from 'vue'
 
 import type { Skill, SkillTag } from '../../types'
+import PackBadge from '../PackBadge/PackBadge.vue'
 
 type SortMode = 'name' | 'pack'
 
@@ -52,7 +61,7 @@ const props = withDefaults(defineProps<{
   sortBy?: SortMode
 }>(), { tags: () => [], skills: () => [], selectedIds: () => [], query: '', sortBy: 'name' })
 
-const emit = defineEmits<{ toggleTag: [tagId: string]; 'update:query': [value: string]; 'update:sortBy': [value: SortMode] }>()
+const emit = defineEmits<{ toggleTag: [tagId: string]; clearSelection: []; 'update:query': [value: string]; 'update:sortBy': [value: SortMode] }>()
 const selected = computed(() => new Set(props.selectedIds))
 const orderedTags = computed(() => props.tags.filter((tag) => tag.enabled).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)))
 const taggedSkills = (tagId: string) => props.skills.filter((skill) => skill.enabled && skill.tags.includes(tagId))

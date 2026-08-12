@@ -16,6 +16,13 @@ export function useInstallation() {
         state.installation.perSkillStatus[event.data.skillId] = 'pending'
         state.installation.displayNames[event.data.skillId] = event.data.displayName
         break
+      case 'command':
+        state.installation.outputLines.push({
+          skillId: event.data.skillId,
+          line: `$ ${event.data.command}`,
+          stream: 'command',
+        })
+        break
       case 'output':
         state.installation.outputLines.push({
           skillId: event.data.skillId,
@@ -30,6 +37,11 @@ export function useInstallation() {
       case 'skill-error':
         state.installation.perSkillStatus[event.data.skillId] = 'failed'
         state.installation.displayNames[event.data.skillId] = event.data.displayName
+        state.installation.outputLines.push({
+          skillId: event.data.skillId,
+          line: `Error: ${event.data.message}`,
+          stream: 'stderr',
+        })
         break
       case 'complete':
         state.installation.result = event.data.result

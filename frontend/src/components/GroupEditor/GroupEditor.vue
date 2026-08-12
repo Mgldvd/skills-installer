@@ -103,16 +103,16 @@ function handleDelete() {
 
 // Mirrors `config::color::CURATED_PALETTE` in the Rust backend.
 const palette = [
-  { label: 'Pink', value: '#E75480' },
-  { label: 'Coral', value: '#E8785A' },
-  { label: 'Orange', value: '#DB8A3E' },
-  { label: 'Amber', value: '#C99A3B' },
-  { label: 'Green', value: '#4E9A70' },
-  { label: 'Teal', value: '#3F9490' },
-  { label: 'Blue', value: '#627FA4' },
-  { label: 'Indigo', value: '#6B82D9' },
-  { label: 'Violet', value: '#8C6FB0' },
-  { label: 'Muted Gray', value: '#8A7F84' },
+  { label: 'Pink', value: '#F43F75' },
+  { label: 'Red / Coral', value: '#F05252' },
+  { label: 'Orange', value: '#F97316' },
+  { label: 'Amber', value: '#F59E0B' },
+  { label: 'Green', value: '#22C55E' },
+  { label: 'Teal', value: '#14B8A6' },
+  { label: 'Cyan', value: '#06B6D4' },
+  { label: 'Blue', value: '#3B82F6' },
+  { label: 'Indigo', value: '#6366F1' },
+  { label: 'Violet', value: '#A855F7' },
 ]
 
 const dialogEl = ref<HTMLDialogElement | null>(null)

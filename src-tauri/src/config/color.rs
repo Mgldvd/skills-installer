@@ -1,19 +1,19 @@
 use crate::error::AppError;
 
-/// Curated palette for the warm light theme (requirement: pink, coral, orange,
-/// amber, green, teal, blue, indigo, violet, muted gray). Also used to assign
+/// Curated palette for the application theme (pink, red/coral, orange, amber,
+/// green, teal, cyan, blue, indigo, violet). Also used to assign
 /// deterministic colors to legacy groups that have none.
 pub const CURATED_PALETTE: &[(&str, &str)] = &[
-    ("pink", "#E75480"),
-    ("coral", "#E8785A"),
-    ("orange", "#DB8A3E"),
-    ("amber", "#C99A3B"),
-    ("green", "#4E9A70"),
-    ("teal", "#3F9490"),
-    ("blue", "#627FA4"),
-    ("indigo", "#6B82D9"),
-    ("violet", "#8C6FB0"),
-    ("muted-gray", "#8A7F84"),
+    ("pink", "#F43F75"),
+    ("coral", "#F05252"),
+    ("orange", "#F97316"),
+    ("amber", "#F59E0B"),
+    ("green", "#22C55E"),
+    ("teal", "#14B8A6"),
+    ("cyan", "#06B6D4"),
+    ("blue", "#3B82F6"),
+    ("indigo", "#6366F1"),
+    ("violet", "#A855F7"),
 ];
 
 /// Validates and normalizes a color string to uppercase `#RRGGBB`. Rejects
@@ -30,7 +30,7 @@ pub fn validate_and_normalize_color(raw: &str) -> Result<String, AppError> {
 
     if hex.len() != 6 || !hex.chars().all(|c| c.is_ascii_hexdigit()) {
         return Err(AppError::Validation(format!(
-            "group color \"{raw}\" must be exactly 6 hexadecimal digits, e.g. #E75480"
+            "group color \"{raw}\" must be exactly 6 hexadecimal digits, e.g. #F43F75"
         )));
     }
 
@@ -57,7 +57,7 @@ mod tests {
 
     #[test]
     fn accepts_and_normalizes_valid_hex() {
-        assert_eq!(validate_and_normalize_color("#e75480").unwrap(), "#E75480");
+        assert_eq!(validate_and_normalize_color("#f43f75").unwrap(), "#F43F75");
         assert_eq!(validate_and_normalize_color("#ABCDEF").unwrap(), "#ABCDEF");
     }
 

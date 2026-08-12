@@ -102,6 +102,10 @@ pub enum InstallProgressEvent {
         skill_id: String,
         display_name: String,
     },
+    Command {
+        skill_id: String,
+        command: String,
+    },
     Output {
         skill_id: String,
         line: String,

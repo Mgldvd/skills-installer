@@ -34,6 +34,19 @@
         </label>
       </div>
 
+      <fieldset class="edit-skill-dialog__packs">
+        <legend>Packs</legend>
+        <p>Assign this Skill to one or more installation packs.</p>
+        <div v-if="enabledTags.length" class="edit-skill-dialog__pack-list">
+          <label v-for="tag in enabledTags" :key="tag.id" class="edit-skill-dialog__pack">
+            <input v-model="selectedTagIds" type="checkbox" :value="tag.id" />
+            <span class="edit-skill-dialog__pack-dot" :style="{ backgroundColor: tag.color }" aria-hidden="true" />
+            <span>{{ tag.name }}</span>
+          </label>
+        </div>
+        <p v-else class="edit-skill-dialog__packs-empty">No enabled packs are available.</p>
+      </fieldset>
+
       <p v-if="submitError" class="edit-skill-dialog__error" role="alert">{{ submitError }}</p>
 
       <div class="edit-skill-dialog__actions">
@@ -51,13 +64,14 @@ import { computed, ref } from 'vue'
 
 import { useNativeDialog } from '../../composables/useNativeDialog'
 import * as backend from '../../services/backend'
-import type { ParsedSkillSource, Skill } from '../../types'
+import type { ParsedSkillSource, Skill, SkillTag } from '../../types'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   open: boolean
   skill: Skill | null
+  tags?: SkillTag[]
   submitError?: string | null
-}>()
+}>(), { tags: () => [], submitError: null })
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -71,6 +85,7 @@ const description = ref('')
 const groupId = ref<string | null>(null)
 const preselected = ref(false)
 const enabled = ref(true)
+const selectedTagIds = ref<string[]>([])
 const preview = ref<ParsedSkillSource | null>(null)
 const urlError = ref<string | null>(null)
 const urlChanged = ref(false)
@@ -86,6 +101,7 @@ function loadFromSkill() {
   groupId.value = skill.groupId
   preselected.value = skill.preselected
   enabled.value = skill.enabled
+  selectedTagIds.value = [...skill.tags]
   preview.value = null
   urlError.value = null
   urlChanged.value = false
@@ -113,6 +129,7 @@ function handleUrlInput() {
 }
 
 const canSubmit = computed(() => displayName.value.trim().length > 0 && !urlError.value && Boolean(groupId.value))
+const enabledTags = computed(() => props.tags.filter((tag) => tag.enabled).sort((a, b) => a.order - b.order))
 
 function close() {
   emit('update:open', false)
@@ -126,6 +143,7 @@ function handleSubmit() {
     displayName: displayName.value.trim(),
     description: description.value.trim(),
     groupId: groupId.value,
+    tags: selectedTagIds.value,
     preselected: preselected.value,
     enabled: enabled.value,
   })
