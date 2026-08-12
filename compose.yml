@@ -1,0 +1,21 @@
+services:
+  dist:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    environment:
+      HOST_UID: ${HOST_UID:-0}
+      HOST_GID: ${HOST_GID:-0}
+    volumes:
+      - .:/workspace
+      - frontend_node_modules:/workspace/frontend/node_modules
+      - cargo_registry:/opt/cargo/registry
+      - cargo_git:/opt/cargo/git
+      - rust_target:/workspace/src-tauri/target
+
+volumes:
+  frontend_node_modules:
+  cargo_registry:
+  cargo_git:
+  rust_target:

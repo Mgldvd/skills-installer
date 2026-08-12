@@ -1,0 +1,43 @@
+@use '../../styles/dialog-base' as dialog;
+
+.delete-group-dialog {
+  @include dialog.reset(24rem);
+
+  &__body {
+    @include dialog.form-layout;
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  &__message {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+  }
+
+  &__select {
+    @include dialog.text-input;
+    margin-left: 1.5em;
+  }
+
+  &__actions {
+    @include dialog.actions-row;
+  }
+
+  &__btn {
+    @include dialog.button-base;
+
+    &--danger {
+      @include dialog.button-danger;
+    }
+  }
+}

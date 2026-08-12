@@ -1,0 +1,43 @@
+@use '../../styles/dialog-base' as dialog;
+
+.install-confirm-dialog {
+  @include dialog.reset(26rem);
+
+  &__body {
+    @include dialog.form-layout;
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  &__list {
+    list-style: disc;
+    padding-left: 1.25em;
+    max-height: 10rem;
+    overflow-y: auto;
+    font-size: var(--font-size-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  &__meta {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+  &__summary{display:grid;gap:var(--space-sm);margin:0;div{display:grid;grid-template-columns:6rem 1fr;gap:var(--space-sm)}dt{color:var(--text-muted);font-size:var(--font-size-sm)}dd{margin:0;font-size:var(--font-size-sm);font-weight:600}}
+
+  &__actions {
+    @include dialog.actions-row;
+  }
+
+  &__btn {
+    @include dialog.button-base;
+
+    &--primary {
+      @include dialog.button-primary;
+    }
+  }
+}

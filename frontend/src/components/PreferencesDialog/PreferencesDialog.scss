@@ -1,0 +1,68 @@
+@use '../../styles/dialog-base' as dialog;
+
+.preferences-dialog {
+  @include dialog.reset(24rem);
+
+  &__form {
+    @include dialog.form-layout;
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  &__field {
+    @include dialog.field-label;
+  }
+
+  &__input {
+    @include dialog.text-input;
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+  }
+
+  &__segmented {
+    display: flex;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    width: fit-content;
+  }
+
+  &__segment {
+    padding: var(--space-2xs) var(--space-md);
+    font-size: var(--font-size-sm);
+    background: var(--bg-card);
+
+    &:not(:last-child) {
+      border-right: 1px solid var(--border-soft);
+    }
+
+    &.is-active {
+      background: var(--accent-soft);
+      color: var(--accent-hover);
+      font-weight: 600;
+    }
+  }
+
+  &__actions {
+    @include dialog.actions-row;
+  }
+
+  &__accents { display:flex;gap:var(--space-xs);flex-wrap:wrap;button{width:1.45rem;height:1.45rem;border:2px solid transparent;border-radius:50%;cursor:pointer;&.is-active{outline:2px solid var(--text-primary);outline-offset:2px}} }
+  &__config-actions { display:flex;gap:var(--space-xs);button{@include dialog.button-base} }
+
+  &__btn {
+    @include dialog.button-base;
+
+    &--primary {
+      @include dialog.button-primary;
+    }
+  }
+}

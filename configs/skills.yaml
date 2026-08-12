@@ -1,0 +1,119 @@
+version: 1
+
+defaults:
+  agent: universal
+  copy: true
+  scope: project
+
+groups:
+  - id: workflow
+    name: Development Workflow
+    color: "#E75480"
+    order: 10
+    enabled: true
+  - id: testing
+    name: Testing
+    color: "#6B82D9"
+    order: 20
+    enabled: true
+  - id: architecture
+    name: Architecture
+    color: "#4E9A70"
+    order: 30
+    enabled: true
+  - id: design
+    name: Design & Polish
+    color: "#8C6FB0"
+    order: 40
+    enabled: true
+
+tags:
+  - id: recommended
+    name: Recommended
+    color: "#E75480"
+    order: 10
+    enabled: true
+  - id: bash
+    name: Bash
+    color: "#D98B45"
+    order: 20
+    enabled: true
+  - id: frontend
+    name: Frontend
+    color: "#5F82C9"
+    order: 30
+    enabled: true
+  - id: testing
+    name: Testing
+    color: "#56A37B"
+    order: 40
+    enabled: true
+  - id: workflow
+    name: Workflow
+    color: "#9368B7"
+    order: 50
+    enabled: true
+
+skills:
+  - id: triage
+    name: Issue Triage
+    url: https://www.skills.sh/mattpocock/skills/triage
+    description: Helps triage and prioritize incoming development issues.
+    group: workflow
+    tags: [workflow, recommended]
+    preselected: true
+    enabled: true
+
+  - id: handoff
+    name: Work Handoff
+    url: https://www.skills.sh/mattpocock/skills/handoff
+    description: Generates a clear handoff summary for work in progress.
+    group: workflow
+    tags: [workflow]
+    preselected: false
+    enabled: true
+
+  - id: prototype
+    name: Rapid Prototype
+    url: https://www.skills.sh/mattpocock/skills/prototype
+    description: Speeds up rapid prototyping of new features.
+    group: workflow
+    tags: []
+    preselected: false
+    enabled: true
+
+  - id: tdd
+    name: Test-Driven Development
+    url: https://www.skills.sh/mattpocock/skills/tdd
+    description: Guides a disciplined test-driven development workflow.
+    group: testing
+    tags: [testing, recommended]
+    preselected: true
+    enabled: true
+
+  - id: improve-architecture
+    name: Improve Codebase Architecture
+    url: https://www.skills.sh/mattpocock/skills/improve-codebase-architecture
+    description: Reviews and improves the architecture of an existing codebase.
+    group: architecture
+    tags: [recommended]
+    preselected: false
+    enabled: true
+
+  - id: teach
+    name: Teach a Concept
+    url: https://www.skills.sh/mattpocock/skills/teach
+    description: Explains a concept or codebase area in a teaching style.
+    group: architecture
+    tags: []
+    preselected: false
+    enabled: true
+
+  - id: impeccable
+    name: Impeccable Design Polish
+    url: https://www.skills.sh/pbakaus/impeccable/impeccable
+    description: Applies high-craft visual and UX polish to interfaces.
+    group: design
+    tags: [frontend]
+    preselected: false
+    enabled: true

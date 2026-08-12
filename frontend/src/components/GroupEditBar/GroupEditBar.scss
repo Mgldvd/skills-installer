@@ -1,0 +1,54 @@
+.group-edit-bar {
+  display: flex;
+  gap: var(--space-xs);
+  padding-bottom: var(--space-2xs);
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  &__edit-btn {
+    width: 1.6em;
+    height: 1.6em;
+    min-width: 22px;
+    min-height: 22px;
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+
+    &:hover {
+      background: var(--bg-muted);
+      color: var(--text-primary);
+    }
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    white-space: nowrap;
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: 999px;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  &__dot {
+    width: 0.6em;
+    height: 0.6em;
+    min-width: 7px;
+    min-height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  &__count {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+}

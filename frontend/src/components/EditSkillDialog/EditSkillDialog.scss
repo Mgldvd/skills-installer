@@ -1,0 +1,69 @@
+@use '../../styles/dialog-base' as dialog;
+
+.edit-skill-dialog {
+  @include dialog.reset(30rem);
+
+  &__form {
+    @include dialog.form-layout;
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  &__field {
+    @include dialog.field-label;
+  }
+
+  &__input {
+    @include dialog.text-input;
+  }
+
+  &__textarea {
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  &__preview {
+    background: var(--info-soft);
+    color: var(--info);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-sm);
+
+    p {
+      margin: 0;
+    }
+  }
+
+  &__error {
+    font-size: var(--font-size-sm);
+    color: var(--danger);
+  }
+
+  &__checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  &__checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+  }
+
+  &__actions {
+    @include dialog.actions-row;
+  }
+
+  &__btn {
+    @include dialog.button-base;
+
+    &--primary {
+      @include dialog.button-primary;
+    }
+  }
+}

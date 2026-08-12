@@ -1,0 +1,28 @@
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
+  align-items: start;
+
+  // Explicit breakpoints matching the target column counts, layered on top
+  // of the auto-fill default so intent stays obvious even though auto-fill
+  // alone already degrades gracefully at any width/font-scale combination.
+  @media (min-width: 1400px) {
+    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+  }
+
+  @media (max-width: 999px) {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  @media (max-width: 699px) {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  &__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-muted);
+    padding: var(--space-xl) 0;
+  }
+}

@@ -1,0 +1,5 @@
+// Import order matters: tokens define custom properties, base applies them
+// to raw elements, utilities are opt-in helper classes layered on top.
+@use './tokens.scss';
+@use './base.scss';
+@use './utilities.scss';

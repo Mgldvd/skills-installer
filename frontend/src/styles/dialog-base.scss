@@ -1,0 +1,100 @@
+// Shared native-<dialog> reset, used by every modal component
+// (ConfirmDialog, AddSkillDialog, EditSkillDialog, GroupEditor,
+// InstallConfirmDialog and PreferencesDialog). Centralized here
+// instead of duplicated per component, since it's identical boilerplate
+// every time.
+@mixin reset($max-width: 32rem) {
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  width: min(#{$max-width}, calc(100vw - #{var(--space-lg)} * 2));
+  max-height: min(85vh, 100%);
+  overflow: auto;
+
+  &::backdrop {
+    background: rgba(44, 37, 40, 0.35);
+  }
+}
+
+@mixin form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+@mixin actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+
+@mixin field-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+@mixin text-input {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+
+  &:focus-visible {
+    border-color: var(--accent);
+  }
+}
+
+@mixin button-base {
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: var(--bg-panel);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: var(--border-strong);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+
+  &:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+  }
+}
+
+@mixin button-danger {
+  @include button-base;
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+
+  &:hover {
+    filter: brightness(1.05);
+  }
+}
