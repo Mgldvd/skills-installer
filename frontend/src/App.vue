@@ -3,7 +3,7 @@
     <AppHeader :project-path="state.projectRoot" :dependency-status="state.dependencyStatus" :scope="state.preferences.defaultScope" :agents="state.preferences.defaultAgents" @update:project-path="handleProjectPathUpdate" />
 
     <main class="app-shell__main">
-      <SkillToolbar :tags="state.tags" :skills="state.skills" :selected-ids="[...state.selectedSkillIds]" :query="skillQuery" :sort-by="skillSort" @toggle-tag="toggleTagSelection" @clear-selection="clearSelection" @update:query="skillQuery = $event" @update:sort-by="skillSort = $event" />
+      <SkillToolbar :tags="state.tags" :skills="state.skills" :selected-ids="[...state.selectedSkillIds]" :query="skillQuery" :sort-by="skillSort" @toggle-tag="toggleTagSelection" @reorder-tags="handleReorderTags" @clear-selection="clearSelection" @update:query="skillQuery = $event" @update:sort-by="skillSort = $event" />
 
       <SkillGrid
         :skills="displayedSkills"
@@ -11,7 +11,6 @@
         :selected-ids="state.selectedSkillIds"
         @toggle="toggleSelected"
         @edit="openEditDialog"
-        @description="openDescriptionDialog"
       />
 
       <InstallProgressPanel
@@ -32,9 +31,9 @@
         </button>
         <button type="button" class="app-shell__footer-btn" @click="isAgentsOpen = true">Agents</button>
         <button type="button" class="app-shell__footer-btn" @click="isTagsOpen = !isTagsOpen">Packs</button>
-        <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
       </div>
       <div class="app-shell__footer-actions">
+        <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
         <button
           type="button"
           class="app-shell__footer-btn app-shell__footer-btn--primary"
@@ -49,6 +48,7 @@
     <AddSkillDialog
       v-model:open="isAddDialogOpen"
       :default-group-id="defaultGroupId"
+      :skills="state.skills"
       :submit-error="addSkillError"
       @submit="handleAddSkillSubmit"
     />
@@ -59,9 +59,9 @@
       :tags="state.tags"
       :submit-error="editSkillError"
       @submit="handleEditSkillSubmit"
+      @delete="handleDeleteSkill"
     />
 
-    <SkillDescriptionDialog v-model:open="isDescriptionDialogOpen" :skill="skillBeingDescribed" />
 
     <InstallConfirmDialog
       v-model:open="isInstallConfirmOpen"
@@ -110,7 +110,6 @@ import InstallProgressPanel from './components/InstallProgressPanel/InstallProgr
 import TagsDialog from './components/TagsDialog/TagsDialog.vue'
 import PreferencesDialog from './components/PreferencesDialog/PreferencesDialog.vue'
 import SkillGrid from './components/SkillGrid/SkillGrid.vue'
-import SkillDescriptionDialog from './components/SkillDescriptionDialog/SkillDescriptionDialog.vue'
 import SkillToolbar from './components/SkillToolbar/SkillToolbar.vue'
 import ToastHost from './components/ToastHost/ToastHost.vue'
 import { resetInstallationState, useAppState } from './composables/useAppState'
@@ -131,6 +130,7 @@ const {
   toggleSelected,
   addSkill,
   updateSkill,
+  deleteSkill,
 } = useSkills()
 const tags = useTags()
 const { install, cancel, checkDependencies } = useInstallation()
@@ -151,11 +151,6 @@ const skillBeingEditedId = ref<string | null>(null)
 const skillBeingEdited = computed<Skill | null>(
   () => state.skills.find((s) => s.id === skillBeingEditedId.value) ?? null,
 )
-const isDescriptionDialogOpen = ref(false)
-const skillBeingDescribedId = ref<string | null>(null)
-const skillBeingDescribed = computed<Skill | null>(
-  () => state.skills.find((skill) => skill.id === skillBeingDescribedId.value) ?? null,
-)
 
 const isInstallConfirmOpen = ref(false)
 const skillQuery = ref('')
@@ -169,6 +164,14 @@ const displayedSkills = computed(() => {
     .filter((skill) => !query || skill.displayName.toLocaleLowerCase().includes(query) || skill.description.toLocaleLowerCase().includes(query))
     .slice()
     .sort((a, b) => {
+      const aSelected = state.selectedSkillIds.has(a.id)
+      const bSelected = state.selectedSkillIds.has(b.id)
+      if (aSelected !== bSelected) return aSelected ? -1 : 1
+      if (aSelected && bSelected) {
+        const byPack = firstPackOrder(a) - firstPackOrder(b)
+        if (byPack) return byPack
+        return a.displayName.localeCompare(b.displayName)
+      }
       if (skillSort.value === 'pack') {
         const byPack = firstPackOrder(a) - firstPackOrder(b)
         if (byPack) return byPack
@@ -247,6 +250,7 @@ function handleUnassignTag(skillId:string,tagId:string){void persistTagToggle(sk
 function handleCreateTag(name:string,color:string){void tagAction(()=>tags.create(name,color),'Could not create Pack.')}
 function handleUpdateTag(tagId:string,name:string,color:string){void tagAction(()=>tags.update(tagId,name,color),'Could not update Pack')}
 function handleDeleteTag(tagId:string){void tagAction(()=>tags.remove(tagId),'Could not delete Pack')}
+function handleReorderTags(tagIds:string[]){void tagAction(()=>tags.reorder(tagIds),'Could not reorder Packs.')}
 
 function openAddDialog() {
   addSkillError.value = null
@@ -269,16 +273,22 @@ function openEditDialog(skillId: string) {
   isEditDialogOpen.value = true
 }
 
-function openDescriptionDialog(skillId: string) {
-  skillBeingDescribedId.value = skillId
-  isDescriptionDialogOpen.value = true
-}
-
 async function handleEditSkillSubmit(payload: backend.UpdateSkillArgs) {
   try {
     await updateSkill(payload)
     isEditDialogOpen.value = false
     pushToast('Skill updated', 'success')
+  } catch (error) {
+    editSkillError.value = describeError(error)
+  }
+}
+
+async function handleDeleteSkill(skillId: string) {
+  try {
+    await deleteSkill(skillId)
+    isEditDialogOpen.value = false
+    skillBeingEditedId.value = null
+    pushToast('Skill deleted', 'success')
   } catch (error) {
     editSkillError.value = describeError(error)
   }

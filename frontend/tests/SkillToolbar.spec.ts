@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import SkillToolbar from '../src/components/SkillToolbar/SkillToolbar.vue'
 import type { SkillTag } from '../src/types'
@@ -36,6 +36,27 @@ describe('SkillToolbar Pack preselection', () => {
     await wrapper.find('.skill-toolbar__tag').trigger('click')
     expect(wrapper.emitted('toggleTag')).toEqual([['recommended']])
     expect(wrapper.find('dialog').exists()).toBe(false)
+  })
+
+  it('reorders Packs with drag and drop', async () => {
+    const wrapper = mount(SkillToolbar, { props: { tags, skills: [makeSkill({ tags: ['recommended'] })], selectedIds: [] } })
+    const slots = wrapper.findAll('.skill-toolbar__tag-slot')
+    const dataTransfer = { setData: vi.fn(), effectAllowed: '' }
+
+    await slots[0].trigger('dragstart', { dataTransfer })
+    await slots[1].trigger('dragover')
+    expect(slots[1].classes()).toContain('is-drag-over')
+    expect(slots[1].classes()).toContain('is-insert-after')
+    expect(slots[1].classes()).not.toContain('is-insert-before')
+    await slots[1].trigger('drop')
+
+    expect(wrapper.emitted('reorderTags')).toEqual([[['testing', 'recommended']]])
+  })
+
+  it('supports keyboard Pack reordering with Alt and arrow keys', async () => {
+    const wrapper = mount(SkillToolbar, { props: { tags, skills: [makeSkill({ tags: ['recommended', 'testing'] })], selectedIds: [] } })
+    await wrapper.findAll('.skill-toolbar__tag')[0].trigger('keydown', { key: 'ArrowRight', altKey: true })
+    expect(wrapper.emitted('reorderTags')).toEqual([[['testing', 'recommended']]])
   })
 
   it('keeps Clear with Preselect and disables it when nothing is selected', async () => {

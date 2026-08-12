@@ -22,5 +22,18 @@ export function useTags() {
     state.tags = state.tags.filter((tag) => tag.id !== tagId)
     state.skills = state.skills.map((skill) => ({ ...skill, tags: skill.tags.filter((id) => id !== tagId) }))
   }
-  return { assign, unassign, create, update, remove }
+  async function reorder(enabledTagIds: string[]) {
+    const previous = state.tags
+    const enabled = new Set(enabledTagIds)
+    const allIds = [...enabledTagIds, ...previous.filter((tag) => !enabled.has(tag.id)).sort((a, b) => a.order - b.order).map((tag) => tag.id)]
+    const order = new Map(allIds.map((id, index) => [id, (index + 1) * 10]))
+    state.tags = previous.map((tag) => ({ ...tag, order: order.get(tag.id) ?? tag.order }))
+    try {
+      state.tags = await backend.reorderTags(allIds)
+    } catch (error) {
+      state.tags = previous
+      throw error
+    }
+  }
+  return { assign, unassign, create, update, remove, reorder }
 }

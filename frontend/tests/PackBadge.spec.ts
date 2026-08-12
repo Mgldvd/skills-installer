@@ -24,4 +24,12 @@ describe('PackBadge', () => {
     await wrapper.trigger('click')
     expect(wrapper.emitted('click')).toHaveLength(1)
   })
+
+  it('supports a neutral muted appearance for inactive assignment controls', () => {
+    const wrapper = mount(PackBadge, { props: { name: 'Frontend', color: '#3B82F6', interactive: true, muted: true } })
+
+    expect(wrapper.classes()).toContain('pack-badge--muted')
+    expect(wrapper.classes()).not.toContain('pack-badge--selected')
+    expect(wrapper.attributes('aria-pressed')).toBe('false')
+  })
 })

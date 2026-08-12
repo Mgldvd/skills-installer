@@ -16,11 +16,9 @@
       <span v-if="skill.installed" class="skill-card__installed">Installed</span>
     </header>
 
-    <button type="button" class="skill-card__description" @click="emit('description', skill.id)">
-      <span class="skill-card__description-label">Description</span>
+    <div class="skill-card__description">
       <span class="skill-card__description-text">{{ skill.description || 'No description provided.' }}</span>
-      <span class="skill-card__description-more">View details</span>
-    </button>
+    </div>
 
     <footer class="skill-card__footer">
       <div class="skill-card__meta">
@@ -29,11 +27,10 @@
           <PackBadge v-for="tag in assignedTags" :key="tag.id" :name="tag.name" :color="tag.color" compact />
         </div>
       </div>
-      <button type="button" class="skill-card__edit" @click="emit('edit', skill.id)">
+      <button type="button" class="skill-card__edit" :aria-label="`View and edit ${skill.displayName}`" title="View and edit Skill" @click="emit('edit', skill.id)">
         <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M3 11.8V13h1.2l7.1-7.1-1.2-1.2L3 11.8Zm8-8 1.2-1.2 1.2 1.2L12.2 5 11 3.8Z" fill="currentColor" />
+          <path d="M1.5 8s2.2-4 6.5-4 6.5 4 6.5 4-2.2 4-6.5 4-6.5-4-6.5-4Z" /><circle cx="8" cy="8" r="1.8" />
         </svg>
-        Edit
       </button>
     </footer>
   </article>
@@ -54,7 +51,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   toggle: [skillId: string]
   edit: [skillId: string]
-  description: [skillId: string]
 }>()
 
 const ariaLabel = computed(() => `${props.skill.displayName}${props.selected ? ', selected' : ', not selected'}`)

@@ -49,38 +49,27 @@
     background: transparent;
     cursor: pointer;
 
-    &:hover:not(:disabled), &:focus-visible {
+    &:hover:not(:disabled) {
       border-color: var(--accent);
       background: var(--accent-soft);
-      outline: none;
+    }
+
+    body.is-keyboard-navigation &:focus-visible {
+      border-color: var(--accent);
+      background: var(--accent-soft);
     }
 
     &:disabled { cursor: default; }
-  }
 
-  &__path-editor {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    gap: var(--space-2xs);
-    flex: 1;
-
-    input {
-      min-width: 10rem;
-      flex: 1;
-      padding: var(--space-2xs) var(--space-xs);
-      border: 1px solid var(--accent);
-      border-radius: var(--radius-sm);
-      background: var(--bg-panel);
-      color: var(--text-primary);
-    }
-
-    button {
-      padding: var(--space-2xs) var(--space-xs);
-      border: 1px solid var(--border-soft);
-      border-radius: var(--radius-sm);
-      background: var(--bg-panel);
-      cursor: pointer;
+    svg {
+      width: 1rem;
+      height: 1rem;
+      flex: 0 0 1rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.35;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
     }
   }
 
@@ -99,7 +88,7 @@
     height: 0.5em;
     min-width: 6px;
     min-height: 6px;
-    border-radius: 50%;
+    border-radius: var(--radius-md);
     background: var(--text-muted);
   }
 

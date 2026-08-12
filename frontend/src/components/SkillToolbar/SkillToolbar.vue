@@ -2,21 +2,38 @@
   <section class="skill-toolbar" aria-label="Skill preselection Packs">
     <span class="skill-toolbar__label">Preselect</span>
     <div v-if="orderedTags.length" class="skill-toolbar__tags">
-      <PackBadge
+      <div
         v-for="tag in orderedTags"
         :key="tag.id"
-        class="skill-toolbar__tag"
-        :name="tag.name"
-        :color="tag.color"
-        interactive
-        :selected="tagState(tag.id) === 'all'"
-        :partial="tagState(tag.id) === 'some'"
-        :disabled="tagSkillCount(tag.id) === 0"
-        :title="tagTitle(tag.id, tag.name)"
-        @click="emit('toggleTag', tag.id)"
+        class="skill-toolbar__tag-slot"
+        :class="{
+          'is-dragging': draggedTagId === tag.id,
+          'is-drag-over': dragOverTagId === tag.id,
+          'is-insert-before': insertionSide(tag.id) === 'before',
+          'is-insert-after': insertionSide(tag.id) === 'after',
+        }"
+        draggable="true"
+        @dragstart="startDrag($event, tag.id)"
+        @dragover.prevent="dragOverTagId = tag.id"
+        @drop.prevent="dropTag(tag.id)"
+        @dragend="endDrag"
       >
-        <template #trailing><span class="skill-toolbar__count" aria-hidden="true">{{ tagSkillCount(tag.id) }}</span></template>
-      </PackBadge>
+        <PackBadge
+          class="skill-toolbar__tag"
+          :name="tag.name"
+          :color="tag.color"
+          interactive
+          :selected="tagState(tag.id) === 'all'"
+          :partial="tagState(tag.id) === 'some'"
+          :disabled="tagSkillCount(tag.id) === 0"
+          :title="`${tagTitle(tag.id, tag.name)}. Drag to reorder; Alt+Left or Alt+Right also moves it.`"
+          @click="emit('toggleTag', tag.id)"
+          @keydown.alt.left.prevent="moveTag(tag.id, -1)"
+          @keydown.alt.right.prevent="moveTag(tag.id, 1)"
+        >
+          <template #trailing><span class="skill-toolbar__count" aria-hidden="true">{{ tagSkillCount(tag.id) }}</span></template>
+        </PackBadge>
+      </div>
     </div>
     <p v-else class="skill-toolbar__empty">Create Packs from the Packs menu to build reusable selections.</p>
     <button
@@ -46,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import type { Skill, SkillTag } from '../../types'
 import PackBadge from '../PackBadge/PackBadge.vue'
@@ -61,7 +78,9 @@ const props = withDefaults(defineProps<{
   sortBy?: SortMode
 }>(), { tags: () => [], skills: () => [], selectedIds: () => [], query: '', sortBy: 'name' })
 
-const emit = defineEmits<{ toggleTag: [tagId: string]; clearSelection: []; 'update:query': [value: string]; 'update:sortBy': [value: SortMode] }>()
+const emit = defineEmits<{ toggleTag: [tagId: string]; reorderTags: [tagIds: string[]]; clearSelection: []; 'update:query': [value: string]; 'update:sortBy': [value: SortMode] }>()
+const draggedTagId = ref<string | null>(null)
+const dragOverTagId = ref<string | null>(null)
 const selected = computed(() => new Set(props.selectedIds))
 const orderedTags = computed(() => props.tags.filter((tag) => tag.enabled).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)))
 const taggedSkills = (tagId: string) => props.skills.filter((skill) => skill.enabled && skill.tags.includes(tagId))
@@ -75,6 +94,41 @@ function tagTitle(tagId: string, name: string) {
   const count = tagSkillCount(tagId)
   if (!count) return `${name} has no Skills assigned`
   return tagState(tagId) === 'all' ? `Remove ${count} ${name} Skills from selection` : `Select ${count} ${name} Skills`
+}
+function insertionSide(targetId: string): 'before' | 'after' | null {
+  if (!draggedTagId.value || dragOverTagId.value !== targetId || draggedTagId.value === targetId) return null
+  const ids = orderedTags.value.map((tag) => tag.id)
+  return ids.indexOf(draggedTagId.value) < ids.indexOf(targetId) ? 'after' : 'before'
+}
+function reorderedIds(tagId: string, targetId: string) {
+  const ids = orderedTags.value.map((tag) => tag.id)
+  const from = ids.indexOf(tagId)
+  const to = ids.indexOf(targetId)
+  if (from < 0 || to < 0 || from === to) return null
+  ids.splice(to, 0, ids.splice(from, 1)[0])
+  return ids
+}
+function startDrag(event: globalThis.DragEvent, tagId: string) {
+  draggedTagId.value = tagId
+  event.dataTransfer?.setData('text/plain', tagId)
+  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+}
+function dropTag(targetId: string) {
+  if (draggedTagId.value) {
+    const ids = reorderedIds(draggedTagId.value, targetId)
+    if (ids) emit('reorderTags', ids)
+  }
+  endDrag()
+}
+function endDrag() { draggedTagId.value = null; dragOverTagId.value = null }
+function moveTag(tagId: string, offset: -1 | 1) {
+  const ids = orderedTags.value.map((tag) => tag.id)
+  const index = ids.indexOf(tagId)
+  const target = ids[index + offset]
+  if (target) {
+    const reordered = reorderedIds(tagId, target)
+    if (reordered) emit('reorderTags', reordered)
+  }
 }
 </script>
 

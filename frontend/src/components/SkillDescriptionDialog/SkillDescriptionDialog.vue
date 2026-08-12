@@ -6,9 +6,7 @@
           <span class="skill-description-dialog__eyebrow">Skill description</span>
           <h2>{{ skill.displayName }}</h2>
         </div>
-        <button type="button" class="skill-description-dialog__close" aria-label="Close description" @click="close">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
-        </button>
+        <CloseButton aria-label="Close description" @click="close" />
       </header>
 
       <p class="skill-description-dialog__description">{{ skill.description || 'No description provided.' }}</p>
@@ -29,6 +27,7 @@ import { ref } from 'vue'
 
 import { useNativeDialog } from '../../composables/useNativeDialog'
 import type { Skill } from '../../types'
+import CloseButton from '../CloseButton/CloseButton.vue'
 
 const props = defineProps<{ open: boolean; skill: Skill | null }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()

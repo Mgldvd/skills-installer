@@ -1,6 +1,6 @@
 <template>
-  <div class="skill-grid" role="list">
-    <p v-if="skills.length === 0" class="skill-grid__empty">No skills match the current search and filter.</p>
+  <TransitionGroup name="skill-grid" tag="div" class="skill-grid" role="list">
+    <p v-if="skills.length === 0" key="empty" class="skill-grid__empty">No skills match the current search and filter.</p>
     <div v-for="skill in skills" :key="skill.id" class="skill-grid__item" role="listitem">
       <SkillCard
         :skill="skill"
@@ -8,10 +8,9 @@
         :tags="tags"
         @toggle="(id) => emit('toggle', id)"
         @edit="(id) => emit('edit', id)"
-        @description="(id) => emit('description', id)"
       />
     </div>
-  </div>
+  </TransitionGroup>
 </template>
 
 <script setup lang="ts">
@@ -27,7 +26,6 @@ defineProps<{
 const emit = defineEmits<{
   toggle: [skillId: string]
   edit: [skillId: string]
-  description: [skillId: string]
 }>()
 </script>
 

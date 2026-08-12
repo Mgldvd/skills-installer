@@ -1,7 +1,7 @@
 <template>
   <dialog ref="dialogEl" class="skills-dialog" @close="emit('update:open',false)">
     <section class="skills-dialog__panel">
-      <header><div><h2>Skills</h2><p>Maintain the curated catalog available for installation.</p></div><button type="button" aria-label="Close Skills" @click="close">×</button></header>
+      <header><div><h2>Skills</h2><p>Maintain the curated catalog available for installation.</p></div><CloseButton aria-label="Close Skills" @click="close" /></header>
       <div class="skills-dialog__heading"><h3>Curated Skills</h3><button type="button" class="primary" @click="emit('add')">+ Add Skill</button></div>
       <div class="skills-dialog__list">
         <div v-for="skill in skills" :key="skill.id"><span><strong>{{ skill.displayName }}</strong><small>{{ skill.local ? 'Local source' : skill.skillsUrl }}</small></span><span v-if="!skill.local" class="skills-dialog__actions"><button type="button" @click="emit('edit',skill.id)">Edit</button><button type="button" @click="emit('remove',skill.id)">Remove</button></span></div>
@@ -13,6 +13,7 @@
 <script setup lang="ts">
 import { ref,watch } from 'vue'
 import { useNativeDialog } from '../../composables/useNativeDialog'
+import CloseButton from '../CloseButton/CloseButton.vue'
 import type { Skill } from '../../types'
 const props=defineProps<{open:boolean;skills:Skill[];localSourcePath:string|null}>()
 const emit=defineEmits<{ 'update:open':[boolean];add:[];edit:[string];remove:[string];refresh:[];updateLocalSource:[string] }>()

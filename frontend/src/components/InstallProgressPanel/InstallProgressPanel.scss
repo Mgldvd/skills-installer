@@ -47,16 +47,6 @@
     }
   }
 
-  &__close {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    padding: var(--space-2xs) var(--space-xs);
-
-    &:hover {
-      color: var(--text-primary);
-    }
-  }
-
   &__body {
     max-height: 16rem;
     overflow-y: auto;

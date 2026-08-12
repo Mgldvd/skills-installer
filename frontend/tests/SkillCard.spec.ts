@@ -12,6 +12,9 @@ describe('SkillCard', () => {
 
     expect(wrapper.find('.skill-card__title').text()).toBe('Issue Triage')
     expect(wrapper.find('.skill-card__description-text').text()).toBe('Helps triage issues.')
+    expect(wrapper.find('.skill-card__description-label').exists()).toBe(false)
+    expect(wrapper.find('.skill-card__description').element.tagName).toBe('DIV')
+    expect(wrapper.text()).not.toContain('View details')
   })
 
   it('selects from the title and dead card surface without hijacking description', async () => {
@@ -19,7 +22,7 @@ describe('SkillCard', () => {
 
     await wrapper.find('.skill-card__description').trigger('click')
     expect(wrapper.emitted('toggle')).toBeUndefined()
-    expect(wrapper.emitted('description')).toEqual([['triage']])
+    expect(wrapper.emitted('edit')).toBeUndefined()
 
     await wrapper.find('.skill-card__selection-surface').trigger('click')
     expect(wrapper.emitted('toggle')).toEqual([['triage']])
@@ -48,6 +51,8 @@ describe('SkillCard', () => {
     const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: 'triage' }), selected: false } })
     await wrapper.find('.skill-card__edit').trigger('click')
     expect(wrapper.emitted('edit')).toEqual([['triage']])
+    expect(wrapper.find('.skill-card__edit').attributes('aria-label')).toBe('View and edit Issue Triage')
+    expect(wrapper.find('.skill-card__edit circle').exists()).toBe(true)
   })
 
   it('renders assigned pack names and local/install status', () => {

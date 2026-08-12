@@ -106,8 +106,9 @@ describe('InstallProgressPanel', () => {
     const finished = mount(InstallProgressPanel, {
       props: { installation: baseInstallation({ result: { requested: 1, installed: 1, alreadyInstalled: 0, failed: 0, cancelled: false, perSkill: [] } }) },
     })
-    expect(finished.find('.install-progress-panel__close').exists()).toBe(true)
-    await finished.find('.install-progress-panel__close').trigger('click')
+    const dismiss = finished.get('[aria-label="Dismiss installation output"]')
+    expect(dismiss.classes()).toContain('close-button')
+    await dismiss.trigger('click')
     expect(finished.emitted('dismiss')).toBeTruthy()
   })
 })

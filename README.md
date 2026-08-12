@@ -424,14 +424,12 @@ not a functional defect, and there is no config knob to change it — see
 
 ## Application icons
 
-The canonical source is `src-tauri/app-icon.svg` (an original flat mark —
-a pink rounded-square badge with the same checkmark-in-circle motif used
-for a selected skill card in the UI). It's rasterized to a 1024×1024 PNG
-and the full platform set is generated with the official tool:
+The canonical source is the root-level `icon.png`. The Linux icon set used
+by the application window, desktop integration, AppImage, and DEB bundles
+is generated from that single source with the official tool:
 
 ```bash
-rsvg-convert -w 1024 -h 1024 src-tauri/app-icon.svg -o src-tauri/app-icon.png
-frontend/node_modules/.bin/tauri icon src-tauri/app-icon.png   # run from repo root
+frontend/node_modules/.bin/tauri icon icon.png   # run from repo root
 ```
 
 Only the Linux-relevant sizes are kept (`32x32.png`, `64x64.png`,

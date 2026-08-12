@@ -52,6 +52,7 @@ fn run_gui(config_override: Option<PathBuf>) {
     let state = commands::AppState { services };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(state)
         .invoke_handler(tauri::generate_handler![
             commands::skills::get_application_state,
@@ -65,6 +66,7 @@ fn run_gui(config_override: Option<PathBuf>) {
             commands::tags::create_tag,
             commands::tags::update_tag,
             commands::tags::delete_tag,
+            commands::tags::reorder_tags,
             commands::tags::assign_tag_to_skill,
             commands::tags::unassign_tag_from_skill,
             commands::configuration::export_portable_configuration,

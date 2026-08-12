@@ -43,6 +43,9 @@ describe('Packs assignment matrix', () => {
     expect(skillB.findAll('.tag-toggle').map(toggle => toggle.attributes('aria-pressed'))).toEqual(['false', 'true', 'true'])
     expect(skillA.findAll('.pack-badge--selected')).toHaveLength(1)
     expect(skillB.findAll('.pack-badge--selected')).toHaveLength(2)
+    expect(skillA.findAll('.pack-badge--muted')).toHaveLength(2)
+    expect(skillB.findAll('.pack-badge--muted')).toHaveLength(1)
+    expect(skillA.find('.pack-badge--selected').classes()).not.toContain('pack-badge--muted')
   })
 
   it('assigns an inactive Pack with one click and opens no assignment surface', async () => {

@@ -28,9 +28,7 @@
         <button v-if="installation.isInstalling" type="button" class="install-progress-panel__cancel" @click="emit('cancel')">
           Cancel
         </button>
-        <button v-else type="button" class="install-progress-panel__close" aria-label="Dismiss" @click="emit('dismiss')">
-          ✕
-        </button>
+        <CloseButton v-else aria-label="Dismiss installation output" @click="emit('dismiss')" />
       </div>
     </header>
 
@@ -65,6 +63,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 
 import type { InstallationState } from '../../composables/useAppState'
+import CloseButton from '../CloseButton/CloseButton.vue'
 
 const props = defineProps<{
   installation: InstallationState

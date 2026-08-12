@@ -1,4 +1,5 @@
 import { Channel } from '@tauri-apps/api/core'
+import { open } from '@tauri-apps/plugin-dialog'
 
 import { call } from './tauri/client'
 import type {
@@ -69,6 +70,7 @@ export async function updateTag(tagId: string, name: string, color: string): Pro
   return call('update_tag', { args: { tagId, name, color } })
 }
 export async function deleteTag(tagId: string): Promise<void> { return call('delete_tag', { tagId }) }
+export async function reorderTags(tagIds: string[]): Promise<SkillTag[]> { return call('reorder_tags', { tagIds }) }
 export async function assignTagToSkill(skillId: string, tagId: string): Promise<Skill> {
   return call('assign_tag_to_skill', { skillId, tagId })
 }
@@ -112,6 +114,16 @@ export async function cancelInstallation(): Promise<void> {
 
 export async function refresh(): Promise<ApplicationConfig> {
   return call('refresh')
+}
+
+export async function selectInstallationDirectory(defaultPath?: string): Promise<string | null> {
+  const selected = await open({
+    title: 'Select installation folder',
+    directory: true,
+    multiple: false,
+    defaultPath: defaultPath || undefined,
+  })
+  return typeof selected === 'string' ? selected : null
 }
 export async function exportPortableConfiguration():Promise<string>{return call('export_portable_configuration')}
 export async function importPortableConfiguration(content:string):Promise<void>{return call('import_portable_configuration',{content})}

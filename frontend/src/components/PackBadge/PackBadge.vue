@@ -7,6 +7,7 @@
       'pack-badge--selected': selected,
       'pack-badge--partial': partial,
       'pack-badge--compact': compact,
+      'pack-badge--muted': muted,
     }"
     :type="interactive ? 'button' : undefined"
     :aria-pressed="interactive ? pressedState : undefined"
@@ -36,6 +37,7 @@ const props = withDefaults(defineProps<{
   selected?: boolean
   partial?: boolean
   compact?: boolean
+  muted?: boolean
   disabled?: boolean
   ariaLabel?: string
   title?: string
@@ -44,6 +46,7 @@ const props = withDefaults(defineProps<{
   selected: false,
   partial: false,
   compact: false,
+  muted: false,
   disabled: false,
   ariaLabel: undefined,
   title: undefined,

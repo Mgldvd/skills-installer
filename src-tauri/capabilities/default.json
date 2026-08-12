@@ -1,11 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Minimum permissions required by the main window: core window/event plumbing only. All skill install/list/remove/config logic runs through dedicated Rust commands, never through a shell, filesystem, or dialog plugin.",
+  "description": "Minimum permissions required by the main window, including native folder selection for the installation destination.",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "core:window:default",
-    "core:event:default"
+    "core:event:default",
+    "dialog:allow-open"
   ]
 }

@@ -19,6 +19,37 @@
   }
 }
 
+// Shared geometry and composition for the application's menu-like dialogs.
+@mixin menu-surface {
+  @include reset(100vw);
+  width: calc(100vw - 14rem);
+  max-width: none;
+  height: calc(100vh - 14rem);
+  max-height: none;
+  overflow: hidden;
+}
+
+@mixin menu-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+}
+
+@mixin menu-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+@mixin menu-body {
+  min-height: 0;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
 @mixin form-layout {
   display: flex;
   flex-direction: column;
@@ -53,7 +84,7 @@
   font-size: var(--font-size-sm);
   font-weight: 400;
 
-  &:focus-visible {
+  body.is-keyboard-navigation &:focus-visible {
     border-color: var(--accent);
   }
 }

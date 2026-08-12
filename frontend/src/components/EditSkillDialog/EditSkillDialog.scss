@@ -1,16 +1,103 @@
 @use '../../styles/dialog-base' as dialog;
 
 .edit-skill-dialog {
-  @include dialog.reset(30rem);
+  @include dialog.reset(38rem);
+  width: calc(100vw - 14rem);
+  max-width: none;
+  height: calc(100vh - 14rem);
+  max-height: none;
+  overflow: hidden;
 
   &__form {
-    @include dialog.form-layout;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: var(--space-md);
+    height: 100%;
+    padding: var(--space-lg);
+    overflow: hidden;
   }
 
   &__title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
+    font-size: var(--font-size-xl);
+    font-weight: 650;
+    line-height: var(--line-height-tight);
   }
+
+  &__hero {
+    display: grid;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--accent);
+    background: var(--bg-card);
+  }
+
+  &__hero-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-lg);
+
+    > div { display: grid; gap: var(--space-2xs); }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      min-height: 2rem;
+      padding: 0 var(--space-sm);
+      border: 1px solid color-mix(in srgb, var(--info) 45%, var(--border-soft));
+      border-radius: var(--radius-md);
+      color: var(--info);
+      font-size: var(--font-size-sm);
+      font-weight: 650;
+      text-decoration: none;
+      white-space: nowrap;
+
+      &:hover { border-color: var(--info); background: var(--info-soft); }
+      svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; stroke-linejoin: miter; }
+    }
+  }
+
+  &__description {
+    max-width: 75ch;
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+    line-height: 1.6;
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  &__eyebrow {
+    color: var(--accent-hover);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  &__details {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    overflow-y: auto;
+  }
+
+  &__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: 0;
+    overflow: visible;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  &__field--wide { grid-column: 1 / -1; }
 
   &__field {
     @include dialog.field-label;
@@ -24,6 +111,8 @@
     resize: vertical;
     font-family: inherit;
   }
+
+  &__field small { color: var(--text-muted); font-size: var(--font-size-xs); font-weight: 400; }
 
   &__preview {
     background: var(--info-soft);
@@ -69,27 +158,32 @@
 
   &__pack-list { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 
-  &__pack {
+  &__actions {
+    @include dialog.actions-row;
+    z-index: 3;
+    margin-top: auto;
+    padding-top: var(--space-sm);
+    background: var(--bg-panel);
+  }
+
+  &__actions-spacer { flex: 1; }
+
+  &__delete-confirm {
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    min-height: 2.75rem;
-    padding: 0 var(--space-sm);
-    border: 1px solid var(--border-soft);
-    border-radius: 999px;
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    cursor: pointer;
+    padding: var(--space-sm);
+    border-left: 3px solid var(--danger);
+    background: var(--danger-soft);
 
-    &:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--text-primary); }
-    input { accent-color: var(--accent); }
-  }
+    div {
+      display: grid;
+      min-width: 0;
+      flex: 1;
+      gap: var(--space-2xs);
+    }
 
-  &__pack-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; }
-
-  &__actions {
-    @include dialog.actions-row;
+    span { color: var(--text-secondary); font-size: var(--font-size-xs); }
   }
 
   &__btn {
@@ -98,5 +192,22 @@
     &--primary {
       @include dialog.button-primary;
     }
+
+    &--delete {
+      border-color: color-mix(in srgb, var(--danger) 40%, var(--border-soft));
+      color: var(--danger);
+    }
+
+    &--danger {
+      @include dialog.button-danger;
+    }
+  }
+
+  @media (max-width: 520px) {
+    &__form { padding: var(--space-md); }
+    &__hero-heading { flex-direction: column; }
+    &__fields { grid-template-columns: 1fr; }
+    &__field--wide { grid-column: 1; }
+    &__delete-confirm { align-items: stretch; flex-direction: column; }
   }
 }

@@ -139,6 +139,26 @@ impl SkillsService {
         Ok(())
     }
 
+    pub fn reorder_tags(&self, tag_ids: Vec<String>) -> Result<Vec<SkillTag>, AppError> {
+        let mut config = self.config_service.load()?;
+        let existing: HashSet<&str> = config.tags.iter().map(|tag| tag.id.as_str()).collect();
+        let requested: HashSet<&str> = tag_ids.iter().map(String::as_str).collect();
+        if tag_ids.len() != config.tags.len() || requested.len() != tag_ids.len() || requested != existing {
+            return Err(AppError::Validation(
+                "tag order must contain every configured tag exactly once".to_string(),
+            ));
+        }
+        for (index, tag_id) in tag_ids.iter().enumerate() {
+            if let Some(tag) = config.tags.iter_mut().find(|tag| &tag.id == tag_id) {
+                tag.order = ((index + 1) * 10) as i32;
+            }
+        }
+        config.tags.sort_by_key(|tag| tag.order);
+        let tags = config.tags.clone();
+        self.config_service.save(&config)?;
+        Ok(tags)
+    }
+
     pub fn set_tag_assignment(
         &self,
         skill_id: &str,

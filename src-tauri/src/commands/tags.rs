@@ -41,6 +41,13 @@ pub fn delete_tag(state: State<'_, AppState>, tag_id: String) -> Result<(), AppE
     state.services.skills.delete_tag(&tag_id)
 }
 #[tauri::command]
+pub fn reorder_tags(
+    state: State<'_, AppState>,
+    tag_ids: Vec<String>,
+) -> Result<Vec<SkillTag>, AppError> {
+    state.services.skills.reorder_tags(tag_ids)
+}
+#[tauri::command]
 pub fn assign_tag_to_skill(
     state: State<'_, AppState>,
     skill_id: String,

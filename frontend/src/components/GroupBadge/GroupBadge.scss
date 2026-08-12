@@ -15,7 +15,7 @@
     height: 0.6em;
     min-width: 8px;
     min-height: 8px;
-    border-radius: 50%;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
   }
 

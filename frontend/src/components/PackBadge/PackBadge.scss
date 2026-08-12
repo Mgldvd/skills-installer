@@ -9,9 +9,9 @@
   min-height: 2rem;
   box-sizing: border-box;
   padding: 0.25rem var(--space-xs);
-  border: 1px solid color-mix(in srgb, var(--pack-color) 22%, var(--border-soft));
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--pack-color) 3%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--pack-color) 48%, var(--border-soft));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--pack-color) 9%, var(--bg-card));
   color: var(--text-secondary);
   font-family: var(--font-family-base);
   font-size: var(--font-size-xs);
@@ -33,18 +33,18 @@
     cursor: pointer;
 
     &:hover:not(:disabled) {
-      border-color: color-mix(in srgb, var(--pack-color) 58%, var(--border-strong));
-      background: color-mix(in srgb, var(--pack-color) 7%, var(--bg-card));
+      border-color: color-mix(in srgb, var(--pack-color) 78%, var(--border-strong));
+      background: color-mix(in srgb, var(--pack-color) 15%, var(--bg-card));
       color: var(--text-primary);
     }
 
-    &:focus-visible {
+    body.is-keyboard-navigation &:focus-visible {
       outline: 2px solid color-mix(in srgb, var(--pack-color) 72%, var(--text-primary));
       outline-offset: 2px;
     }
 
     &:active:not(:disabled) {
-      background: color-mix(in srgb, var(--pack-color) 12%, var(--bg-card));
+      background: color-mix(in srgb, var(--pack-color) 20%, var(--bg-card));
     }
 
     &:disabled {
@@ -55,22 +55,51 @@
 
   &--selected,
   &--partial {
-    border-color: color-mix(in srgb, var(--pack-color) 58%, var(--border-strong));
-    background: color-mix(in srgb, var(--pack-color) 10%, var(--bg-card));
+    border-color: color-mix(in srgb, var(--pack-color) 86%, var(--border-strong));
+    background: color-mix(in srgb, var(--pack-color) 18%, var(--bg-card));
     color: var(--text-primary);
     font-weight: 650;
+    box-shadow: inset 3px 0 0 var(--pack-color);
   }
 
   &--partial {
     border-style: dashed;
   }
 
+  // Assignment controls keep unassigned Packs intentionally neutral so the
+  // configured color remains a strong, immediate cue for assigned Packs.
+  &--muted {
+    border-color: var(--border-soft);
+    background: var(--bg-muted);
+    color: var(--text-muted);
+    box-shadow: none;
+
+    .pack-badge__dot {
+      background: var(--text-muted);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-muted) 14%, transparent);
+    }
+
+    &.pack-badge--interactive:hover:not(:disabled) {
+      border-color: var(--border-strong);
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+
+      .pack-badge__dot {
+        background: var(--pack-color);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--pack-color) 20%, transparent);
+      }
+    }
+  }
+
   &__dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    flex: 0 0 0.5rem;
-    border-radius: 50%;
+    width: 0.625rem;
+    height: 0.625rem;
+    flex: 0 0 0.625rem;
+    border-radius: var(--radius-sm);
     background: var(--pack-color);
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--pack-color) 20%, transparent),
+      0 1px 2px color-mix(in srgb, var(--pack-color) 45%, transparent);
   }
 
   &__label {

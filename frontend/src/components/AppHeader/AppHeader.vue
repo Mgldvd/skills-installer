@@ -3,13 +3,9 @@
     <h1 class="app-header__title">Skills Installer</h1>
     <div class="app-header__item app-header__destination">
       <span class="app-header__label">Install to</span>
-      <form v-if="editingPath" class="app-header__path-editor" @submit.prevent="savePath">
-        <input ref="pathInput" v-model="draftPath" aria-label="Project installation destination" @keydown.esc.prevent="cancelPath" />
-        <button type="submit">Use</button><button type="button" @click="cancelPath">Cancel</button>
-      </form>
-      <button v-else type="button" class="app-header__value app-header__path" :disabled="scope === 'global'" :title="scope === 'global' ? 'Change to Project scope to select a folder' : 'Change installation destination'" @click="beginPathEdit">
+      <button type="button" class="app-header__value app-header__path" :disabled="scope === 'global' || selectingPath" :title="scope === 'global' ? 'Change to Project scope to select a folder' : 'Select installation folder'" aria-label="Select project installation folder" @click="selectPath">
         {{ scope === 'global' ? 'Global installation' : projectPath || '(select a project)' }}
-        <span v-if="scope === 'project'" aria-hidden="true">✎</span>
+        <svg v-if="scope === 'project'" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.8 4.5h4l1.3 1.6h7.1v6.7H1.8V4.5Zm0 1.6V3.2h4.7l1.3 1.3" /></svg>
       </button>
     </div>
     <div class="app-header__item app-header__agents"><span class="app-header__label">Agents</span><strong class="app-header__value">{{ agentLabels }}</strong></div>
@@ -23,8 +19,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, ref } from 'vue'
 
+import * as backend from '../../services/backend'
 import { SUPPORTED_AGENTS, type DependencyStatus, type InstallScope } from '../../types'
 
 const props = defineProps<{
@@ -34,10 +31,17 @@ const props = defineProps<{
   agents: string[]
 }>()
 const emit=defineEmits<{ 'update:projectPath':[path:string] }>()
-const editingPath=ref(false),draftPath=ref(''),pathInput=ref<HTMLInputElement|null>(null)
-async function beginPathEdit(){if(props.scope==='global')return;draftPath.value=props.projectPath;editingPath.value=true;await nextTick();pathInput.value?.focus();pathInput.value?.select()}
-function cancelPath(){editingPath.value=false}
-function savePath(){const path=draftPath.value.trim();if(path){emit('update:projectPath',path);editingPath.value=false}}
+const selectingPath = ref(false)
+async function selectPath() {
+  if (props.scope === 'global' || selectingPath.value) return
+  selectingPath.value = true
+  try {
+    const path = await backend.selectInstallationDirectory(props.projectPath)
+    if (path) emit('update:projectPath', path)
+  } finally {
+    selectingPath.value = false
+  }
+}
 const agentLabels=computed(()=>props.agents.map(id=>SUPPORTED_AGENTS.find(agent=>agent.id===id)?.label??id).join(', ')||'None selected')
 
 const dependencyClass = computed(() => {

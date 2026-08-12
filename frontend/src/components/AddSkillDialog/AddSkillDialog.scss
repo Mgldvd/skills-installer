@@ -1,15 +1,63 @@
 @use '../../styles/dialog-base' as dialog;
 
 .add-skill-dialog {
-  @include dialog.reset(30rem);
+  @include dialog.menu-surface;
 
   &__form {
-    @include dialog.form-layout;
+    @include dialog.menu-shell;
+  }
+
+  &__header {
+    @include dialog.menu-header;
   }
 
   &__title {
     font-size: var(--font-size-lg);
     font-weight: 600;
+  }
+
+  &__heading {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    justify-content: start;
+    column-gap: var(--space-xs);
+
+    p {
+      grid-column: 1 / -1;
+      margin-top: var(--space-2xs);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+    }
+
+    a {
+      color: var(--info);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+
+      &:hover { color: #2563eb; }
+    }
+  }
+
+  &__body {
+    @include dialog.menu-body;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: var(--space-md);
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  &__wide,
+  &__field--wide {
+    grid-column: 1 / -1;
   }
 
   &__field {
@@ -42,6 +90,14 @@
     color: var(--danger);
   }
 
+  &__duplicate {
+    padding: var(--space-xs) var(--space-sm);
+    border-left: 3px solid var(--danger);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: var(--font-size-sm);
+  }
+
   &__checkboxes {
     display: flex;
     flex-wrap: wrap;
@@ -55,15 +111,16 @@
     font-size: var(--font-size-sm);
   }
 
-  &__actions {
-    @include dialog.actions-row;
-  }
-
   &__btn {
     @include dialog.button-base;
 
     &--primary {
       @include dialog.button-primary;
     }
+  }
+
+  @media (max-width: 780px) {
+    &__body { grid-template-columns: 1fr; }
+    &__wide, &__field--wide { grid-column: 1; }
   }
 }

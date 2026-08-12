@@ -3,7 +3,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   gap: var(--space-sm);
-  height: 19rem;
+  height: 14.75rem;
   padding: var(--space-md);
   box-sizing: border-box;
   overflow: hidden;
@@ -26,7 +26,7 @@
     background: transparent;
     cursor: pointer;
 
-    &:focus-visible {
+    body.is-keyboard-navigation &:focus-visible {
       outline: 3px solid var(--accent);
       outline-offset: -3px;
     }
@@ -59,7 +59,7 @@
   &__installed {
     flex: 0 0 auto;
     padding: var(--space-2xs) var(--space-xs);
-    border-radius: 999px;
+    border-radius: var(--radius-md);
     background: var(--success-soft);
     color: var(--success);
     font-size: var(--font-size-xs);
@@ -85,30 +85,18 @@
   }
 
   &__description {
-    position: relative;
-    z-index: 2;
     display: flex;
     min-height: 0;
-    flex-direction: column;
+    align-self: start;
     align-items: flex-start;
-    gap: var(--space-2xs);
     padding: var(--space-sm);
     overflow: hidden;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    background: var(--bg-muted);
+    background: color-mix(in srgb, var(--bg-muted) 55%, var(--bg-card));
     color: var(--text-secondary);
     text-align: left;
 
-    &:hover { border-color: var(--border-strong); background: var(--bg-card-hover); }
-  }
-
-  &__description-label {
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
   }
 
   &__description-text {
@@ -117,14 +105,7 @@
     font-size: var(--font-size-sm);
     line-height: var(--line-height-normal);
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
-
-  &__description-more {
-    margin-top: auto;
-    color: var(--accent-hover);
-    font-size: var(--font-size-xs);
-    font-weight: 650;
+    -webkit-line-clamp: 2;
   }
 
   &__footer {
@@ -170,23 +151,26 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-2xs);
-    min-height: 2.75rem;
-    padding: 0 var(--space-sm);
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
     flex: 0 0 auto;
     border: 1px solid var(--border-soft);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     background: var(--bg-panel);
     color: var(--text-primary);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
 
-    svg { width: 1rem; height: 1rem; }
+    svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.4; }
     &:hover { border-color: var(--accent); color: var(--accent-hover); }
   }
 }
 
 @media (max-width: 699px) {
-  .skill-card { height: 20rem; }
+  .skill-card { height: 14.75rem; }
+}
+
+@media (pointer: coarse) {
+  .skill-card__edit { min-height: 2.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
