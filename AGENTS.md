@@ -2,74 +2,94 @@
 
 ## Propósito del repositorio
 
-Skills Installer es una aplicación de escritorio para descubrir, organizar e instalar Agent Skills remotos o locales. Una misma base Rust sirve a la interfaz Tauri/Vue y a la CLI.
+Skills Installer es una aplicación Linux para descubrir, organizar e instalar Agent Skills remotos o locales. El mismo binario ofrece una interfaz de escritorio Tauri/Vue y una CLI; ambos caminos reutilizan los mismos servicios de aplicación escritos en Rust.
 
-El frontend está construido con Vue 3, TypeScript, Vite y SCSS. El backend utiliza Rust y Tauri v2. Las instalaciones reales se delegan al Skills CLI y transmiten comando, `stdout`, `stderr`, progreso y errores hacia la interfaz.
+El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1.85) y Tauri v2. Las instalaciones se delegan al Skills CLI mediante procesos con argumentos estructurados y transmiten comando, `stdout`, `stderr`, progreso, resultados y errores hacia la interfaz.
 
-## Estructura principal
+## Estructura vigente
 
-- `frontend/src/App.vue`: composición de la aplicación y conexión de los flujos principales.
-- `frontend/src/components/`: componentes Vue organizados en carpetas PascalCase, normalmente con un `.vue` y un `.scss` del mismo nombre.
-- `frontend/src/composables/`: estado reactivo y operaciones de dominio del frontend.
-- `frontend/src/services/backend.ts`: única capa autorizada para invocar comandos Tauri.
-- `frontend/src/styles/`: tokens, estilos base y mixins compartidos.
+- `frontend/src/App.vue`: composición de la interfaz y conexión de los flujos principales.
+- `frontend/src/components/`: componentes Vue en carpetas PascalCase, normalmente con un `.vue` y un `.scss` homónimos.
+- `frontend/src/composables/`: estado reactivo compartido y operaciones de Skills, Packs, preferencias, instalación y toasts.
+- `frontend/src/services/backend.ts`: wrappers tipados de los comandos Tauri y del selector nativo de carpetas.
+- `frontend/src/services/tauri/client.ts`: único lugar autorizado para llamar directamente a `invoke()`.
+- `frontend/src/styles/`: tokens semánticos, estilos base, utilidades y mixins compartidos.
 - `frontend/src/types/`: contratos TypeScript que reflejan los DTO de Rust.
-- `frontend/tests/`: pruebas Vitest y Vue Test Utils.
-- `src-tauri/src/commands/`: fachada delgada de comandos Tauri.
-- `src-tauri/src/app/`: servicios de aplicación y reglas de negocio.
-- `src-tauri/src/domain/`: DTO y modelos compartidos.
-- `src-tauri/src/installer/`: integración con Skills CLI.
-- `src-tauri/src/process/`: ejecución segura y streaming de procesos.
-- `configs/skills.yaml`: catálogo predeterminado embebido.
+- `frontend/src/utils/`: utilidades puras de color y navegación por teclado.
+- `frontend/tests/`: pruebas Vitest, jsdom y Vue Test Utils.
+- `src-tauri/src/commands/`: fachadas delgadas expuestas a Tauri.
+- `src-tauri/src/app/`: composición de servicios y reglas de aplicación.
+- `src-tauri/src/domain/`: DTO, validación y modelos compartidos.
+- `src-tauri/src/config/`: carga, migración, validación y escritura atómica de YAML.
+- `src-tauri/src/preferences/`: persistencia de preferencias de interfaz e instalación.
+- `src-tauri/src/skills/`: descubrimiento local, análisis de URLs e importación de Packs.
+- `src-tauri/src/installer/`: integración con Skills CLI y resolución de dependencias.
+- `src-tauri/src/process/`: ejecución segura, streaming, vista previa y limpieza ANSI.
+- `src-tauri/src/cli/`: argumentos y ejecución de la CLI sin iniciar el bucle gráfico.
+- `configs/skills.yaml`: catálogo predeterminado incluido en el binario.
+- `src-tauri/tauri.conf.json`: ventana mínima de 760 × 560 y bundles Linux AppImage/DEB.
 
-## Estado actual de la experiencia
+## Estado actual del producto
 
-- `Add Skill` abre directamente el diálogo para agregar un Skill remoto.
-- `Local Skill Source` se configura y refresca desde Preferences.
-- PRESELECT contiene los Packs, el estado de selección y la acción `Clear`.
-- `Install Selected` permanece en el footer y abre confirmación cuando corresponde.
-- Las tarjetas tienen altura uniforme y separan selección, descripción y edición.
-- La descripción abre un diálogo con el contenido completo y enlace a `skills.sh` cuando existe.
-- La edición de un Skill permite actualizar sus datos y Packs individuales.
-- `PackBadge` es la fuente visual compartida para Packs en PRESELECT, tarjetas y menú Packs.
-- El panel de instalación muestra en vivo los comandos, `stdout`, `stderr` y errores.
+- El encabezado muestra el destino, los Agents seleccionados y el estado del Skills CLI. En scope Project permite elegir una carpeta con el diálogo nativo; Global ignora ese destino.
+- La barra PRESELECT muestra Packs reutilizables con estados completo, parcial, inactivo y deshabilitado. También permite limpiar la selección, filtrar Skills, ordenar por nombre o Pack y reordenar Packs con drag-and-drop o `Alt+Left`/`Alt+Right`.
+- Los Skills seleccionados se ordenan primero. Las tarjetas pueden usar modo normal o compacto, muestran estado Installed/Local y los Packs asignados, y abren `EditSkillDialog` para consultar o modificar detalles.
+- `Add Skill` acepta una URL individual de `skills.sh` o una URL de Pack con formato `https://skills.sh/p/...`. La importación de Pack crea el Pack y agrega al catálogo los Skills remotos que no estén duplicados; no instala nada.
+- `Edit Skill` permite actualizar URL, nombre, descripción, estado, preselección y Packs, o eliminar una entrada remota del catálogo.
+- El menú Packs permite crear, editar, eliminar y asignar Packs a Skills. El nombre visible es “Pack”, aunque la representación persistida y varios tipos internos conservan `tag`/`tags` por compatibilidad.
+- Preferences controla escala tipográfica, acento, tarjetas compactas, scope, copia frente a enlace, confirmación, continuación tras errores y Local Skill Source. También importa/exporta configuración JSON e instala el lanzador Linux `~/.local/bin/skills`.
+- Agents es una selección múltiple. La lista vigente vive en `frontend/src/types/preferences.ts`; no dupliques esos ids en componentes.
+- La instalación usa un `Channel` por invocación, muestra eventos en vivo, permite cancelar y refresca el catálogo al terminar.
+- La aplicación soporta temas claro y oscuro mediante tokens semánticos y `prefers-color-scheme`.
+
+## Compatibilidad y fuentes de verdad
+
+- La configuración activa se busca, en orden, mediante `--config`, `./skills.yaml`, `./skills.confg`, la ruta XDG del usuario y finalmente `configs/skills.yaml` embebido. Conserva esta precedencia y sus pruebas.
+- El YAML moderno persiste Packs bajo `tags`. La clave `packs` solo se acepta como entrada heredada y no se vuelve a serializar.
+- `groups` y los componentes/commands relacionados permanecen por compatibilidad histórica, pero no forman parte del flujo gráfico registrado actual. No construyas nuevas funciones sobre Groups ni los presentes en la UI salvo que la tarea autorice explícitamente reactivarlos.
+- Las habilidades locales se descubren por `SKILL.md`. `localSkillTags` conserva sus asignaciones de Packs. La carpeta local es una fuente del catálogo, nunca el destino de instalación.
+- Una entrada remota explícita prevalece frente a una local con el mismo nombre técnico.
+- El catálogo embebido, los DTO TypeScript y los modelos Rust deben seguir siendo compatibles. Si cambia un contrato IPC, actualiza ambos lados y sus pruebas.
 
 ## Reglas de implementación
 
-1. Respeta estrictamente el alcance solicitado. Una tarea visual no autoriza cambios de lógica, persistencia, instalación o contratos Rust/Tauri.
+1. Respeta estrictamente el alcance solicitado. Una tarea visual no autoriza cambios de lógica, persistencia, instalación, CLI ni contratos Rust/Tauri.
 2. Conserva los cambios existentes del usuario. No reviertas archivos no relacionados ni uses comandos destructivos.
-3. Usa `<script setup lang="ts">` y mantén el orden `template`, `script`, `style` en componentes Vue.
-4. Mantén los estilos específicos junto al componente. Los tokens compartidos pertenecen a `frontend/src/styles/tokens.scss`.
-5. Reutiliza componentes y variantes antes de crear implementaciones visuales paralelas. Para Packs, usa `components/PackBadge/PackBadge.vue`.
-6. No introduzcas Pinia ni otra librería de estado sin una necesidad explícita. El proyecto usa `useAppState` y composables enfocados.
-7. Las llamadas Tauri deben pasar por `frontend/src/services/backend.ts`; los componentes no deben invocar Tauri directamente.
-8. Los comandos Tauri deben ser fachadas delgadas. La lógica pertenece a los servicios de `src-tauri/src/app/`.
-9. Nunca ejecutes comandos de instalación mediante strings de shell. Conserva `Command::new(program).args(args)` y el aislamiento de `ProcessRunner`.
-10. No cambies npm por pnpm o yarn.
+3. En componentes Vue usa `<script setup lang="ts">` y conserva el orden `template`, `script`, `style`.
+4. Mantén estilos específicos junto al componente. Los tokens compartidos pertenecen a `frontend/src/styles/tokens.scss`; los mixins de diálogos pertenecen a `dialog-base.scss`.
+5. Reutiliza componentes y variantes antes de crear implementaciones paralelas. Para Packs usa `components/PackBadge/PackBadge.vue`; para cerrar diálogos usa `CloseButton`; para sincronizar `<dialog>` usa `useNativeDialog`.
+6. No introduzcas Pinia ni otra librería de estado sin una necesidad explícita. El proyecto usa un store reactivo de módulo en `useAppState` y composables enfocados.
+7. Añade wrappers tipados en `frontend/src/services/backend.ts`; nunca invoques comandos Tauri directamente desde componentes o composables. Solo `services/tauri/client.ts` llama a `invoke()`.
+8. Los comandos Tauri deben ser fachadas delgadas. La lógica pertenece a `src-tauri/src/app/` o al módulo de dominio correspondiente.
+9. Nunca construyas ejecuciones con strings de shell. Conserva `Command::new(program).args(args)`, `ProcessRunner`, las vistas previas seguras y el aislamiento del proceso.
+10. Para progreso de instalación conserva un `tauri::ipc::Channel` ligado a cada invocación; no lo reemplaces por listeners globales que mezclen instalaciones.
+11. Usa npm y `frontend/package-lock.json` como flujo oficial. No cambies el proyecto a pnpm, yarn o Bun aunque exista un `bun.lock` heredado.
+12. El proyecto apunta únicamente a Linux desktop. No añadas rutas mobile ni supongas que AppImage elimina las dependencias de GTK/WebKitGTK.
 
 ## UI, UX y accesibilidad
 
 - Usa HTML semántico: botones para acciones, enlaces para navegación externa y `<dialog>` para modales.
-- Todo control interactivo debe funcionar con teclado y tener un foco visible.
-- Usa `aria-pressed` para toggles y un indicador adicional al color para comunicar selección.
+- Todo control interactivo debe funcionar con teclado y mostrar foco visible.
+- Usa `aria-pressed` para toggles y un indicador adicional al color para comunicar selección o estado parcial.
 - No uses emojis como iconos estructurales; usa SVG con `aria-hidden="true"` cuando sea decorativo.
 - Mantén áreas táctiles de al menos 44 px en dispositivos de puntero grueso.
-- Soporta temas claro y oscuro mediante tokens semánticos.
+- Usa tokens semánticos para conservar temas claro/oscuro y acentos configurables.
 - Respeta `prefers-reduced-motion` en transiciones nuevas.
-- Diseña para la ventana mínima de 760 × 560 y evita overflow horizontal en tamaños menores.
-- Verifica la preferencia de escala tipográfica máxima; textos largos deben envolver sin romper el layout.
+- Diseña para la ventana mínima de 760 × 560, sin overflow horizontal y con textos largos capaces de envolver.
+- Verifica la escala tipográfica máxima (`1.4`); no fijes alturas que corten contenido.
 - No muestres fallbacks como Pack (`Other`, `Default`, `Uncategorized`) salvo que sean Packs configurados reales.
+- Los controles de selección deben seguir siendo distinguibles sin depender únicamente del color.
 
 ## Sistema visual de Packs
 
-- Cada Pack tiene `name` y `color`; el mismo color debe aparecer en todos sus contextos.
+- Cada Pack tiene `name`, `color`, `order` y `enabled`; el mismo color debe aparecer en todos sus contextos.
 - Usa `PackBadge` para representación estática o interactiva.
-- El color del Pack se reserva principalmente para el punto y acentos sutiles.
-- Las tarjetas muestran badges compactos y no interactivos; si no hay Packs, no renderizan un placeholder.
-- PRESELECT y el menú Packs usan botones con estados activos, parciales, inactivos y deshabilitados.
+- Reserva el color del Pack principalmente para el punto y acentos sutiles.
+- Las tarjetas muestran badges compactos no interactivos; si no hay Packs, no renderizan un placeholder.
+- PRESELECT y el menú Packs deben conservar estados activos, parciales, inactivos y deshabilitados.
 - No reintroduzcas estilos duplicados como `pack-pill`, `tag-toggle__dot` o badges con geometrías independientes.
 
-## Paleta de Packs
+### Paleta de Packs
 
 - Pink: `#F43F75`
 - Red/Coral: `#F05252`
@@ -82,7 +102,7 @@ El frontend está construido con Vue 3, TypeScript, Vite y SCSS. El backend util
 - Indigo: `#6366F1`
 - Violet: `#A855F7`
 
-Mantén sincronizadas las fuentes de verdad cuando una tarea autorice cambiar la paleta: tokens SCSS, selectores Vue, utilidad TypeScript, configuración embebida y `src-tauri/src/config/color.rs`.
+Cuando una tarea autorice cambiar la paleta, mantén sincronizados `frontend/src/utils/color.ts`, los selectores de `AddSkillDialog` y `TagsDialog`, cualquier selector heredado aún cubierto por pruebas, `configs/skills.yaml` y `src-tauri/src/config/color.rs`. La paleta de acentos de Preferences es un subconjunto independiente y solo debe cambiar si el alcance lo requiere.
 
 ## Validación requerida
 
@@ -110,8 +130,12 @@ cargo test --manifest-path src-tauri/Cargo.toml
 frontend/node_modules/.bin/tauri build --no-bundle
 ```
 
-Si Rust no está instalado, informa la limitación con precisión; no presentes la compilación Tauri como aprobada.
+Para cambios que afecten ambos lados, ejecuta ambas baterías. `make typecheck`, `make lint`, `make test` y `make build` son los equivalentes integrados. No uses `make clean` sin autorización: elimina artefactos y directorios de salida.
+
+Para cambios exclusivamente documentales basta con revisar rutas y comandos afectados y ejecutar `git diff --check`; no presentes las suites de aplicación como ejecutadas si no lo fueron.
+
+Si Rust, Node o las librerías del sistema no están disponibles, informa la limitación con precisión; no presentes una compilación parcial como aprobada.
 
 ## Entrega
 
-Resume qué cambió, menciona los archivos principales y reporta las validaciones realmente ejecutadas. Señala cualquier comprobación bloqueada y su causa concreta.
+Resume qué cambió, menciona los archivos principales y reporta únicamente las validaciones realmente ejecutadas. Señala cualquier comprobación bloqueada y su causa concreta.
