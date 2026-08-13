@@ -1,133 +1,166 @@
-@use '../../styles/dialog-base' as dialog;
+@use "../../styles/dialog-base" as dialog;
 
 .add-skill-dialog {
-  @include dialog.menu-surface;
+    @include dialog.menu-surface;
 
-  &__form {
-    @include dialog.menu-shell;
-  }
-
-  &__header {
-    @include dialog.menu-header;
-  }
-
-  &__title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-  }
-
-  &__heading {
-    display: grid;
-    grid-template-columns: auto auto;
-    align-items: baseline;
-    justify-content: start;
-    column-gap: var(--space-xs);
-
-    p {
-      grid-column: 1 / -1;
-      margin-top: var(--space-2xs);
-      color: var(--text-secondary);
-      font-size: var(--font-size-sm);
+    &__form {
+        @include dialog.menu-shell;
     }
 
-    a {
-      color: var(--info);
-      font-size: var(--font-size-sm);
-      font-weight: 600;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-
-      &:hover { color: #2563eb; }
+    &__header {
+        @include dialog.menu-header;
     }
-  }
 
-  &__body {
-    @include dialog.menu-body;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
-    gap: var(--space-md);
-  }
-
-  &__header-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-  }
-
-  &__wide,
-  &__field--wide {
-    grid-column: 1 / -1;
-  }
-
-  &__field {
-    @include dialog.field-label;
-  }
-
-  &__input {
-    @include dialog.text-input;
-  }
-
-  &__textarea {
-    resize: vertical;
-    font-family: inherit;
-  }
-
-  &__preview {
-    background: var(--info-soft);
-    color: var(--info);
-    border-radius: var(--radius-sm);
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--font-size-sm);
-
-    p {
-      margin: 0;
+    &__title {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
     }
-  }
 
-  &__pack-skills { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xs); }
-  &__pack-skills span { padding: var(--space-2xs) var(--space-xs); border: 1px solid var(--border-soft); background: var(--bg-panel); color: var(--text-primary); font-size: var(--font-size-xs); }
-  &__catalog-note { margin-top: var(--space-sm) !important; color: var(--text-secondary); }
-  &__colors { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
-  &__colors button { width: 1.55rem; height: 1.55rem; border: 2px solid var(--bg-panel); border-radius: var(--radius-md); }
-  &__colors button.is-active { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+    &__heading {
+        display: grid;
+        grid-template-columns: auto auto;
+        align-items: baseline;
+        justify-content: start;
+        column-gap: var(--space-xs);
 
-  &__error {
-    font-size: var(--font-size-sm);
-    color: var(--danger);
-  }
+        p {
+            grid-column: 1 / -1;
+            margin-top: var(--space-2xs);
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+        }
 
-  &__duplicate {
-    padding: var(--space-xs) var(--space-sm);
-    border-left: 3px solid var(--danger);
-    background: var(--danger-soft);
-    color: var(--danger);
-    font-size: var(--font-size-sm);
-  }
+        a {
+            color: var(--info);
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 2px;
 
-  &__checkboxes {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-md);
-  }
-
-  &__checkbox {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: var(--font-size-sm);
-  }
-
-  &__btn {
-    @include dialog.button-base;
-
-    &--primary {
-      @include dialog.button-primary;
+            &:hover {
+                color: #2563eb;
+            }
+        }
     }
-  }
 
-  @media (max-width: 780px) {
-    &__body { grid-template-columns: 1fr; }
-    &__wide, &__field--wide { grid-column: 1; }
-  }
+    &__body {
+        @include dialog.menu-body;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: start;
+        gap: var(--space-md);
+    }
+
+    &__header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    &__wide,
+    &__field--wide {
+        grid-column: 1 / -1;
+    }
+
+    &__field {
+        @include dialog.field-label;
+    }
+
+    &__input {
+        @include dialog.text-input;
+    }
+
+    &__textarea {
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    &__preview {
+        background: var(--info-soft);
+        color: var(--info);
+        border-radius: var(--radius-sm);
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--font-size-sm);
+
+        p {
+            margin: 0;
+        }
+    }
+
+    &__pack-skills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+        margin-top: var(--space-xs);
+    }
+    &__pack-skills span {
+        padding: var(--space-2xs) var(--space-xs);
+        border: 1px solid var(--border-soft);
+        background: var(--bg-panel);
+        color: var(--text-primary);
+        font-size: var(--font-size-xs);
+    }
+    &__catalog-note {
+        margin-top: var(--space-sm) !important;
+        color: var(--text-secondary);
+    }
+    &__colors {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+    &__colors button {
+        width: 1.55rem;
+        height: 1.55rem;
+        border: 2px solid var(--bg-panel);
+        border-radius: var(--radius-md);
+    }
+    &__colors button.is-active {
+        outline: 2px solid var(--text-primary);
+        outline-offset: 2px;
+    }
+
+    &__error {
+        font-size: var(--font-size-sm);
+        color: var(--danger);
+    }
+
+    &__duplicate {
+        padding: var(--space-xs) var(--space-sm);
+        border-left: 3px solid var(--danger);
+        background: var(--danger-soft);
+        color: var(--danger);
+        font-size: var(--font-size-sm);
+    }
+
+    &__checkboxes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+
+    &__checkbox {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: var(--font-size-sm);
+    }
+
+    &__btn {
+        @include dialog.button-base;
+
+        &--primary {
+            @include dialog.button-primary;
+        }
+    }
+
+    @media (max-width: 780px) {
+        &__body {
+            grid-template-columns: 1fr;
+        }
+        &__wide,
+        &__field--wide {
+            grid-column: 1;
+        }
+    }
 }

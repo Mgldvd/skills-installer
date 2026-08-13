@@ -21,3 +21,6 @@
 # Logs
 *.log
 npm-debug.log*
+
+.claude/
+.agents/

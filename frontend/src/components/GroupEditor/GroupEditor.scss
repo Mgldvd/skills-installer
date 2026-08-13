@@ -1,85 +1,85 @@
-@use '../../styles/dialog-base' as dialog;
+@use "../../styles/dialog-base" as dialog;
 
 .group-editor {
-  @include dialog.reset(24rem);
+    @include dialog.reset(24rem);
 
-  &__form {
-    @include dialog.form-layout;
-  }
-
-  &__title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-  }
-
-  &__field {
-    @include dialog.field-label;
-  }
-
-  &__input {
-    @include dialog.text-input;
-  }
-
-  &__hex-input {
-    margin-top: var(--space-xs);
-    max-width: 10rem;
-    font-family: monospace;
-  }
-
-  &__swatches {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs);
-  }
-
-  &__swatch {
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: var(--radius-sm);
-    border: 2px solid transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &.is-selected {
-      border-color: var(--text-primary);
-    }
-  }
-
-  &__swatch-check {
-    width: 0.85rem;
-    height: 0.85rem;
-  }
-
-  &__checkbox {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    font-size: var(--font-size-sm);
-  }
-
-  &__error {
-    font-size: var(--font-size-sm);
-    color: var(--danger);
-  }
-
-  &__actions {
-    @include dialog.actions-row;
-  }
-
-  &__btn {
-    @include dialog.button-base;
-
-    &--delete {
-      margin-right: auto;
+    &__form {
+        @include dialog.form-layout;
     }
 
-    &--danger {
-      @include dialog.button-danger;
+    &__title {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
     }
 
-    &--primary {
-      @include dialog.button-primary;
+    &__field {
+        @include dialog.field-label;
     }
-  }
+
+    &__input {
+        @include dialog.text-input;
+    }
+
+    &__hex-input {
+        margin-top: var(--space-xs);
+        max-width: 10rem;
+        font-family: monospace;
+    }
+
+    &__swatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+    }
+
+    &__swatch {
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: var(--radius-sm);
+        border: 2px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.is-selected {
+            border-color: var(--text-primary);
+        }
+    }
+
+    &__swatch-check {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    &__checkbox {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: var(--font-size-sm);
+    }
+
+    &__error {
+        font-size: var(--font-size-sm);
+        color: var(--danger);
+    }
+
+    &__actions {
+        @include dialog.actions-row;
+    }
+
+    &__btn {
+        @include dialog.button-base;
+
+        &--delete {
+            margin-right: auto;
+        }
+
+        &--danger {
+            @include dialog.button-danger;
+        }
+
+        &--primary {
+            @include dialog.button-primary;
+        }
+    }
 }

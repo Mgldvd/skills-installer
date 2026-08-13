@@ -1,1 +1,89 @@
-@use '../../styles/dialog-base' as dialog;.skills-dialog{@include dialog.reset(42rem)}.skills-dialog__panel{display:grid;gap:var(--space-md);padding:var(--space-lg);max-height:80vh}header,.skills-dialog__heading{display:flex;justify-content:space-between;align-items:center;gap:1rem}h2,h3,p{margin:0}header p,.skills-dialog__source>p{color:var(--text-secondary);font-size:var(--font-size-sm);margin-top:.2rem}button{cursor:pointer}.primary{@include dialog.button-primary;padding:.45rem .75rem;border-radius:var(--radius-sm)}.skills-dialog__list{display:grid;overflow:auto;border:1px solid var(--border-soft);border-radius:var(--radius-md)}.skills-dialog__list>div{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.6rem .75rem;border-bottom:1px solid var(--border-soft)}.skills-dialog__list>div:last-child{border:0}.skills-dialog__list span:first-child{display:grid;min-width:0}.skills-dialog__list small{color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skills-dialog__actions{display:flex;gap:.25rem}.skills-dialog__actions button,.skills-dialog__source button{@include dialog.button-base}.skills-dialog__source{display:grid;gap:.6rem;padding-top:var(--space-sm);border-top:1px solid var(--border-soft)}.skills-dialog__source label{display:grid;gap:.25rem;font-size:var(--font-size-sm)}.skills-dialog__source input{@include dialog.text-input}.skills-dialog__source>div{display:flex;gap:.5rem}
+@use "../../styles/dialog-base" as dialog;
+.skills-dialog {
+    @include dialog.reset(42rem);
+}
+.skills-dialog__panel {
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    max-height: 80vh;
+}
+header,
+.skills-dialog__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+h2,
+h3,
+p {
+    margin: 0;
+}
+header p,
+.skills-dialog__source > p {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    margin-top: 0.2rem;
+}
+button {
+    cursor: pointer;
+}
+.primary {
+    @include dialog.button-primary;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius-sm);
+}
+.skills-dialog__list {
+    display: grid;
+    overflow: auto;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+}
+.skills-dialog__list > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+.skills-dialog__list > div:last-child {
+    border: 0;
+}
+.skills-dialog__list span:first-child {
+    display: grid;
+    min-width: 0;
+}
+.skills-dialog__list small {
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.skills-dialog__actions {
+    display: flex;
+    gap: 0.25rem;
+}
+.skills-dialog__actions button,
+.skills-dialog__source button {
+    @include dialog.button-base;
+}
+.skills-dialog__source {
+    display: grid;
+    gap: 0.6rem;
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-soft);
+}
+.skills-dialog__source label {
+    display: grid;
+    gap: 0.25rem;
+    font-size: var(--font-size-sm);
+}
+.skills-dialog__source input {
+    @include dialog.text-input;
+}
+.skills-dialog__source > div {
+    display: flex;
+    gap: 0.5rem;
+}

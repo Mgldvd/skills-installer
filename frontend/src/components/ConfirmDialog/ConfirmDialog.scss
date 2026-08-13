@@ -1,35 +1,35 @@
-@use '../../styles/dialog-base' as dialog;
+@use "../../styles/dialog-base" as dialog;
 
 .confirm-dialog {
-  @include dialog.reset(26rem);
+    @include dialog.reset(26rem);
 
-  &__form {
-    @include dialog.form-layout;
-  }
-
-  &__title {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-  }
-
-  &__message {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-  }
-
-  &__actions {
-    @include dialog.actions-row;
-  }
-
-  &__btn {
-    @include dialog.button-base;
-
-    &--primary {
-      @include dialog.button-primary;
+    &__form {
+        @include dialog.form-layout;
     }
 
-    &--danger {
-      @include dialog.button-danger;
+    &__title {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
     }
-  }
+
+    &__message {
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+    }
+
+    &__actions {
+        @include dialog.actions-row;
+    }
+
+    &__btn {
+        @include dialog.button-base;
+
+        &--primary {
+            @include dialog.button-primary;
+        }
+
+        &--danger {
+            @include dialog.button-danger;
+        }
+    }
 }
