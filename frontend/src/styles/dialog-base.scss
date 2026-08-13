@@ -112,10 +112,20 @@
     background: var(--accent);
     border-color: var(--accent);
     color: #fff;
+    -webkit-text-fill-color: #fff;
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: var(--accent-hover);
         border-color: var(--accent-hover);
+    }
+
+    &:disabled {
+        opacity: 1;
+        border-color: color-mix(in srgb, var(--accent) 58%, var(--border-soft));
+        background: var(--accent-soft);
+        color: var(--accent-hover);
+        -webkit-text-fill-color: var(--accent-hover);
+        cursor: not-allowed;
     }
 }
 

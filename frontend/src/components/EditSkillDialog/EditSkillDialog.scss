@@ -8,7 +8,7 @@
     max-height: none;
     overflow: hidden;
 
-    &__form {
+    .edit-skill-dialog__form {
         display: grid;
         grid-template-rows: auto minmax(0, 1fr) auto auto;
         gap: var(--space-md);
@@ -17,13 +17,13 @@
         overflow: hidden;
     }
 
-    &__title {
+    .edit-skill-dialog__title {
         font-size: var(--font-size-xl);
         font-weight: 650;
         line-height: var(--line-height-tight);
     }
 
-    &__hero {
+    .edit-skill-dialog__hero {
         display: grid;
         gap: var(--space-sm);
         padding: var(--space-lg);
@@ -32,7 +32,7 @@
         background: var(--bg-card);
     }
 
-    &__hero-heading {
+    .edit-skill-dialog__hero-heading {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
@@ -73,14 +73,14 @@
         }
     }
 
-    &__description {
+    .edit-skill-dialog__description {
         max-width: 75ch;
         color: var(--text-secondary);
         font-size: var(--font-size-md);
         line-height: 1.6;
     }
 
-    &__meta {
+    .edit-skill-dialog__meta {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-sm);
@@ -88,7 +88,7 @@
         font-size: var(--font-size-xs);
     }
 
-    &__eyebrow {
+    .edit-skill-dialog__eyebrow {
         color: var(--accent-hover);
         font-size: var(--font-size-xs);
         font-weight: 700;
@@ -96,13 +96,13 @@
         text-transform: uppercase;
     }
 
-    &__details {
+    .edit-skill-dialog__details {
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-md);
         overflow-y: auto;
     }
 
-    &__fields {
+    .edit-skill-dialog__fields {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         min-height: 0;
@@ -111,30 +111,30 @@
         padding: var(--space-md);
     }
 
-    &__field--wide {
+    .edit-skill-dialog__field--wide {
         grid-column: 1 / -1;
     }
 
-    &__field {
+    .edit-skill-dialog__field {
         @include dialog.field-label;
     }
 
-    &__input {
+    .edit-skill-dialog__input {
         @include dialog.text-input;
     }
 
-    &__textarea {
+    .edit-skill-dialog__textarea {
         resize: vertical;
         font-family: inherit;
     }
 
-    &__field small {
+    .edit-skill-dialog__field small {
         color: var(--text-muted);
         font-size: var(--font-size-xs);
         font-weight: 400;
     }
 
-    &__preview {
+    .edit-skill-dialog__preview {
         background: var(--info-soft);
         color: var(--info);
         border-radius: var(--radius-sm);
@@ -146,25 +146,25 @@
         }
     }
 
-    &__error {
+    .edit-skill-dialog__error {
         font-size: var(--font-size-sm);
         color: var(--danger);
     }
 
-    &__checkboxes {
+    .edit-skill-dialog__checkboxes {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-md);
     }
 
-    &__checkbox {
+    .edit-skill-dialog__checkbox {
         display: flex;
         align-items: center;
         gap: var(--space-xs);
         font-size: var(--font-size-sm);
     }
 
-    &__packs {
+    .edit-skill-dialog__packs {
         display: grid;
         gap: var(--space-xs);
         margin: 0;
@@ -184,13 +184,13 @@
         }
     }
 
-    &__pack-list {
+    .edit-skill-dialog__pack-list {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-xs);
     }
 
-    &__actions {
+    .edit-skill-dialog__actions {
         @include dialog.actions-row;
         z-index: 3;
         margin-top: auto;
@@ -198,11 +198,11 @@
         background: var(--bg-panel);
     }
 
-    &__actions-spacer {
+    .edit-skill-dialog__actions-spacer {
         flex: 1;
     }
 
-    &__delete-confirm {
+    .edit-skill-dialog__delete-confirm {
         display: flex;
         align-items: center;
         gap: var(--space-xs);
@@ -223,37 +223,37 @@
         }
     }
 
-    &__btn {
+    .edit-skill-dialog__btn {
         @include dialog.button-base;
+    }
 
-        &--primary {
-            @include dialog.button-primary;
-        }
+    .edit-skill-dialog__btn--primary {
+        @include dialog.button-primary;
+    }
 
-        &--delete {
-            border-color: color-mix(in srgb, var(--danger) 40%, var(--border-soft));
-            color: var(--danger);
-        }
+    .edit-skill-dialog__btn--delete {
+        border-color: color-mix(in srgb, var(--danger) 40%, var(--border-soft));
+        color: var(--danger);
+    }
 
-        &--danger {
-            @include dialog.button-danger;
-        }
+    .edit-skill-dialog__btn--danger {
+        @include dialog.button-danger;
     }
 
     @media (max-width: 520px) {
-        &__form {
+        .edit-skill-dialog__form {
             padding: var(--space-md);
         }
-        &__hero-heading {
+        .edit-skill-dialog__hero-heading {
             flex-direction: column;
         }
-        &__fields {
+        .edit-skill-dialog__fields {
             grid-template-columns: 1fr;
         }
-        &__field--wide {
+        .edit-skill-dialog__field--wide {
             grid-column: 1;
         }
-        &__delete-confirm {
+        .edit-skill-dialog__delete-confirm {
             align-items: stretch;
             flex-direction: column;
         }

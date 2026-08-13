@@ -4,7 +4,7 @@
     height: 100%;
     min-height: 0;
 
-    &__main {
+    .app-shell__main {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
@@ -14,7 +14,7 @@
         padding: var(--space-lg);
     }
 
-    &__footer {
+    .app-shell__footer {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -25,26 +25,26 @@
         flex-wrap: wrap;
     }
 
-    &__footer-left {
+    .app-shell__footer-left {
         display: flex;
         align-items: center;
         gap: var(--space-sm);
         flex-wrap: wrap;
     }
 
-    &__selected-count {
+    .app-shell__selected-count {
         font-size: var(--font-size-sm);
         color: var(--text-secondary);
         font-weight: 500;
     }
 
-    &__footer-actions {
+    .app-shell__footer-actions {
         display: flex;
         align-items: center;
         gap: var(--space-xs);
     }
 
-    &__footer-btn {
+    .app-shell__footer-btn {
         padding: var(--space-xs) var(--space-md);
         border-radius: var(--radius-md);
         border: 1px solid var(--border-soft);
@@ -65,7 +65,7 @@
             color: var(--accent-hover);
         }
 
-        &--primary {
+        @at-root .app-shell__footer-btn--primary {
             border-color: var(--accent);
             background: var(--accent-soft);
             color: var(--accent-hover);
@@ -78,7 +78,7 @@
             }
         }
 
-        &--add {
+        @at-root .app-shell__footer-btn--add {
             border-color: var(--palette-green);
             background: color-mix(in srgb, var(--palette-green) 14%, var(--bg-card));
             color: color-mix(in srgb, var(--palette-green) 72%, var(--text-primary));

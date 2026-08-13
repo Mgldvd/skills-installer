@@ -6,11 +6,11 @@
     color: var(--text-secondary);
     min-height: 1.5em;
 
-    &--sm {
+    @at-root .group-badge--sm {
         font-size: var(--font-size-xs);
     }
 
-    &__dot {
+    .group-badge__dot {
         width: 0.6em;
         height: 0.6em;
         min-width: 8px;
@@ -19,7 +19,7 @@
         flex-shrink: 0;
     }
 
-    &__label {
+    .group-badge__label {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;

@@ -3,11 +3,11 @@
 .agents-dialog {
     @include dialog.menu-surface;
 
-    &__panel {
+    .agents-dialog__panel {
         @include dialog.menu-shell;
     }
 
-    &__header {
+    .agents-dialog__header {
         @include dialog.menu-header;
 
         h2,
@@ -24,26 +24,26 @@
         }
     }
 
-    &__body {
+    .agents-dialog__body {
         @include dialog.menu-body;
         display: grid;
         align-content: start;
         gap: var(--space-md);
     }
 
-    &__header-actions {
+    .agents-dialog__header-actions {
         display: flex;
         align-items: center;
         gap: var(--space-sm);
     }
 
-    &__list {
+    .agents-dialog__list {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--space-sm);
     }
 
-    &__toggle {
+    .agents-dialog__toggle {
         display: flex;
         align-items: center;
         gap: var(--space-sm);
@@ -74,7 +74,7 @@
         }
     }
 
-    &__check {
+    .agents-dialog__check {
         display: grid;
         place-items: center;
         flex: 0 0 1.55rem;
@@ -85,21 +85,21 @@
         color: #fff;
     }
 
-    .is-active &__check {
+    .is-active .agents-dialog__check {
         border-color: var(--accent);
         background: var(--accent);
     }
-    &__error {
+    .agents-dialog__error {
         margin: 0;
         color: var(--danger);
         font-size: var(--font-size-sm);
     }
-    &__done {
+    .agents-dialog__done {
         @include dialog.button-primary;
     }
 
     @media (max-width: 780px) {
-        &__list {
+        .agents-dialog__list {
             grid-template-columns: 1fr;
         }
     }

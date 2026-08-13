@@ -8,7 +8,7 @@
     z-index: 100;
     max-width: min(22rem, calc(100vw - #{var(--space-lg)} * 2));
 
-    &__toast {
+    .toast-host__toast {
         padding: var(--space-sm) var(--space-md);
         border-radius: var(--radius-md);
         background: var(--bg-panel);
@@ -17,13 +17,13 @@
         font-size: var(--font-size-sm);
         color: var(--text-primary);
 
-        &--success {
+        @at-root .toast-host__toast--success {
             border-color: var(--success);
             background: var(--success-soft);
             color: var(--success);
         }
 
-        &--error {
+        @at-root .toast-host__toast--error {
             border-color: var(--danger);
             background: var(--danger-soft);
             color: var(--danger);

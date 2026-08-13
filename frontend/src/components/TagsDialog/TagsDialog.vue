@@ -15,11 +15,11 @@
 
             <div class="tags-dialog__body">
                 <form v-if="editor" class="tags-dialog__editor" @submit.prevent="saveEditor">
-                    <label>
+                    <label class="tags-dialog__editor-field">
                         Name
                         <input ref="nameInput" v-model="editor.name" maxlength="64" required />
                     </label>
-                    <fieldset>
+                    <fieldset class="tags-dialog__palette">
                         <legend>Color</legend>
                         <button
                             v-for="color in palette"
@@ -28,21 +28,23 @@
                             class="color"
                             :class="{ selected: editor.color === color }"
                             :style="{ backgroundColor: color }"
+                            :aria-pressed="editor.color === color"
                             :aria-label="`Use color ${color}`"
                             @click="editor.color = color" />
                     </fieldset>
-                    <span class="tags-dialog__grow" />
-                    <button
-                        v-if="editor.id"
-                        type="button"
-                        class="link-button"
-                        @click="requestDelete(editor.id, editor.name)">
-                        Delete
-                    </button>
-                    <button type="button" class="link-button" @click="editor = null">Cancel</button>
-                    <button type="submit" class="button" :disabled="busy">
-                        {{ editor.id ? "Save" : "Create" }}
-                    </button>
+                    <div class="tags-dialog__editor-actions">
+                        <button
+                            v-if="editor.id"
+                            type="button"
+                            class="link-button link-button--danger"
+                            @click="requestDelete(editor.id, editor.name)">
+                            Delete
+                        </button>
+                        <button type="button" class="link-button" @click="editor = null">Cancel</button>
+                        <button type="submit" class="button button--primary" :disabled="busy">
+                            {{ editor.id ? "Save" : "Create" }}
+                        </button>
+                    </div>
                 </form>
                 <p v-if="error" class="tags-dialog__error" role="alert">
                     {{ error }}

@@ -21,10 +21,15 @@
                 </svg>
             </button>
         </div>
-        <div class="app-header__item app-header__agents">
+        <button
+            type="button"
+            class="app-header__item app-header__agents"
+            aria-label="Open Agents settings"
+            title="Configure Agents"
+            @click="emit('open-agents')">
             <span class="app-header__label">Agents</span>
             <strong class="app-header__value">{{ agentLabels }}</strong>
-        </div>
+        </button>
         <div class="app-header__status-row">
             <span class="app-header__dependency" :class="dependencyClass">
                 <span class="app-header__dependency-dot" aria-hidden="true" />
@@ -47,7 +52,10 @@ const props = defineProps<{
     scope: InstallScope;
     agents: string[];
 }>();
-const emit = defineEmits<{ "update:projectPath": [path: string] }>();
+const emit = defineEmits<{
+    "update:projectPath": [path: string];
+    "open-agents": [];
+}>();
 const selectingPath = ref(false);
 async function selectPath() {
     if (props.scope === "global" || selectingPath.value) return;

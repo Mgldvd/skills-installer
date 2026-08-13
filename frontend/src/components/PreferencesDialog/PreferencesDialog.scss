@@ -3,11 +3,11 @@
 .preferences-dialog {
     @include dialog.menu-surface;
 
-    &__form {
+    .preferences-dialog__form {
         @include dialog.menu-shell;
     }
 
-    &__header {
+    .preferences-dialog__header {
         @include dialog.menu-header;
 
         p {
@@ -17,7 +17,7 @@
         }
     }
 
-    &__body {
+    .preferences-dialog__body {
         @include dialog.menu-body;
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -25,13 +25,13 @@
         gap: var(--space-md);
     }
 
-    &__section {
+    .preferences-dialog__section {
         min-width: 0;
         border: 1px solid var(--border-soft);
         background: var(--bg-card);
     }
 
-    &__section-heading {
+    .preferences-dialog__section-heading {
         padding: var(--space-md);
         border-bottom: 1px solid var(--border-soft);
         background: var(--bg-panel);
@@ -48,40 +48,40 @@
         }
     }
 
-    &__section-content {
+    .preferences-dialog__section-content {
         display: grid;
         align-content: start;
         gap: var(--space-md);
         padding: var(--space-md);
     }
 
-    &__header-actions {
+    .preferences-dialog__header-actions {
         display: flex;
         align-items: center;
         gap: var(--space-sm);
     }
 
-    &__title {
+    .preferences-dialog__title {
         font-size: var(--font-size-lg);
         font-weight: 600;
     }
 
-    &__field {
+    .preferences-dialog__field {
         @include dialog.field-label;
     }
 
-    &__input {
+    .preferences-dialog__input {
         @include dialog.text-input;
     }
 
-    &__help {
+    .preferences-dialog__help {
         color: var(--text-muted);
         font-size: var(--font-size-xs);
         font-weight: 400;
         line-height: var(--line-height-normal);
     }
 
-    &__source-actions {
+    .preferences-dialog__source-actions {
         display: flex;
         gap: var(--space-xs);
 
@@ -90,7 +90,7 @@
         }
     }
 
-    &__checkbox {
+    .preferences-dialog__checkbox {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -116,11 +116,11 @@
         }
     }
 
-    &__checks {
+    .preferences-dialog__checks {
         display: grid;
     }
 
-    &__segmented {
+    .preferences-dialog__segmented {
         display: flex;
         border: 1px solid var(--border-soft);
         border-radius: var(--radius-sm);
@@ -128,7 +128,7 @@
         width: fit-content;
     }
 
-    &__segment {
+    .preferences-dialog__segment {
         padding: var(--space-2xs) var(--space-md);
         font-size: var(--font-size-sm);
         background: var(--bg-card);
@@ -144,7 +144,7 @@
         }
     }
 
-    &__accents {
+    .preferences-dialog__accents {
         display: flex;
         gap: var(--space-sm);
         flex-wrap: wrap;
@@ -160,7 +160,7 @@
             }
         }
     }
-    &__config-actions {
+    .preferences-dialog__config-actions {
         display: flex;
         gap: var(--space-xs);
         button {
@@ -168,35 +168,35 @@
         }
     }
 
-    &__tools {
+    .preferences-dialog__tools {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    &__tool + &__tool {
+    .preferences-dialog__tool + .preferences-dialog__tool {
         padding-left: var(--space-md);
         border-left: 1px solid var(--border-soft);
     }
 
-    &__cli-button {
+    .preferences-dialog__cli-button {
         @include dialog.button-base;
         width: fit-content;
     }
 
-    &__btn {
+    .preferences-dialog__btn {
         @include dialog.button-base;
+    }
 
-        &--primary {
-            @include dialog.button-primary;
-        }
+    .preferences-dialog__btn--primary {
+        @include dialog.button-primary;
     }
 
     @media (max-width: 780px) {
-        &__body {
+        .preferences-dialog__body {
             grid-template-columns: 1fr;
         }
-        &__tools {
+        .preferences-dialog__tools {
             grid-template-columns: 1fr;
         }
-        &__tool + &__tool {
+        .preferences-dialog__tool + .preferences-dialog__tool {
             padding-top: var(--space-md);
             padding-left: 0;
             border-top: 1px solid var(--border-soft);

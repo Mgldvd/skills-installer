@@ -10,12 +10,14 @@ services:
     volumes:
       - .:/workspace
       - frontend_node_modules:/workspace/frontend/node_modules
+      - npm_cache:/opt/npm-cache
       - cargo_registry:/opt/cargo/registry
       - cargo_git:/opt/cargo/git
       - rust_target:/workspace/src-tauri/target
 
 volumes:
   frontend_node_modules:
+  npm_cache:
   cargo_registry:
   cargo_git:
   rust_target:

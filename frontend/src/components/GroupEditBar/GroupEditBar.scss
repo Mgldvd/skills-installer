@@ -3,14 +3,14 @@
     gap: var(--space-xs);
     padding-bottom: var(--space-2xs);
 
-    &__item {
+    .group-edit-bar__item {
         display: inline-flex;
         align-items: center;
         gap: 2px;
         flex-shrink: 0;
     }
 
-    &__edit-btn {
+    .group-edit-bar__edit-btn {
         width: 1.6em;
         height: 1.6em;
         min-width: 22px;
@@ -25,7 +25,7 @@
         }
     }
 
-    &__chip {
+    .group-edit-bar__chip {
         display: inline-flex;
         align-items: center;
         gap: var(--space-2xs);
@@ -38,7 +38,7 @@
         font-size: var(--font-size-sm);
     }
 
-    &__dot {
+    .group-edit-bar__dot {
         width: 0.6em;
         height: 0.6em;
         min-width: 7px;
@@ -47,7 +47,7 @@
         flex-shrink: 0;
     }
 
-    &__count {
+    .group-edit-bar__count {
         color: var(--text-muted);
         font-variant-numeric: tabular-nums;
     }

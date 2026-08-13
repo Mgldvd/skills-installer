@@ -3,36 +3,36 @@
 .group-editor {
     @include dialog.reset(24rem);
 
-    &__form {
+    .group-editor__form {
         @include dialog.form-layout;
     }
 
-    &__title {
+    .group-editor__title {
         font-size: var(--font-size-lg);
         font-weight: 600;
     }
 
-    &__field {
+    .group-editor__field {
         @include dialog.field-label;
     }
 
-    &__input {
+    .group-editor__input {
         @include dialog.text-input;
     }
 
-    &__hex-input {
+    .group-editor__hex-input {
         margin-top: var(--space-xs);
         max-width: 10rem;
         font-family: monospace;
     }
 
-    &__swatches {
+    .group-editor__swatches {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-xs);
     }
 
-    &__swatch {
+    .group-editor__swatch {
         width: 1.75rem;
         height: 1.75rem;
         border-radius: var(--radius-sm);
@@ -46,39 +46,39 @@
         }
     }
 
-    &__swatch-check {
+    .group-editor__swatch-check {
         width: 0.85rem;
         height: 0.85rem;
     }
 
-    &__checkbox {
+    .group-editor__checkbox {
         display: flex;
         align-items: center;
         gap: var(--space-xs);
         font-size: var(--font-size-sm);
     }
 
-    &__error {
+    .group-editor__error {
         font-size: var(--font-size-sm);
         color: var(--danger);
     }
 
-    &__actions {
+    .group-editor__actions {
         @include dialog.actions-row;
     }
 
-    &__btn {
+    .group-editor__btn {
         @include dialog.button-base;
 
-        &--delete {
+        @at-root .group-editor__btn--delete {
             margin-right: auto;
         }
 
-        &--danger {
+        @at-root .group-editor__btn--danger {
             @include dialog.button-danger;
         }
 
-        &--primary {
+        @at-root .group-editor__btn--primary {
             @include dialog.button-primary;
         }
     }

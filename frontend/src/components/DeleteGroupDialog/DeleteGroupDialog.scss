@@ -3,40 +3,40 @@
 .delete-group-dialog {
     @include dialog.reset(24rem);
 
-    &__body {
+    .delete-group-dialog__body {
         @include dialog.form-layout;
     }
 
-    &__title {
+    .delete-group-dialog__title {
         font-size: var(--font-size-lg);
         font-weight: 600;
     }
 
-    &__message {
+    .delete-group-dialog__message {
         font-size: var(--font-size-sm);
         color: var(--text-secondary);
     }
 
-    &__option {
+    .delete-group-dialog__option {
         display: flex;
         align-items: center;
         gap: var(--space-xs);
         font-size: var(--font-size-sm);
     }
 
-    &__select {
+    .delete-group-dialog__select {
         @include dialog.text-input;
         margin-left: 1.5em;
     }
 
-    &__actions {
+    .delete-group-dialog__actions {
         @include dialog.actions-row;
     }
 
-    &__btn {
+    .delete-group-dialog__btn {
         @include dialog.button-base;
 
-        &--danger {
+        @at-root .delete-group-dialog__btn--danger {
             @include dialog.button-danger;
         }
     }

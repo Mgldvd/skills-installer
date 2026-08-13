@@ -23,6 +23,14 @@ describe('AppHeader installation destination', () => {
     expect(brand.get('h1').text()).toBe('Skills Installer')
   })
 
+  it('requests the Agents dialog from the Agents summary', async () => {
+    const wrapper = mount(AppHeader, { props: baseProps })
+
+    await wrapper.get('.app-header__agents').trigger('click')
+
+    expect(wrapper.emitted('open-agents')).toEqual([[]])
+  })
+
   it('opens the native directory picker and emits the selected folder', async () => {
     vi.mocked(backend.selectInstallationDirectory).mockResolvedValue('/home/user/new-project')
     const wrapper = mount(AppHeader, { props: baseProps })

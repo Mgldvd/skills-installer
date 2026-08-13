@@ -10,6 +10,10 @@ FROM mgldvd/tauri-vue:latest
 # in practice even though the base image sets it too.
 ENV DEBIAN_FRONTEND=noninteractive \
     APPIMAGE_EXTRACT_AND_RUN=1 \
+    npm_config_fetch_retries=5 \
+    npm_config_fetch_retry_mintimeout=10000 \
+    npm_config_fetch_retry_maxtimeout=120000 \
+    npm_config_fetch_timeout=300000 \
     PATH="/usr/local/cargo/bin:/root/.cargo/bin:${PATH}"
 
 # mgldvd/tauri-vue defaults to a non-root USER, unlike the old
@@ -33,4 +37,4 @@ WORKDIR /workspace
 # Plain (non-login) shell: `bash -lc` sources /etc/profile and friends,
 # which on some Debian-derived images reset PATH from scratch and drop
 # cargo's directory again even though ENV set it correctly above.
-CMD ["bash", "-c", "npm ci --prefix frontend && rm -rf dist && make release && chown -R \"${HOST_UID:-0}:${HOST_GID:-0}\" dist"]
+CMD ["bash", "scripts/dist-container.sh"]

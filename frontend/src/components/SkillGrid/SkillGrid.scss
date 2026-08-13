@@ -5,12 +5,12 @@
     gap: var(--space-sm);
     align-items: stretch;
 
-    &__item {
+    .skill-grid__item {
         min-width: 0;
         height: 100%;
     }
 
-    &--compact {
+    @at-root .skill-grid--compact {
         grid-auto-rows: calc(7.25rem * var(--font-scale));
     }
 
@@ -20,7 +20,7 @@
         grid-auto-rows: calc(11.5rem * var(--font-scale));
     }
 
-    &__empty {
+    .skill-grid__empty {
         grid-column: 1 / -1;
         text-align: center;
         color: var(--text-muted);
@@ -42,7 +42,7 @@
 @media (pointer: coarse) {
     .skill-grid {
         grid-auto-rows: calc(12.25rem * var(--font-scale));
-        &--compact {
+        @at-root .skill-grid--compact {
             grid-auto-rows: calc(8.25rem * var(--font-scale));
         }
     }

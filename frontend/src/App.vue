@@ -5,6 +5,7 @@
             :dependency-status="state.dependencyStatus"
             :scope="state.preferences.defaultScope"
             :agents="state.preferences.defaultAgents"
+            @open-agents="isAgentsOpen = true"
             @update:project-path="handleProjectPathUpdate" />
 
         <main class="app-shell__main">
@@ -40,11 +41,15 @@
                 <button type="button" class="app-shell__footer-btn app-shell__footer-btn--add" @click="openAddDialog">
                     Add Skill
                 </button>
+                <button type="button" class="app-shell__footer-btn" @click="isAgentsOpen = true">
+                    Agents
+                </button>
+                <button type="button" class="app-shell__footer-btn" @click="isTagsOpen = !isTagsOpen">
+                    Packs
+                </button>
                 <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
                     Preferences
                 </button>
-                <button type="button" class="app-shell__footer-btn" @click="isAgentsOpen = true">Agents</button>
-                <button type="button" class="app-shell__footer-btn" @click="isTagsOpen = !isTagsOpen">Packs</button>
             </div>
             <div class="app-shell__footer-actions">
                 <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>

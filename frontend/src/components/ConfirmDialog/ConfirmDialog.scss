@@ -3,32 +3,32 @@
 .confirm-dialog {
     @include dialog.reset(26rem);
 
-    &__form {
+    .confirm-dialog__form {
         @include dialog.form-layout;
     }
 
-    &__title {
+    .confirm-dialog__title {
         font-size: var(--font-size-lg);
         font-weight: 600;
     }
 
-    &__message {
+    .confirm-dialog__message {
         font-size: var(--font-size-sm);
         color: var(--text-secondary);
     }
 
-    &__actions {
+    .confirm-dialog__actions {
         @include dialog.actions-row;
     }
 
-    &__btn {
+    .confirm-dialog__btn {
         @include dialog.button-base;
 
-        &--primary {
+        @at-root .confirm-dialog__btn--primary {
             @include dialog.button-primary;
         }
 
-        &--danger {
+        @at-root .confirm-dialog__btn--danger {
             @include dialog.button-danger;
         }
     }

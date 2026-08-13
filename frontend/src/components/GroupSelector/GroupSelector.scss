@@ -1,7 +1,7 @@
 .group-selector {
     position: relative;
 
-    &__trigger {
+    .group-selector__trigger {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -17,19 +17,19 @@
         }
     }
 
-    &__placeholder {
+    .group-selector__placeholder {
         color: var(--text-muted);
         font-size: var(--font-size-sm);
     }
 
-    &__chevron {
+    .group-selector__chevron {
         width: 0.9em;
         height: 0.9em;
         color: var(--text-muted);
         flex-shrink: 0;
     }
 
-    &__list {
+    .group-selector__list {
         position: absolute;
         z-index: 20;
         top: calc(100% + var(--space-2xs));
@@ -44,7 +44,7 @@
         padding: var(--space-2xs);
     }
 
-    &__option {
+    .group-selector__option {
         display: flex;
         width: 100%;
         padding: var(--space-xs) var(--space-sm);
@@ -55,13 +55,13 @@
             background: var(--bg-muted);
         }
 
-        &--create {
+        @at-root .group-selector__option--create {
             color: var(--accent);
             font-weight: 500;
         }
     }
 
-    &__divider {
+    .group-selector__divider {
         height: 1px;
         background: var(--border-soft);
         margin: var(--space-2xs) 0;

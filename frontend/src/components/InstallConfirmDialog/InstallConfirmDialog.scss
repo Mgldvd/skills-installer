@@ -3,16 +3,16 @@
 .install-confirm-dialog {
     @include dialog.reset(26rem);
 
-    &__body {
+    .install-confirm-dialog__body {
         @include dialog.form-layout;
     }
 
-    &__title {
+    .install-confirm-dialog__title {
         font-size: var(--font-size-lg);
         font-weight: 600;
     }
 
-    &__list {
+    .install-confirm-dialog__list {
         list-style: disc;
         padding-left: 1.25em;
         max-height: 10rem;
@@ -23,11 +23,11 @@
         gap: var(--space-2xs);
     }
 
-    &__meta {
+    .install-confirm-dialog__meta {
         font-size: var(--font-size-sm);
         color: var(--text-secondary);
     }
-    &__summary {
+    .install-confirm-dialog__summary {
         display: grid;
         gap: var(--space-sm);
         margin: 0;
@@ -47,14 +47,14 @@
         }
     }
 
-    &__actions {
+    .install-confirm-dialog__actions {
         @include dialog.actions-row;
     }
 
-    &__btn {
+    .install-confirm-dialog__btn {
         @include dialog.button-base;
 
-        &--primary {
+        @at-root .install-confirm-dialog__btn--primary {
             @include dialog.button-primary;
         }
     }
