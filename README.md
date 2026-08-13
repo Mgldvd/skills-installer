@@ -335,6 +335,14 @@ skills-installer --help
 
 Global options: `--config <path>`, `--debug` (verbose structured logging).
 
+On Linux, Preferences includes **Install `skills` command**. It creates the
+user-local launcher `~/.local/bin/skills`, targeting the running executable or
+the persistent AppImage file. Running `skills` with no arguments opens the GUI
+using the terminal's current directory as the project context. If
+`~/.local/bin` is not already in `PATH`, the application reports that it must be
+added. The launcher is deliberately ignored when resolving the separate
+third-party Skills CLI used internally for Skill installation.
+
 Exit codes: `0` success · `1` operation/install error · `2` invalid
 arguments/configuration · `3` missing dependency · `130` interrupted
 (Ctrl+C, or an install result that reports `cancelled: true`).

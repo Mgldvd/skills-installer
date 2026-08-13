@@ -85,6 +85,9 @@ impl SkillsCliInstaller {
         options: &crate::domain::InstallOptions,
     ) -> Result<Vec<String>, AppError> {
         let source = match &skill.source {
+            SkillSource::Remote if skill.repository_url.starts_with("https://skills.sh/p/") => {
+                skill.repository_url.clone()
+            }
             SkillSource::Remote => format!(
                 "{}/{}",
                 owner_from_repository_url(&skill.repository_url)?,

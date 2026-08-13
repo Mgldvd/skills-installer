@@ -7,6 +7,21 @@
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border-soft);
 
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
+  }
+
+  &__logo {
+    display: block;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
+    object-fit: contain;
+  }
+
   &__title {
     margin: 0;
     font-size: var(--font-size-lg);
@@ -105,6 +120,6 @@
 
   @media (max-width: 680px) {
     grid-template-columns: 1fr auto;
-    &__title { display: none; }
+    &__brand { display: none; }
   }
 }

@@ -6,6 +6,7 @@ import { makeGroup, makeSkill } from './fixtures'
 
 vi.mock('../src/services/backend', () => ({
   previewSkillUrl: vi.fn(),
+  previewPackUrl: vi.fn(),
 }))
 
 import * as backend from '../src/services/backend'
@@ -47,6 +48,33 @@ describe('AddSkillDialog', () => {
     expect((wrapper.find('input[type="text"]').element as HTMLInputElement).value).toBe('triage')
     expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('mattpocock/skills')
     expect(wrapper.find('.add-skill-dialog__error').exists()).toBe(false)
+  })
+
+  it('detects a Pack URL and emits a catalog import instead of a Skill install', async () => {
+    vi.mocked(backend.previewPackUrl).mockResolvedValue({
+      canonicalUrl: 'https://skills.sh/p/example123',
+      suggestedName: 'Pack example123',
+      skills: [
+        { name: 'bash-defensive-patterns', description: 'Defensive Bash.' },
+        { name: 'bash-scripting', description: 'Bash workflows.' },
+      ],
+    })
+    const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup({ id: 'other' })] } })
+
+    await wrapper.find('input[type="url"]').setValue('https://skills.sh/p/example123')
+    await vi.waitFor(() => expect(backend.previewPackUrl).toHaveBeenCalled())
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Detected Pack: 2 Skills')
+    expect(wrapper.text()).toContain('Nothing is installed into the current project')
+    expect(wrapper.get('button[type="submit"]').text()).toBe('Import Pack')
+    await wrapper.find('form').trigger('submit')
+    expect(wrapper.emitted('importPack')?.[0]?.[0]).toMatchObject({
+      url: 'https://skills.sh/p/example123',
+      packName: 'Pack example123',
+      groupId: 'other',
+    })
+    expect(wrapper.emitted('submit')).toBeUndefined()
   })
 
   it('keeps detected suggestions editable', async () => {

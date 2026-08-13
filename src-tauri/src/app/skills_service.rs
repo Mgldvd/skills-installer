@@ -9,6 +9,7 @@ use crate::domain::{
 };
 use crate::error::AppError;
 use crate::preferences::PreferencesService;
+use crate::skills::pack_import::{PackPreview, PackSkillPreview};
 use crate::skills::{
     discover_local_skills, discover_skills_in_directory, SkillUrlParser, SkillsShUrlParser,
 };
@@ -22,6 +23,14 @@ pub struct NewSkillInput {
     pub tags: Vec<String>,
     pub preselected: bool,
     pub enabled: bool,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PackImportResult {
+    pub tag: SkillTag,
+    pub added: Vec<Skill>,
+    pub skipped: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -74,6 +83,77 @@ pub struct SkillsService {
 }
 
 impl SkillsService {
+    pub fn import_pack(
+        &self,
+        preview: PackPreview,
+        pack_name: String,
+        color: String,
+        group_id: String,
+    ) -> Result<PackImportResult, AppError> {
+        let mut config = self.config_service.load()?;
+        if !config.groups.iter().any(|group| group.id == group_id) {
+            return Err(AppError::Validation(format!(
+                "unknown group \"{group_id}\""
+            )));
+        }
+        let name = validate_tag_name(&config.tags, &pack_name, None)?;
+        let color = validate_and_normalize_color(&color)?;
+        let mut used_tag_ids = config.tags.iter().map(|tag| tag.id.clone()).collect();
+        let tag = SkillTag {
+            id: dedupe_id(&slugify(&name), &mut used_tag_ids),
+            name,
+            color,
+            order: config.tags.iter().map(|tag| tag.order).max().unwrap_or(0) + 10,
+            enabled: true,
+        };
+        let mut used_skill_ids = config.skills.iter().map(|skill| skill.id.clone()).collect();
+        let existing_names = config
+            .skills
+            .iter()
+            .map(|skill| skill.skill_name.clone())
+            .collect::<HashSet<_>>();
+        let mut added = Vec::new();
+        let mut skipped = Vec::new();
+        for PackSkillPreview { name, description } in preview.skills {
+            if existing_names.contains(&name) {
+                skipped.push(name);
+                continue;
+            }
+            let id = dedupe_id(&slugify(&name), &mut used_skill_ids);
+            let skill = Skill {
+                id,
+                name: name.clone(),
+                display_name: name.clone(),
+                description,
+                source: SkillSource::Remote,
+                repository: preview.suggested_name.clone(),
+                repository_url: preview.canonical_url.clone(),
+                skill_name: name.clone(),
+                skills_url: format!("{}#{}", preview.canonical_url, name),
+                group_id: group_id.clone(),
+                tags: vec![tag.id.clone()],
+                preselected: false,
+                local: false,
+                installed: false,
+                enabled: true,
+            };
+            config.skills.push(skill.clone());
+            added.push(skill);
+        }
+        if added.is_empty() {
+            return Err(AppError::Validation(
+                "every Skill in this pack is already in the catalog".into(),
+            ));
+        }
+        config.tags.push(tag.clone());
+        self.config_service.save(&config)?;
+        Ok(PackImportResult {
+            tag,
+            added,
+            skipped,
+        })
+    }
+
     pub fn configured_state(&self) -> Result<ApplicationConfig, AppError> {
         self.config_service.load()
     }
@@ -143,7 +223,10 @@ impl SkillsService {
         let mut config = self.config_service.load()?;
         let existing: HashSet<&str> = config.tags.iter().map(|tag| tag.id.as_str()).collect();
         let requested: HashSet<&str> = tag_ids.iter().map(String::as_str).collect();
-        if tag_ids.len() != config.tags.len() || requested.len() != tag_ids.len() || requested != existing {
+        if tag_ids.len() != config.tags.len()
+            || requested.len() != tag_ids.len()
+            || requested != existing
+        {
             return Err(AppError::Validation(
                 "tag order must contain every configured tag exactly once".to_string(),
             ));

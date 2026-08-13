@@ -9,6 +9,7 @@ export interface UiPreferences {
   continueAfterFailure: boolean
   accent: AccentColor
   localSourcePath: string | null
+  compactCards: boolean
 }
 
 export type AccentColor = 'pink' | 'coral' | 'blue' | 'teal' | 'violet' | 'green'
@@ -47,5 +48,6 @@ export function defaultPreferences(): UiPreferences {
     continueAfterFailure: true,
     accent: 'pink',
     localSourcePath: null,
+    compactCards: false,
   }
 }

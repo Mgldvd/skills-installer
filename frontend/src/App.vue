@@ -9,6 +9,7 @@
         :skills="displayedSkills"
         :tags="state.tags"
         :selected-ids="state.selectedSkillIds"
+        :compact="state.preferences.compactCards"
         @toggle="toggleSelected"
         @edit="openEditDialog"
       />
@@ -51,6 +52,7 @@
       :skills="state.skills"
       :submit-error="addSkillError"
       @submit="handleAddSkillSubmit"
+      @import-pack="handleImportPack"
     />
 
     <EditSkillDialog
@@ -79,6 +81,7 @@
       @refresh-local-source="handleLocalRefresh"
       @export-config="handleExportConfig"
       @import-config="handleImportConfig"
+      @install-cli="handleInstallCli"
     />
     <AgentsDialog v-model:open="isAgentsOpen" :model-value="state.preferences.defaultAgents" :scope="state.preferences.defaultScope" @update:model-value="handleAgentsUpdate" />
     <TagsDialog
@@ -233,6 +236,7 @@ async function handleImportConfig(content:string){try{await backend.importPortab
 function handleAgentsUpdate(agents:string[]){updatePreferencesPartial({defaultAgents:agents}).catch(error=>pushToast(describeError(error),'error'))}
 function handleLocalRefresh(){refresh().catch(error=>pushToast(describeError(error),'error'))}
 async function handleLocalSourceUpdate(path:string){try{await updatePreferencesPartial({localSourcePath:path});await refresh();pushToast('Local Skill Source updated','success')}catch(error){pushToast(describeError(error),'error')}}
+async function handleInstallCli(){try{const result=await backend.installCliCommand();const pathNote=result.pathConfigured?'':` Add ${result.commandPath.replace(/\/skills$/, '')} to your PATH.`;pushToast(`Command installed at ${result.commandPath}.${pathNote}`,'success')}catch(error){pushToast(describeError(error),'error')}}
 
 async function tagAction(action: () => Promise<unknown>, failure: string) { tagsError.value=null;try{await action()}catch(error){tagsError.value=failure;pushToast(`${failure} ${describeError(error)}`,'error')} }
 async function persistTagToggle(skillId:string,tagId:string,assigned:boolean){
@@ -262,6 +266,18 @@ async function handleAddSkillSubmit(payload: backend.AddSkillArgs) {
     await addSkill(payload)
     isAddDialogOpen.value = false
     pushToast('Skill added', 'success')
+  } catch (error) {
+    addSkillError.value = describeError(error)
+  }
+}
+
+async function handleImportPack(payload: backend.ImportPackArgs) {
+  try {
+    const result = await backend.importPack(payload)
+    await loadAll()
+    isAddDialogOpen.value = false
+    const skipped = result.skipped.length ? ` ${result.skipped.length} duplicate(s) skipped.` : ''
+    pushToast(`${result.added.length} Skills added to ${result.tag.name}.${skipped}`, 'success')
   } catch (error) {
     addSkillError.value = describeError(error)
   }

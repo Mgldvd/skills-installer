@@ -1,5 +1,5 @@
 <template>
-  <article class="skill-card" :class="{ 'is-selected': selected, 'is-disabled': !skill.enabled }">
+  <article class="skill-card" :class="{ 'is-selected': selected, 'is-disabled': !skill.enabled, 'is-compact': compact }">
     <button
       type="button"
       class="skill-card__selection-surface"
@@ -16,7 +16,7 @@
       <span v-if="skill.installed" class="skill-card__installed">Installed</span>
     </header>
 
-    <div class="skill-card__description">
+    <div v-if="!compact" class="skill-card__description">
       <span class="skill-card__description-text">{{ skill.description || 'No description provided.' }}</span>
     </div>
 
@@ -46,7 +46,8 @@ const props = withDefaults(defineProps<{
   skill: Skill
   selected: boolean
   tags?: SkillTag[]
-}>(), { tags: () => [] })
+  compact?: boolean
+}>(), { tags: () => [], compact: false })
 
 const emit = defineEmits<{
   toggle: [skillId: string]

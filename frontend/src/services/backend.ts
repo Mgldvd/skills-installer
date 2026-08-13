@@ -51,6 +51,19 @@ export async function previewSkillUrl(rawUrl: string): Promise<ParsedSkillSource
   return call('preview_skill_url', { rawUrl })
 }
 
+export interface PackSkillPreview { name: string; description: string }
+export interface PackPreview { canonicalUrl: string; suggestedName: string; skills: PackSkillPreview[] }
+export interface ImportPackArgs { url: string; packName: string; color: string; groupId: string }
+export interface PackImportResult { tag: SkillTag; added: Skill[]; skipped: string[] }
+
+export async function previewPackUrl(rawUrl: string): Promise<PackPreview> {
+  return call('preview_pack_url', { rawUrl })
+}
+
+export async function importPack(args: ImportPackArgs): Promise<PackImportResult> {
+  return call('import_pack', { args })
+}
+
 export async function addSkill(args: AddSkillArgs): Promise<Skill> {
   return call('add_skill', { args })
 }
@@ -84,6 +97,16 @@ export async function getPreferences(): Promise<UiPreferences> {
 
 export async function updatePreferences(preferences: UiPreferences): Promise<UiPreferences> {
   return call('update_preferences', { preferences })
+}
+
+export interface CliInstallResult {
+  commandPath: string
+  executablePath: string
+  pathConfigured: boolean
+}
+
+export async function installCliCommand(): Promise<CliInstallResult> {
+  return call('install_cli_command')
 }
 
 export async function getDependencyStatus(): Promise<DependencyStatus> {

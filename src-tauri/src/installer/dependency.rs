@@ -58,7 +58,9 @@ impl DependencyResolver {
     }
 
     fn resolve_with_paths(search_paths: &[PathBuf]) -> Result<ResolvedSkillsCli, AppError> {
-        if let Some(path) = find_executable("skills", search_paths) {
+        if let Some(path) = find_executable("skills", search_paths)
+            .filter(|candidate| !is_application_launcher(candidate))
+        {
             return Ok(ResolvedSkillsCli {
                 program: path.to_string_lossy().to_string(),
                 leading_args: Vec::new(),
@@ -114,6 +116,20 @@ impl DependencyResolver {
             },
         }
     }
+}
+
+fn is_application_launcher(candidate: &Path) -> bool {
+    let candidate = candidate
+        .canonicalize()
+        .unwrap_or_else(|_| candidate.to_path_buf());
+    let current_exe = std::env::current_exe()
+        .ok()
+        .and_then(|path| path.canonicalize().ok());
+    let app_image = std::env::var_os("APPIMAGE")
+        .map(PathBuf::from)
+        .and_then(|path| path.canonicalize().ok());
+
+    current_exe.as_ref() == Some(&candidate) || app_image.as_ref() == Some(&candidate)
 }
 
 async fn probe_version(resolved: &ResolvedSkillsCli) -> Option<String> {

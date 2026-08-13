@@ -5,9 +5,9 @@ use serde::Deserialize;
 use crate::domain::{slugify, Skill, SkillSource, OTHER_GROUP_ID};
 
 #[derive(Debug, Deserialize, Default)]
-struct FrontMatter {
-    name: Option<String>,
-    description: Option<String>,
+pub struct FrontMatter {
+    pub name: Option<String>,
+    pub description: Option<String>,
 }
 
 /// Extracts and parses the `---\n...\n---` YAML front matter block from a
@@ -15,7 +15,7 @@ struct FrontMatter {
 /// front matter block at all (tolerated — such a file is simply skipped by
 /// the caller rather than treated as an error, since local discovery must
 /// never fail the whole app over one malformed file).
-fn extract_front_matter(content: &str) -> Option<FrontMatter> {
+pub fn extract_front_matter(content: &str) -> Option<FrontMatter> {
     let mut lines = content.lines();
     if lines.next()?.trim() != "---" {
         return None;

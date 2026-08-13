@@ -16,6 +16,13 @@ const baseProps = {
 describe('AppHeader installation destination', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  it('shows the application logo before its name', () => {
+    const wrapper = mount(AppHeader, { props: baseProps })
+    const brand = wrapper.get('.app-header__brand')
+    expect(brand.find('img.app-header__logo').exists()).toBe(true)
+    expect(brand.get('h1').text()).toBe('Skills Installer')
+  })
+
   it('opens the native directory picker and emits the selected folder', async () => {
     vi.mocked(backend.selectInstallationDirectory).mockResolvedValue('/home/user/new-project')
     const wrapper = mount(AppHeader, { props: baseProps })

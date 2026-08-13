@@ -3,8 +3,8 @@ pub mod skills_service;
 
 pub use installation_service::InstallationService;
 pub use skills_service::{
-    DeleteGroupStrategy, GroupUpdateInput, NewGroupInput, NewSkillInput, SkillUpdateInput,
-    SkillsService,
+    DeleteGroupStrategy, GroupUpdateInput, NewGroupInput, NewSkillInput, PackImportResult,
+    SkillUpdateInput, SkillsService,
 };
 
 use std::path::PathBuf;

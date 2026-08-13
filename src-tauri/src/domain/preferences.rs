@@ -27,6 +27,8 @@ pub struct UiPreferences {
     pub accent: String,
     #[serde(default)]
     pub local_source_path: Option<String>,
+    #[serde(default)]
+    pub compact_cards: bool,
 }
 
 impl Default for UiPreferences {
@@ -41,6 +43,7 @@ impl Default for UiPreferences {
             continue_after_failure: true,
             accent: default_accent(),
             local_source_path: None,
+            compact_cards: false,
         }
     }
 }

@@ -85,6 +85,13 @@
     }
   }
 
+  &__pack-skills { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xs); }
+  &__pack-skills span { padding: var(--space-2xs) var(--space-xs); border: 1px solid var(--border-soft); background: var(--bg-panel); color: var(--text-primary); font-size: var(--font-size-xs); }
+  &__catalog-note { margin-top: var(--space-sm) !important; color: var(--text-secondary); }
+  &__colors { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+  &__colors button { width: 1.55rem; height: 1.55rem; border: 2px solid var(--bg-panel); border-radius: var(--radius-md); }
+  &__colors button.is-active { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
   &__error {
     font-size: var(--font-size-sm);
     color: var(--danger);

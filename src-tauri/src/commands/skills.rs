@@ -1,12 +1,40 @@
 use serde::Deserialize;
 use tauri::State;
 
-use crate::app::skills_service::{NewSkillInput, SkillUpdateInput};
+use crate::app::skills_service::{NewSkillInput, PackImportResult, SkillUpdateInput};
 use crate::domain::{ApplicationConfig, ParsedSkillSource, Skill};
 use crate::error::AppError;
 use crate::skills::SkillUrlParser;
 
 use super::state::AppState;
+
+#[tauri::command]
+pub async fn preview_pack_url(
+    raw_url: String,
+) -> Result<crate::skills::pack_import::PackPreview, AppError> {
+    crate::skills::pack_import::discover_pack(&raw_url).await
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportPackArgs {
+    pub url: String,
+    pub pack_name: String,
+    pub color: String,
+    pub group_id: String,
+}
+
+#[tauri::command]
+pub async fn import_pack(
+    state: State<'_, AppState>,
+    args: ImportPackArgs,
+) -> Result<PackImportResult, AppError> {
+    let preview = crate::skills::pack_import::discover_pack(&args.url).await?;
+    state
+        .services
+        .skills
+        .import_pack(preview, args.pack_name, args.color, args.group_id)
+}
 
 /// Thin IPC facade only — every command here does argument extraction plus
 /// one call into `SkillsService`; no business logic lives in this module.

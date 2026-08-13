@@ -17,6 +17,13 @@ describe('SkillCard', () => {
     expect(wrapper.text()).not.toContain('View details')
   })
 
+  it('hides description details in compact mode', () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ description: 'Hidden details' }), selected: false, compact: true } })
+    expect(wrapper.classes()).toContain('is-compact')
+    expect(wrapper.find('.skill-card__description').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Hidden details')
+  })
+
   it('selects from the title and dead card surface without hijacking description', async () => {
     const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: 'triage' }), selected: false } })
 

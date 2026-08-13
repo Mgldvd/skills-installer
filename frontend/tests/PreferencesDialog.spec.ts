@@ -28,4 +28,20 @@ describe('PreferencesDialog', () => {
     await wrapper.findAll('.preferences-dialog__source-actions button')[1].trigger('click')
     expect(wrapper.emitted('refreshLocalSource')).toHaveLength(1)
   })
+
+  it('offers Linux CLI installation', async () => {
+    const wrapper = mount(PreferencesDialog, {
+      props: { open: true, preferences: defaultPreferences() },
+    })
+
+    await wrapper.get('.preferences-dialog__cli-button').trigger('click')
+    expect(wrapper.emitted('installCli')).toHaveLength(1)
+  })
+
+  it('updates the compact card preference', async () => {
+    const wrapper = mount(PreferencesDialog, { props: { open: true, preferences: defaultPreferences() } })
+    const checkbox = wrapper.findAll('.preferences-dialog__checkbox').find((item) => item.text().includes('Compact cards'))!
+    await checkbox.get('input').setValue(true)
+    expect(wrapper.emitted('update')).toContainEqual([{ compactCards: true }])
+  })
 })

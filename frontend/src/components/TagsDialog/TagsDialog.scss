@@ -84,7 +84,7 @@
     border-bottom: 1px solid var(--border-soft);
 
     &:last-child { border-bottom: 0; }
-    &__name { margin: 0; font-size: var(--font-size-sm); font-weight: 650; line-height: 1.25; }
+    &__name { margin: 0; font-size: var(--font-size-sm); font-weight: 400; line-height: 1.25; }
     &__tags { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-xs); min-width: 0; }
     &__empty { color: var(--text-muted); font-size: var(--font-size-xs); }
   }
