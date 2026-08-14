@@ -1,3 +1,10 @@
+<div align="left">
+  <img src=".images/exp.jpg" alt="Gogh" width="400">
+</div>
+
+> **Warning:** This repo is experimental and intended for personal use. Expect rough edges,
+> breaking changes, and assumptions specific to the author's setup.
+
 <div align="center">
   <img src=".images/icon.png" alt="Skills Installer logo" width="128">
 
