@@ -1,119 +1,119 @@
 .install-progress-panel {
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--bg-panel);
-    box-shadow: var(--shadow-sm);
-    overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
 
-    .install-progress-panel__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--space-sm) var(--space-md);
+  .install-progress-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .install-progress-panel__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+
+  .install-progress-panel__chevron {
+    width: 0.8em;
+    height: 0.8em;
+    transition: transform var(--transition-fast);
+
+    &.is-expanded {
+      transform: rotate(90deg);
+    }
+  }
+
+  .install-progress-panel__actions {
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .install-progress-panel__cancel {
+    font-size: var(--font-size-xs);
+    color: var(--danger);
+    padding: var(--space-2xs) var(--space-sm);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-sm);
+
+    &:hover {
+      background: var(--danger-soft);
+    }
+  }
+
+  .install-progress-panel__body {
+    max-height: 16rem;
+    overflow-y: auto;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-app);
+    border-top: 1px solid var(--border-soft);
+    font-family: monospace;
+    font-size: var(--font-size-xs);
+  }
+
+  .install-progress-panel__line {
+    margin: 0;
+    padding: 0.15em 0;
+
+    @at-root .install-progress-panel__line--heading {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-weight: 600;
+      font-family: var(--font-family-base);
+      font-size: var(--font-size-sm);
+      margin-top: var(--space-xs);
     }
 
-    .install-progress-panel__toggle {
-        display: flex;
-        align-items: center;
-        gap: var(--space-xs);
-        font-size: var(--font-size-sm);
+    @at-root .install-progress-panel__line--output {
+      color: var(--text-muted);
+      padding-left: 1.4em;
+      white-space: pre-wrap;
+      word-break: break-word;
+
+      &.is-command {
+        color: var(--text-primary);
         font-weight: 600;
-    }
+      }
 
-    .install-progress-panel__chevron {
-        width: 0.8em;
-        height: 0.8em;
-        transition: transform var(--transition-fast);
-
-        &.is-expanded {
-            transform: rotate(90deg);
-        }
-    }
-
-    .install-progress-panel__actions {
-        display: flex;
-        gap: var(--space-xs);
-    }
-
-    .install-progress-panel__cancel {
-        font-size: var(--font-size-xs);
+      &.is-stderr {
         color: var(--danger);
-        padding: var(--space-2xs) var(--space-sm);
-        border: 1px solid var(--danger);
-        border-radius: var(--radius-sm);
+      }
+    }
+  }
 
-        &:hover {
-            background: var(--danger-soft);
-        }
+  .install-progress-panel__status-icon {
+    display: inline-flex;
+    width: 1.1em;
+    justify-content: center;
+
+    &.is-success {
+      color: var(--success);
     }
 
-    .install-progress-panel__body {
-        max-height: 16rem;
-        overflow-y: auto;
-        padding: var(--space-sm) var(--space-md);
-        background: var(--bg-app);
-        border-top: 1px solid var(--border-soft);
-        font-family: monospace;
-        font-size: var(--font-size-xs);
+    &.is-failed {
+      color: var(--danger);
     }
 
-    .install-progress-panel__line {
-        margin: 0;
-        padding: 0.15em 0;
-
-        @at-root .install-progress-panel__line--heading {
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-            font-weight: 600;
-            font-family: var(--font-family-base);
-            font-size: var(--font-size-sm);
-            margin-top: var(--space-xs);
-        }
-
-        @at-root .install-progress-panel__line--output {
-            color: var(--text-muted);
-            padding-left: 1.4em;
-            white-space: pre-wrap;
-            word-break: break-word;
-
-            &.is-command {
-                color: var(--text-primary);
-                font-weight: 600;
-            }
-
-            &.is-stderr {
-                color: var(--danger);
-            }
-        }
+    &.is-pending {
+      color: var(--text-muted);
     }
+  }
 
-    .install-progress-panel__status-icon {
-        display: inline-flex;
-        width: 1.1em;
-        justify-content: center;
+  .install-progress-panel__summary {
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--border-soft);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
 
-        &.is-success {
-            color: var(--success);
-        }
-
-        &.is-failed {
-            color: var(--danger);
-        }
-
-        &.is-pending {
-            color: var(--text-muted);
-        }
+    @at-root .install-progress-panel__summary--error {
+      color: var(--danger);
     }
-
-    .install-progress-panel__summary {
-        padding: var(--space-sm) var(--space-md);
-        border-top: 1px solid var(--border-soft);
-        font-size: var(--font-size-sm);
-        color: var(--text-secondary);
-
-        @at-root .install-progress-panel__summary--error {
-            color: var(--danger);
-        }
-    }
+  }
 }

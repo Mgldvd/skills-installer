@@ -1,206 +1,206 @@
 @use "../../styles/dialog-base" as dialog;
 
 .preferences-dialog {
-    @include dialog.menu-surface;
+  @include dialog.menu-surface;
 
-    .preferences-dialog__form {
-        @include dialog.menu-shell;
+  .preferences-dialog__form {
+    @include dialog.menu-shell;
+  }
+
+  .preferences-dialog__header {
+    @include dialog.menu-header;
+
+    p {
+      margin-top: var(--space-2xs);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  .preferences-dialog__body {
+    @include dialog.menu-body;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: var(--space-md);
+  }
+
+  .preferences-dialog__section {
+    min-width: 0;
+    border: 1px solid var(--border-soft);
+    background: var(--bg-card);
+  }
+
+  .preferences-dialog__section-heading {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border-soft);
+    background: var(--bg-panel);
+
+    h3 {
+      margin: 0;
+      font-size: var(--font-size-md);
+      font-weight: 650;
+    }
+    p {
+      margin-top: var(--space-2xs);
+      color: var(--text-muted);
+      font-size: var(--font-size-xs);
+    }
+  }
+
+  .preferences-dialog__section-content {
+    display: grid;
+    align-content: start;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .preferences-dialog__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .preferences-dialog__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  .preferences-dialog__field {
+    @include dialog.field-label;
+  }
+
+  .preferences-dialog__input {
+    @include dialog.text-input;
+  }
+
+  .preferences-dialog__help {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 400;
+    line-height: var(--line-height-normal);
+  }
+
+  .preferences-dialog__source-actions {
+    display: flex;
+    gap: var(--space-xs);
+
+    button {
+      @include dialog.button-base;
+    }
+  }
+
+  .preferences-dialog__checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-xs);
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--border-soft);
+    font-size: var(--font-size-sm);
+
+    > span {
+      display: grid;
+      gap: var(--space-2xs);
+    }
+    strong {
+      font-weight: 550;
+    }
+    small {
+      color: var(--text-muted);
+      font-size: var(--font-size-xs);
+      line-height: var(--line-height-normal);
+    }
+    input {
+      flex: 0 0 auto;
+    }
+  }
+
+  .preferences-dialog__checks {
+    display: grid;
+  }
+
+  .preferences-dialog__segmented {
+    display: flex;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    width: fit-content;
+  }
+
+  .preferences-dialog__segment {
+    padding: var(--space-2xs) var(--space-md);
+    font-size: var(--font-size-sm);
+    background: var(--bg-card);
+
+    &:not(:last-child) {
+      border-right: 1px solid var(--border-soft);
     }
 
-    .preferences-dialog__header {
-        @include dialog.menu-header;
-
-        p {
-            margin-top: var(--space-2xs);
-            color: var(--text-secondary);
-            font-size: var(--font-size-sm);
-        }
+    &.is-active {
+      background: var(--accent-soft);
+      color: var(--accent-hover);
+      font-weight: 600;
     }
+  }
 
+  .preferences-dialog__accents {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    button {
+      width: 1.65rem;
+      height: 1.65rem;
+      border: 2px solid var(--bg-panel);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      &.is-active {
+        outline: 2px solid var(--text-primary);
+        outline-offset: 2px;
+      }
+    }
+  }
+  .preferences-dialog__config-actions {
+    display: flex;
+    gap: var(--space-xs);
+    button {
+      @include dialog.button-base;
+    }
+  }
+
+  .preferences-dialog__tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .preferences-dialog__tool + .preferences-dialog__tool {
+    padding-left: var(--space-md);
+    border-left: 1px solid var(--border-soft);
+  }
+
+  .preferences-dialog__cli-button {
+    @include dialog.button-base;
+    width: fit-content;
+  }
+
+  .preferences-dialog__btn {
+    @include dialog.button-base;
+  }
+
+  .preferences-dialog__btn--primary {
+    @include dialog.button-primary;
+  }
+
+  @media (max-width: 780px) {
     .preferences-dialog__body {
-        @include dialog.menu-body;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-content: start;
-        gap: var(--space-md);
+      grid-template-columns: 1fr;
     }
-
-    .preferences-dialog__section {
-        min-width: 0;
-        border: 1px solid var(--border-soft);
-        background: var(--bg-card);
-    }
-
-    .preferences-dialog__section-heading {
-        padding: var(--space-md);
-        border-bottom: 1px solid var(--border-soft);
-        background: var(--bg-panel);
-
-        h3 {
-            margin: 0;
-            font-size: var(--font-size-md);
-            font-weight: 650;
-        }
-        p {
-            margin-top: var(--space-2xs);
-            color: var(--text-muted);
-            font-size: var(--font-size-xs);
-        }
-    }
-
-    .preferences-dialog__section-content {
-        display: grid;
-        align-content: start;
-        gap: var(--space-md);
-        padding: var(--space-md);
-    }
-
-    .preferences-dialog__header-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-    }
-
-    .preferences-dialog__title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
-    }
-
-    .preferences-dialog__field {
-        @include dialog.field-label;
-    }
-
-    .preferences-dialog__input {
-        @include dialog.text-input;
-    }
-
-    .preferences-dialog__help {
-        color: var(--text-muted);
-        font-size: var(--font-size-xs);
-        font-weight: 400;
-        line-height: var(--line-height-normal);
-    }
-
-    .preferences-dialog__source-actions {
-        display: flex;
-        gap: var(--space-xs);
-
-        button {
-            @include dialog.button-base;
-        }
-    }
-
-    .preferences-dialog__checkbox {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--space-xs);
-        padding: var(--space-sm) 0;
-        border-top: 1px solid var(--border-soft);
-        font-size: var(--font-size-sm);
-
-        > span {
-            display: grid;
-            gap: var(--space-2xs);
-        }
-        strong {
-            font-weight: 550;
-        }
-        small {
-            color: var(--text-muted);
-            font-size: var(--font-size-xs);
-            line-height: var(--line-height-normal);
-        }
-        input {
-            flex: 0 0 auto;
-        }
-    }
-
-    .preferences-dialog__checks {
-        display: grid;
-    }
-
-    .preferences-dialog__segmented {
-        display: flex;
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius-sm);
-        overflow: hidden;
-        width: fit-content;
-    }
-
-    .preferences-dialog__segment {
-        padding: var(--space-2xs) var(--space-md);
-        font-size: var(--font-size-sm);
-        background: var(--bg-card);
-
-        &:not(:last-child) {
-            border-right: 1px solid var(--border-soft);
-        }
-
-        &.is-active {
-            background: var(--accent-soft);
-            color: var(--accent-hover);
-            font-weight: 600;
-        }
-    }
-
-    .preferences-dialog__accents {
-        display: flex;
-        gap: var(--space-sm);
-        flex-wrap: wrap;
-        button {
-            width: 1.65rem;
-            height: 1.65rem;
-            border: 2px solid var(--bg-panel);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            &.is-active {
-                outline: 2px solid var(--text-primary);
-                outline-offset: 2px;
-            }
-        }
-    }
-    .preferences-dialog__config-actions {
-        display: flex;
-        gap: var(--space-xs);
-        button {
-            @include dialog.button-base;
-        }
-    }
-
     .preferences-dialog__tools {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
     }
     .preferences-dialog__tool + .preferences-dialog__tool {
-        padding-left: var(--space-md);
-        border-left: 1px solid var(--border-soft);
+      padding-top: var(--space-md);
+      padding-left: 0;
+      border-top: 1px solid var(--border-soft);
+      border-left: 0;
     }
-
-    .preferences-dialog__cli-button {
-        @include dialog.button-base;
-        width: fit-content;
-    }
-
-    .preferences-dialog__btn {
-        @include dialog.button-base;
-    }
-
-    .preferences-dialog__btn--primary {
-        @include dialog.button-primary;
-    }
-
-    @media (max-width: 780px) {
-        .preferences-dialog__body {
-            grid-template-columns: 1fr;
-        }
-        .preferences-dialog__tools {
-            grid-template-columns: 1fr;
-        }
-        .preferences-dialog__tool + .preferences-dialog__tool {
-            padding-top: var(--space-md);
-            padding-left: 0;
-            border-top: 1px solid var(--border-soft);
-            border-left: 0;
-        }
-    }
+  }
 }

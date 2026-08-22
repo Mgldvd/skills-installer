@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from "@tauri-apps/api/core";
 
 /**
  * The only place `invoke()` is called directly. Every Tauri command gets a
@@ -6,5 +6,5 @@ import { invoke } from '@tauri-apps/api/core'
  * from components.
  */
 export async function call<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  return invoke<T>(command, args)
+  return invoke<T>(command, args);
 }

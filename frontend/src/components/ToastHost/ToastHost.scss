@@ -1,32 +1,32 @@
 .toast-host {
-    position: fixed;
-    right: var(--space-lg);
-    bottom: var(--space-lg);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    z-index: 100;
-    max-width: min(22rem, calc(100vw - #{var(--space-lg)} * 2));
+  position: fixed;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  z-index: 100;
+  max-width: min(22rem, calc(100vw - #{var(--space-lg)} * 2));
 
-    .toast-host__toast {
-        padding: var(--space-sm) var(--space-md);
-        border-radius: var(--radius-md);
-        background: var(--bg-panel);
-        border: 1px solid var(--border-soft);
-        box-shadow: var(--shadow-md);
-        font-size: var(--font-size-sm);
-        color: var(--text-primary);
+  .toast-host__toast {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    background: var(--bg-panel);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-md);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
 
-        @at-root .toast-host__toast--success {
-            border-color: var(--success);
-            background: var(--success-soft);
-            color: var(--success);
-        }
-
-        @at-root .toast-host__toast--error {
-            border-color: var(--danger);
-            background: var(--danger-soft);
-            color: var(--danger);
-        }
+    @at-root .toast-host__toast--success {
+      border-color: var(--success);
+      background: var(--success-soft);
+      color: var(--success);
     }
+
+    @at-root .toast-host__toast--error {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+  }
 }

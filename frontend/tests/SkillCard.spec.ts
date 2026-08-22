@@ -1,103 +1,164 @@
-import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { mount } from "@vue/test-utils";
+import { describe, expect, it } from "vitest";
 
-import SkillCard from '../src/components/SkillCard/SkillCard.vue'
-import { makeSkill } from './fixtures'
+import SkillCard from "../src/components/SkillCard/SkillCard.vue";
+import { makeSkill } from "./fixtures";
 
-describe('SkillCard', () => {
-  it('renders the skill name and description in dedicated sections', () => {
-    const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ displayName: 'Issue Triage', description: 'Helps triage issues.' }), selected: false },
-    })
-
-    expect(wrapper.find('.skill-card__title').text()).toBe('Issue Triage')
-    expect(wrapper.find('.skill-card__description-text').text()).toBe('Helps triage issues.')
-    expect(wrapper.find('.skill-card__description-label').exists()).toBe(false)
-    expect(wrapper.find('.skill-card__description').element.tagName).toBe('DIV')
-    expect(wrapper.text()).not.toContain('View details')
-  })
-
-  it('hides description details in compact mode', () => {
-    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ description: 'Hidden details' }), selected: false, compact: true } })
-    expect(wrapper.classes()).toContain('is-compact')
-    expect(wrapper.find('.skill-card__description').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('Hidden details')
-  })
-
-  it('selects from the title and dead card surface without hijacking description', async () => {
-    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: 'triage' }), selected: false } })
-
-    await wrapper.find('.skill-card__description').trigger('click')
-    expect(wrapper.emitted('toggle')).toBeUndefined()
-    expect(wrapper.emitted('edit')).toBeUndefined()
-
-    await wrapper.find('.skill-card__selection-surface').trigger('click')
-    expect(wrapper.emitted('toggle')).toEqual([['triage']])
-  })
-
-  it('exposes selection through aria-pressed and a clean top-right ribbon', () => {
-    const wrapper = mount(SkillCard, { props: { skill: makeSkill(), selected: true } })
-    const selection = wrapper.find('.skill-card__selection-surface')
-
-    expect(wrapper.classes()).toContain('is-selected')
-    expect(selection.attributes('aria-pressed')).toBe('true')
-    expect(wrapper.find('.skill-card__selection-ribbon').exists()).toBe(true)
-    expect(wrapper.find('.skill-card__selection-checkbox').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('Selected for installation')
-  })
-
-  it('disables selection for disabled skills while keeping details and editing available', () => {
-    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ enabled: false }), selected: false } })
-
-    expect(wrapper.find('.skill-card__selection-surface').attributes('disabled')).toBeDefined()
-    expect(wrapper.find('.skill-card__description').attributes('disabled')).toBeUndefined()
-    expect(wrapper.find('.skill-card__edit').attributes('disabled')).toBeUndefined()
-  })
-
-  it('always exposes the per-skill edit action', async () => {
-    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: 'triage' }), selected: false } })
-    await wrapper.find('.skill-card__edit').trigger('click')
-    expect(wrapper.emitted('edit')).toEqual([['triage']])
-    expect(wrapper.find('.skill-card__edit').attributes('aria-label')).toBe('View and edit Issue Triage')
-    expect(wrapper.find('.skill-card__edit circle').exists()).toBe(true)
-  })
-
-  it('renders assigned pack names and local/install status', () => {
+describe("SkillCard", () => {
+  it("renders the skill name and description in dedicated sections", () => {
     const wrapper = mount(SkillCard, {
       props: {
-        skill: makeSkill({ local: true, installed: true, tags: ['workflow'] }),
+        skill: makeSkill({ displayName: "Issue Triage", description: "Helps triage issues." }),
         selected: false,
-        tags: [{ id: 'workflow', name: 'Workflow', color: '#E75480', order: 1, enabled: true }],
       },
-    })
+    });
 
-    expect(wrapper.text()).toContain('Local')
-    expect(wrapper.text()).toContain('Installed')
-    expect(wrapper.text()).toContain('Workflow')
-  })
+    expect(wrapper.find(".skill-card__title").text()).toBe("Issue Triage");
+    expect(wrapper.find(".skill-card__description-text").text()).toBe("Helps triage issues.");
+    expect(wrapper.find(".skill-card__description-label").exists()).toBe(false);
+    expect(wrapper.find(".skill-card__description").element.tagName).toBe("DIV");
+    expect(wrapper.text()).not.toContain("View details");
+  });
 
-  it('does not render raw pack ids when pack metadata is unavailable', () => {
+  it("hides description details in compact mode", () => {
     const wrapper = mount(SkillCard, {
-      props: { skill: makeSkill({ tags: ['secret-tag', '#E75480'] }), selected: false },
-    })
+      props: { skill: makeSkill({ description: "Hidden details" }), selected: false, compact: true },
+    });
+    expect(wrapper.classes()).toContain("is-compact");
+    expect(wrapper.find(".skill-card__description").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("Hidden details");
+  });
 
-    expect(wrapper.text()).not.toContain('secret-tag')
-    expect(wrapper.attributes('style') ?? '').not.toContain('#E75480')
-    expect(wrapper.find('.pack-badge').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('No packs')
-  })
+  it("selects from the title and dead card surface without hijacking description", async () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: "triage" }), selected: false } });
 
-  it('renders Pack markers as static compact badges with their configured color', () => {
+    await wrapper.find(".skill-card__description").trigger("click");
+    expect(wrapper.emitted("toggle")).toBeUndefined();
+    expect(wrapper.emitted("edit")).toBeUndefined();
+
+    await wrapper.find(".skill-card__selection-surface").trigger("click");
+    expect(wrapper.emitted("toggle")).toEqual([["triage"]]);
+  });
+
+  it("exposes selection through aria-pressed and a clean top-right ribbon", () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill(), selected: true } });
+    const selection = wrapper.find(".skill-card__selection-surface");
+
+    expect(wrapper.classes()).toContain("is-selected");
+    expect(selection.attributes("aria-pressed")).toBe("true");
+    expect(wrapper.find(".skill-card__selection-ribbon").exists()).toBe(true);
+    expect(wrapper.find(".skill-card__selection-checkbox").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("Selected for installation");
+  });
+
+  it("marks an installed skill's corner ribbon the same green as its Installed tag", () => {
+    const installed = mount(SkillCard, { props: { skill: makeSkill({ installed: true }), selected: false } });
+    expect(installed.classes()).toContain("is-installed");
+    expect(installed.find(".skill-card__installed").text()).toBe("Installed");
+
+    const notInstalled = mount(SkillCard, { props: { skill: makeSkill({ installed: false }), selected: false } });
+    expect(notInstalled.classes()).not.toContain("is-installed");
+    expect(notInstalled.find(".skill-card__installed").exists()).toBe(false);
+  });
+
+  it("tags a skill as Local or Remote depending on its source, never both", () => {
+    const local = mount(SkillCard, { props: { skill: makeSkill({ local: true }), selected: false } });
+    expect(local.find(".skill-card__local").text()).toBe("Local");
+    expect(local.find(".skill-card__remote").exists()).toBe(false);
+
+    const remote = mount(SkillCard, { props: { skill: makeSkill({ local: false }), selected: false } });
+    expect(remote.find(".skill-card__remote").text()).toBe("Remote");
+    expect(remote.find(".skill-card__local").exists()).toBe(false);
+  });
+
+  it("shows a spinner while a skill is installing, and never alongside the Installed tag", () => {
+    const installing = mount(SkillCard, {
+      props: { skill: makeSkill({ installed: false }), selected: false, installing: true },
+    });
+    expect(installing.classes()).toContain("is-installing");
+    expect(installing.find(".skill-card__spinner").exists()).toBe(true);
+    expect(installing.find(".skill-card__installing").text()).toContain("Installing");
+    expect(installing.find(".skill-card__installed").exists()).toBe(false);
+    expect(installing.find(".skill-card__selection-surface").attributes("aria-label")).toContain("installing");
+
+    const notInstalling = mount(SkillCard, {
+      props: { skill: makeSkill({ installed: false }), selected: false, installing: false },
+    });
+    expect(notInstalling.classes()).not.toContain("is-installing");
+    expect(notInstalling.find(".skill-card__spinner").exists()).toBe(false);
+
+    // An already-installed skill never shows the spinner even if the
+    // `installing` prop is stale for a beat — the Installed tag wins.
+    const alreadyInstalled = mount(SkillCard, {
+      props: { skill: makeSkill({ installed: true }), selected: false, installing: true },
+    });
+    expect(alreadyInstalled.find(".skill-card__spinner").exists()).toBe(false);
+    expect(alreadyInstalled.find(".skill-card__installed").text()).toBe("Installed");
+  });
+
+  it("disables selection for an already-installed skill without hiding its edit action", async () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ installed: true }), selected: false } });
+
+    expect(wrapper.find(".skill-card__selection-surface").attributes("disabled")).toBeDefined();
+    expect(wrapper.find(".skill-card__selection-surface").attributes("aria-label")).toContain("already installed");
+    expect(wrapper.find(".skill-card__edit").attributes("disabled")).toBeUndefined();
+
+    await wrapper.find(".skill-card__selection-surface").trigger("click");
+    expect(wrapper.emitted("toggle")).toBeUndefined();
+  });
+
+  it("disables selection for disabled skills while keeping details and editing available", () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ enabled: false }), selected: false } });
+
+    expect(wrapper.find(".skill-card__selection-surface").attributes("disabled")).toBeDefined();
+    expect(wrapper.find(".skill-card__description").attributes("disabled")).toBeUndefined();
+    expect(wrapper.find(".skill-card__edit").attributes("disabled")).toBeUndefined();
+  });
+
+  it("always exposes the per-skill edit action", async () => {
+    const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: "triage" }), selected: false } });
+    await wrapper.find(".skill-card__edit").trigger("click");
+    expect(wrapper.emitted("edit")).toEqual([["triage"]]);
+    expect(wrapper.find(".skill-card__edit").attributes("aria-label")).toBe("View and edit Issue Triage");
+    expect(wrapper.find(".skill-card__edit circle").exists()).toBe(true);
+  });
+
+  it("renders assigned pack names and local/install status", () => {
     const wrapper = mount(SkillCard, {
       props: {
-        skill: makeSkill({ tags: ['workflow'] }),
+        skill: makeSkill({ local: true, installed: true, tags: ["workflow"] }),
         selected: false,
-        tags: [{ id: 'workflow', name: 'Workflow', color: '#14B8A6', order: 1, enabled: true }],
+        tags: [{ id: "workflow", name: "Workflow", color: "#E75480", order: 1, enabled: true }],
       },
-    })
-    const badge = wrapper.get('.pack-badge')
-    expect(badge.element.tagName).toBe('SPAN')
-    expect(badge.classes()).toContain('pack-badge--compact')
-    expect(badge.attributes('style')).toContain('--pack-color: #14B8A6')
-  })
-})
+    });
+
+    expect(wrapper.text()).toContain("Local");
+    expect(wrapper.text()).toContain("Installed");
+    expect(wrapper.text()).toContain("Workflow");
+  });
+
+  it("does not render raw pack ids when pack metadata is unavailable", () => {
+    const wrapper = mount(SkillCard, {
+      props: { skill: makeSkill({ tags: ["secret-tag", "#E75480"] }), selected: false },
+    });
+
+    expect(wrapper.text()).not.toContain("secret-tag");
+    expect(wrapper.attributes("style") ?? "").not.toContain("#E75480");
+    expect(wrapper.find(".pack-badge").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("No packs");
+  });
+
+  it("renders Pack markers as static compact badges with their configured color", () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ tags: ["workflow"] }),
+        selected: false,
+        tags: [{ id: "workflow", name: "Workflow", color: "#14B8A6", order: 1, enabled: true }],
+      },
+    });
+    const badge = wrapper.get(".pack-badge");
+    expect(badge.element.tagName).toBe("SPAN");
+    expect(badge.classes()).toContain("pack-badge--compact");
+    expect(badge.attributes("style")).toContain("--pack-color: #14B8A6");
+  });
+});

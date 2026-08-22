@@ -1,15 +1,46 @@
-@use '../../styles/dialog-base' as dialog;
+@use "../../styles/dialog-base" as dialog;
 
 .skill-description-dialog {
   @include dialog.reset(38rem);
 
-  .skill-description-dialog__content { display: grid; gap: var(--space-lg); padding: var(--space-lg); }
-  .skill-description-dialog__header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); }
-  .skill-description-dialog__header h2 { margin: var(--space-2xs) 0 0; font-size: var(--font-size-xl); line-height: var(--line-height-tight); }
-  .skill-description-dialog__eyebrow { color: var(--accent); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  .skill-description-dialog__content {
+    display: grid;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+  }
+  .skill-description-dialog__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+  .skill-description-dialog__header h2 {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--font-size-xl);
+    line-height: var(--line-height-tight);
+  }
+  .skill-description-dialog__eyebrow {
+    color: var(--accent);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
 
-  .skill-description-dialog__description { margin: 0; color: var(--text-secondary); font-size: var(--font-size-md); line-height: 1.65; white-space: pre-wrap; }
-  .skill-description-dialog__footer { display: flex; align-items: center; min-height: 2.75rem; padding-top: var(--space-md); border-top: 1px solid var(--border-soft); }
+  .skill-description-dialog__description {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+  .skill-description-dialog__footer {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-soft);
+  }
 
   .skill-description-dialog__link {
     display: inline-flex;
@@ -24,9 +55,17 @@
     font-weight: 600;
     text-decoration: none;
 
-    svg { width: 1rem; height: 1rem; }
-    &:hover { background: var(--accent-hover); }
+    svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    &:hover {
+      background: var(--accent-hover);
+    }
   }
 
-  .skill-description-dialog__local { color: var(--text-muted); font-size: var(--font-size-sm); }
+  .skill-description-dialog__local {
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+  }
 }

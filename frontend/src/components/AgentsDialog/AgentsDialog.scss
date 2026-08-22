@@ -1,106 +1,106 @@
 @use "../../styles/dialog-base" as dialog;
 
 .agents-dialog {
-    @include dialog.menu-surface;
+  @include dialog.menu-surface;
 
-    .agents-dialog__panel {
-        @include dialog.menu-shell;
+  .agents-dialog__panel {
+    @include dialog.menu-shell;
+  }
+
+  .agents-dialog__header {
+    @include dialog.menu-header;
+
+    h2,
+    p {
+      margin: 0;
+    }
+    h2 {
+      font-size: var(--font-size-lg);
+    }
+    p {
+      margin-top: var(--space-2xs);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
+    }
+  }
+
+  .agents-dialog__body {
+    @include dialog.menu-body;
+    display: grid;
+    align-content: start;
+    gap: var(--space-md);
+  }
+
+  .agents-dialog__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .agents-dialog__list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .agents-dialog__toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+    padding: var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    text-align: left;
+
+    &:hover {
+      border-color: var(--border-strong);
+    }
+    &.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
     }
 
-    .agents-dialog__header {
-        @include dialog.menu-header;
-
-        h2,
-        p {
-            margin: 0;
-        }
-        h2 {
-            font-size: var(--font-size-lg);
-        }
-        p {
-            margin-top: var(--space-2xs);
-            color: var(--text-secondary);
-            font-size: var(--font-size-sm);
-        }
+    > span:last-child {
+      display: grid;
+      min-width: 0;
     }
-
-    .agents-dialog__body {
-        @include dialog.menu-body;
-        display: grid;
-        align-content: start;
-        gap: var(--space-md);
+    small {
+      overflow-wrap: anywhere;
+      color: var(--text-muted);
+      font-size: var(--font-size-xs);
     }
+  }
 
-    .agents-dialog__header-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-    }
+  .agents-dialog__check {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.55rem;
+    width: 1.55rem;
+    height: 1.55rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    color: #fff;
+  }
 
+  .is-active .agents-dialog__check {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .agents-dialog__error {
+    margin: 0;
+    color: var(--danger);
+    font-size: var(--font-size-sm);
+  }
+  .agents-dialog__done {
+    @include dialog.button-primary;
+  }
+
+  @media (max-width: 780px) {
     .agents-dialog__list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--space-sm);
+      grid-template-columns: 1fr;
     }
-
-    .agents-dialog__toggle {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-        min-width: 0;
-        padding: var(--space-md);
-        border: 1px solid var(--border-soft);
-        border-radius: var(--radius-md);
-        background: var(--bg-card);
-        color: var(--text-primary);
-        text-align: left;
-
-        &:hover {
-            border-color: var(--border-strong);
-        }
-        &.is-active {
-            border-color: var(--accent);
-            background: var(--accent-soft);
-        }
-
-        > span:last-child {
-            display: grid;
-            min-width: 0;
-        }
-        small {
-            overflow-wrap: anywhere;
-            color: var(--text-muted);
-            font-size: var(--font-size-xs);
-        }
-    }
-
-    .agents-dialog__check {
-        display: grid;
-        place-items: center;
-        flex: 0 0 1.55rem;
-        width: 1.55rem;
-        height: 1.55rem;
-        border: 1px solid var(--border-strong);
-        border-radius: var(--radius-md);
-        color: #fff;
-    }
-
-    .is-active .agents-dialog__check {
-        border-color: var(--accent);
-        background: var(--accent);
-    }
-    .agents-dialog__error {
-        margin: 0;
-        color: var(--danger);
-        font-size: var(--font-size-sm);
-    }
-    .agents-dialog__done {
-        @include dialog.button-primary;
-    }
-
-    @media (max-width: 780px) {
-        .agents-dialog__list {
-            grid-template-columns: 1fr;
-        }
-    }
+  }
 }

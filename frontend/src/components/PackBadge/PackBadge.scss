@@ -53,8 +53,7 @@
     }
   }
 
-  @at-root .pack-badge--selected,
-  .pack-badge--partial {
+  @at-root .pack-badge--selected, .pack-badge--partial {
     border-color: color-mix(in srgb, var(--pack-color) 86%, var(--border-strong));
     background: color-mix(in srgb, var(--pack-color) 18%, var(--bg-card));
     color: var(--text-primary);
@@ -128,7 +127,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pack-badge { transition: none; }
+  .pack-badge {
+    transition: none;
+  }
 }
 
 @media (pointer: coarse) {

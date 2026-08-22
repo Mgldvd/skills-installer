@@ -1,7 +1,7 @@
-import type { useAppState } from '../src/composables/useAppState'
-import { defaultPreferences } from '../src/types'
+import type { useAppState } from "../src/composables/useAppState";
+import { defaultPreferences } from "../src/types";
 
-type AppState = ReturnType<typeof useAppState>
+type AppState = ReturnType<typeof useAppState>;
 
 /**
  * `useAppState` is a module-level singleton (by design — see its own
@@ -10,16 +10,16 @@ type AppState = ReturnType<typeof useAppState>
  * tree rather than exported from production code.
  */
 export function resetState(state: AppState) {
-  state.skills = []
-  state.groups = []
-  state.tags = []
-  state.selectedSkillIds = new Set()
-  state.searchQuery = ''
-  state.skillBeingEditedId = null
-  state.groupBeingEditedId = null
-  state.isAddDialogOpen = false
-  state.preferences = defaultPreferences()
-  state.dependencyStatus = null
+  state.skills = [];
+  state.groups = [];
+  state.tags = [];
+  state.selectedSkillIds = new Set();
+  state.searchQuery = "";
+  state.skillBeingEditedId = null;
+  state.groupBeingEditedId = null;
+  state.isAddDialogOpen = false;
+  state.preferences = defaultPreferences();
+  state.dependencyStatus = null;
   state.installation = {
     isInstalling: false,
     currentSkillId: null,
@@ -30,9 +30,9 @@ export function resetState(state: AppState) {
     displayNames: {},
     result: null,
     error: null,
-  }
-  state.sourcePath = null
-  state.isEmbeddedDefault = false
-  state.projectRoot = ''
-  state.loaded = false
+  };
+  state.sourcePath = null;
+  state.isEmbeddedDefault = false;
+  state.projectRoot = "";
+  state.loaded = false;
 }

@@ -1,61 +1,68 @@
 @use "../../styles/dialog-base" as dialog;
 
 .install-confirm-dialog {
-    @include dialog.reset(26rem);
+  @include dialog.reset(26rem);
 
-    .install-confirm-dialog__body {
-        @include dialog.form-layout;
-    }
+  .install-confirm-dialog__body {
+    @include dialog.form-layout;
+  }
 
-    .install-confirm-dialog__title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
-    }
+  .install-confirm-dialog__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
 
-    .install-confirm-dialog__list {
-        list-style: disc;
-        padding-left: 1.25em;
-        max-height: 10rem;
-        overflow-y: auto;
-        font-size: var(--font-size-sm);
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-2xs);
-    }
+  .install-confirm-dialog__list {
+    list-style: disc;
+    padding-left: 1.25em;
+    max-height: 10rem;
+    overflow-y: auto;
+    font-size: var(--font-size-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
 
-    .install-confirm-dialog__meta {
-        font-size: var(--font-size-sm);
-        color: var(--text-secondary);
+  .install-confirm-dialog__meta {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+  .install-confirm-dialog__summary {
+    display: grid;
+    gap: var(--space-sm);
+    margin: 0;
+    div {
+      display: grid;
+      grid-template-columns: 6rem 1fr;
+      gap: var(--space-sm);
     }
-    .install-confirm-dialog__summary {
-        display: grid;
-        gap: var(--space-sm);
-        margin: 0;
-        div {
-            display: grid;
-            grid-template-columns: 6rem 1fr;
-            gap: var(--space-sm);
-        }
-        dt {
-            color: var(--text-muted);
-            font-size: var(--font-size-sm);
-        }
-        dd {
-            margin: 0;
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-        }
+    dt {
+      color: var(--text-muted);
+      font-size: var(--font-size-sm);
     }
+    dd {
+      margin: 0;
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+    }
+  }
 
-    .install-confirm-dialog__actions {
-        @include dialog.actions-row;
-    }
+  .install-confirm-dialog__actions {
+    @include dialog.actions-row;
+  }
 
-    .install-confirm-dialog__btn {
-        @include dialog.button-base;
+  .install-confirm-dialog__btn {
+    @include dialog.button-base;
 
-        @at-root .install-confirm-dialog__btn--primary {
-            @include dialog.button-primary;
-        }
+    // `&--primary`, not `@at-root .install-confirm-dialog__btn--primary`:
+    // `@at-root` strips the `.install-confirm-dialog` ancestor prefix this
+    // base rule gets from its own nesting, so the modifier ends up *less*
+    // specific than the base rule it's meant to override — every property
+    // they both set (background included) fell back to the base rule,
+    // leaving white button-primary text on the base's near-white panel
+    // background.
+    &--primary {
+      @include dialog.button-primary;
     }
+  }
 }

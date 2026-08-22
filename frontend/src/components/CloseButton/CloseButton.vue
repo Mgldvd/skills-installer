@@ -7,8 +7,8 @@
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{ ariaLabel?: string }>(), { ariaLabel: 'Close' })
-const emit = defineEmits<{ click: [event: MouseEvent] }>()
+withDefaults(defineProps<{ ariaLabel?: string }>(), { ariaLabel: "Close" });
+const emit = defineEmits<{ click: [event: MouseEvent] }>();
 </script>
 
 <style scoped lang="scss" src="./CloseButton.scss"></style>

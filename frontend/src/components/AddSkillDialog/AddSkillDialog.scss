@@ -1,166 +1,166 @@
 @use "../../styles/dialog-base" as dialog;
 
 .add-skill-dialog {
-    @include dialog.menu-surface;
+  @include dialog.menu-surface;
 
-    .add-skill-dialog__form {
-        @include dialog.menu-shell;
+  .add-skill-dialog__form {
+    @include dialog.menu-shell;
+  }
+
+  .add-skill-dialog__header {
+    @include dialog.menu-header;
+  }
+
+  .add-skill-dialog__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  .add-skill-dialog__heading {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: baseline;
+    justify-content: start;
+    column-gap: var(--space-xs);
+
+    p {
+      grid-column: 1 / -1;
+      margin-top: var(--space-2xs);
+      color: var(--text-secondary);
+      font-size: var(--font-size-sm);
     }
 
-    .add-skill-dialog__header {
-        @include dialog.menu-header;
+    a {
+      color: var(--info);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+
+      &:hover {
+        color: #2563eb;
+      }
     }
+  }
 
-    .add-skill-dialog__title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
+  .add-skill-dialog__body {
+    @include dialog.menu-body;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: var(--space-md);
+  }
+
+  .add-skill-dialog__header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .add-skill-dialog__wide,
+  .add-skill-dialog__field--wide {
+    grid-column: 1 / -1;
+  }
+
+  .add-skill-dialog__field {
+    @include dialog.field-label;
+  }
+
+  .add-skill-dialog__input {
+    @include dialog.text-input;
+  }
+
+  .add-skill-dialog__textarea {
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  .add-skill-dialog__preview {
+    background: var(--info-soft);
+    color: var(--info);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-sm);
+
+    p {
+      margin: 0;
     }
+  }
 
-    .add-skill-dialog__heading {
-        display: grid;
-        grid-template-columns: auto auto;
-        align-items: baseline;
-        justify-content: start;
-        column-gap: var(--space-xs);
+  .add-skill-dialog__pack-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+  }
+  .add-skill-dialog__pack-skills span {
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+  }
+  .add-skill-dialog__catalog-note {
+    margin-top: var(--space-sm) !important;
+    color: var(--text-secondary);
+  }
+  .add-skill-dialog__colors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+  .add-skill-dialog__colors button {
+    width: 1.55rem;
+    height: 1.55rem;
+    border: 2px solid var(--bg-panel);
+    border-radius: var(--radius-md);
+  }
+  .add-skill-dialog__colors button.is-active {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+  }
 
-        p {
-            grid-column: 1 / -1;
-            margin-top: var(--space-2xs);
-            color: var(--text-secondary);
-            font-size: var(--font-size-sm);
-        }
+  .add-skill-dialog__error {
+    font-size: var(--font-size-sm);
+    color: var(--danger);
+  }
 
-        a {
-            color: var(--info);
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            text-decoration: underline;
-            text-underline-offset: 2px;
+  .add-skill-dialog__duplicate {
+    padding: var(--space-xs) var(--space-sm);
+    border-left: 3px solid var(--danger);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: var(--font-size-sm);
+  }
 
-            &:hover {
-                color: #2563eb;
-            }
-        }
-    }
+  .add-skill-dialog__checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
 
+  .add-skill-dialog__checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+  }
+
+  .add-skill-dialog__btn {
+    @include dialog.button-base;
+  }
+
+  .add-skill-dialog__btn--primary {
+    @include dialog.button-primary;
+  }
+
+  @media (max-width: 780px) {
     .add-skill-dialog__body {
-        @include dialog.menu-body;
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-content: start;
-        gap: var(--space-md);
+      grid-template-columns: 1fr;
     }
-
-    .add-skill-dialog__header-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--space-sm);
-    }
-
     .add-skill-dialog__wide,
     .add-skill-dialog__field--wide {
-        grid-column: 1 / -1;
+      grid-column: 1;
     }
-
-    .add-skill-dialog__field {
-        @include dialog.field-label;
-    }
-
-    .add-skill-dialog__input {
-        @include dialog.text-input;
-    }
-
-    .add-skill-dialog__textarea {
-        resize: vertical;
-        font-family: inherit;
-    }
-
-    .add-skill-dialog__preview {
-        background: var(--info-soft);
-        color: var(--info);
-        border-radius: var(--radius-sm);
-        padding: var(--space-xs) var(--space-sm);
-        font-size: var(--font-size-sm);
-
-        p {
-            margin: 0;
-        }
-    }
-
-    .add-skill-dialog__pack-skills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-xs);
-        margin-top: var(--space-xs);
-    }
-    .add-skill-dialog__pack-skills span {
-        padding: var(--space-2xs) var(--space-xs);
-        border: 1px solid var(--border-soft);
-        background: var(--bg-panel);
-        color: var(--text-primary);
-        font-size: var(--font-size-xs);
-    }
-    .add-skill-dialog__catalog-note {
-        margin-top: var(--space-sm) !important;
-        color: var(--text-secondary);
-    }
-    .add-skill-dialog__colors {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-xs);
-    }
-    .add-skill-dialog__colors button {
-        width: 1.55rem;
-        height: 1.55rem;
-        border: 2px solid var(--bg-panel);
-        border-radius: var(--radius-md);
-    }
-    .add-skill-dialog__colors button.is-active {
-        outline: 2px solid var(--text-primary);
-        outline-offset: 2px;
-    }
-
-    .add-skill-dialog__error {
-        font-size: var(--font-size-sm);
-        color: var(--danger);
-    }
-
-    .add-skill-dialog__duplicate {
-        padding: var(--space-xs) var(--space-sm);
-        border-left: 3px solid var(--danger);
-        background: var(--danger-soft);
-        color: var(--danger);
-        font-size: var(--font-size-sm);
-    }
-
-    .add-skill-dialog__checkboxes {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-md);
-    }
-
-    .add-skill-dialog__checkbox {
-        display: flex;
-        align-items: center;
-        gap: var(--space-xs);
-        font-size: var(--font-size-sm);
-    }
-
-    .add-skill-dialog__btn {
-        @include dialog.button-base;
-    }
-
-    .add-skill-dialog__btn--primary {
-        @include dialog.button-primary;
-    }
-
-    @media (max-width: 780px) {
-        .add-skill-dialog__body {
-            grid-template-columns: 1fr;
-        }
-        .add-skill-dialog__wide,
-        .add-skill-dialog__field--wide {
-            grid-column: 1;
-        }
-    }
+  }
 }

@@ -1,85 +1,86 @@
 @use "../../styles/dialog-base" as dialog;
 
 .group-editor {
-    @include dialog.reset(24rem);
+  @include dialog.reset(24rem);
 
-    .group-editor__form {
-        @include dialog.form-layout;
+  .group-editor__form {
+    @include dialog.form-layout;
+  }
+
+  .group-editor__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  .group-editor__field {
+    @include dialog.field-label;
+  }
+
+  .group-editor__input {
+    @include dialog.text-input;
+  }
+
+  .group-editor__hex-input {
+    margin-top: var(--space-xs);
+    max-width: 10rem;
+    font-family: monospace;
+  }
+
+  .group-editor__swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .group-editor__swatch {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: var(--radius-sm);
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.is-selected {
+      border-color: var(--text-primary);
+    }
+  }
+
+  .group-editor__swatch-check {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
+
+  .group-editor__checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+  }
+
+  .group-editor__error {
+    font-size: var(--font-size-sm);
+    color: var(--danger);
+  }
+
+  .group-editor__actions {
+    @include dialog.actions-row;
+  }
+
+  .group-editor__btn {
+    @include dialog.button-base;
+
+    // `&--modifier` (see InstallConfirmDialog.scss for why not `@at-root`).
+    &--delete {
+      margin-right: auto;
     }
 
-    .group-editor__title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
+    &--danger {
+      @include dialog.button-danger;
     }
 
-    .group-editor__field {
-        @include dialog.field-label;
+    &--primary {
+      @include dialog.button-primary;
     }
-
-    .group-editor__input {
-        @include dialog.text-input;
-    }
-
-    .group-editor__hex-input {
-        margin-top: var(--space-xs);
-        max-width: 10rem;
-        font-family: monospace;
-    }
-
-    .group-editor__swatches {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-xs);
-    }
-
-    .group-editor__swatch {
-        width: 1.75rem;
-        height: 1.75rem;
-        border-radius: var(--radius-sm);
-        border: 2px solid transparent;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &.is-selected {
-            border-color: var(--text-primary);
-        }
-    }
-
-    .group-editor__swatch-check {
-        width: 0.85rem;
-        height: 0.85rem;
-    }
-
-    .group-editor__checkbox {
-        display: flex;
-        align-items: center;
-        gap: var(--space-xs);
-        font-size: var(--font-size-sm);
-    }
-
-    .group-editor__error {
-        font-size: var(--font-size-sm);
-        color: var(--danger);
-    }
-
-    .group-editor__actions {
-        @include dialog.actions-row;
-    }
-
-    .group-editor__btn {
-        @include dialog.button-base;
-
-        @at-root .group-editor__btn--delete {
-            margin-right: auto;
-        }
-
-        @at-root .group-editor__btn--danger {
-            @include dialog.button-danger;
-        }
-
-        @at-root .group-editor__btn--primary {
-            @include dialog.button-primary;
-        }
-    }
+  }
 }

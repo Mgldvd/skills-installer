@@ -1,59 +1,59 @@
 .font-scale-control {
-    @at-root .font-scale-control--compact {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2xs);
+  @at-root .font-scale-control--compact {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .font-scale-control__step {
+    // Icon-like control; deliberately not scaled at the same ratio as body
+    // text so it stays balanced rather than growing huge at 140%.
+    font-size: 0.8125rem;
+    font-weight: 600;
+    width: 1.9em;
+    height: 1.9em;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover:not(:disabled) {
+      border-color: var(--border-strong);
+    }
+  }
+
+  .font-scale-control__value {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    min-width: 2.6em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .font-scale-control__presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+  }
+
+  .font-scale-control__preset {
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-card);
+    font-size: var(--font-size-sm);
+
+    &:hover {
+      border-color: var(--border-strong);
     }
 
-    .font-scale-control__step {
-        // Icon-like control; deliberately not scaled at the same ratio as body
-        // text so it stays balanced rather than growing huge at 140%.
-        font-size: 0.8125rem;
-        font-weight: 600;
-        width: 1.9em;
-        height: 1.9em;
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-soft);
-        background: var(--bg-panel);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        &:hover:not(:disabled) {
-            border-color: var(--border-strong);
-        }
+    &.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-hover);
+      font-weight: 600;
     }
-
-    .font-scale-control__value {
-        font-size: var(--font-size-xs);
-        color: var(--text-muted);
-        min-width: 2.6em;
-        text-align: center;
-        font-variant-numeric: tabular-nums;
-    }
-
-    .font-scale-control__presets {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-2xs);
-    }
-
-    .font-scale-control__preset {
-        padding: var(--space-2xs) var(--space-sm);
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-soft);
-        background: var(--bg-card);
-        font-size: var(--font-size-sm);
-
-        &:hover {
-            border-color: var(--border-strong);
-        }
-
-        &.is-active {
-            border-color: var(--accent);
-            background: var(--accent-soft);
-            color: var(--accent-hover);
-            font-weight: 600;
-        }
-    }
+  }
 }

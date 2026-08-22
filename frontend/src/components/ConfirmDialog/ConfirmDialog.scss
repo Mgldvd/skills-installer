@@ -1,35 +1,36 @@
 @use "../../styles/dialog-base" as dialog;
 
 .confirm-dialog {
-    @include dialog.reset(26rem);
+  @include dialog.reset(26rem);
 
-    .confirm-dialog__form {
-        @include dialog.form-layout;
+  .confirm-dialog__form {
+    @include dialog.form-layout;
+  }
+
+  .confirm-dialog__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+  }
+
+  .confirm-dialog__message {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+
+  .confirm-dialog__actions {
+    @include dialog.actions-row;
+  }
+
+  .confirm-dialog__btn {
+    @include dialog.button-base;
+
+    // `&--modifier` (see InstallConfirmDialog.scss for why not `@at-root`).
+    &--primary {
+      @include dialog.button-primary;
     }
 
-    .confirm-dialog__title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
+    &--danger {
+      @include dialog.button-danger;
     }
-
-    .confirm-dialog__message {
-        font-size: var(--font-size-sm);
-        color: var(--text-secondary);
-    }
-
-    .confirm-dialog__actions {
-        @include dialog.actions-row;
-    }
-
-    .confirm-dialog__btn {
-        @include dialog.button-base;
-
-        @at-root .confirm-dialog__btn--primary {
-            @include dialog.button-primary;
-        }
-
-        @at-root .confirm-dialog__btn--danger {
-            @include dialog.button-danger;
-        }
-    }
+  }
 }

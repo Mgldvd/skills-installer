@@ -1,4 +1,4 @@
-import { onMounted, watch, type Ref } from 'vue'
+import { onMounted, watch, type Ref } from "vue";
 
 /**
  * Wires a `<dialog ref>` to an `open` boolean prop/getter. A plain
@@ -11,16 +11,16 @@ import { onMounted, watch, type Ref } from 'vue'
  */
 export function useNativeDialog(dialogEl: Ref<HTMLDialogElement | null>, isOpen: () => boolean, onOpen?: () => void) {
   function sync(open: boolean) {
-    const el = dialogEl.value
-    if (!el) return
+    const el = dialogEl.value;
+    if (!el) return;
     if (open) {
-      onOpen?.()
-      if (!el.open) el.showModal()
+      onOpen?.();
+      if (!el.open) el.showModal();
     } else if (el.open) {
-      el.close()
+      el.close();
     }
   }
 
-  onMounted(() => sync(isOpen()))
-  watch(isOpen, sync)
+  onMounted(() => sync(isOpen()));
+  watch(isOpen, sync);
 }

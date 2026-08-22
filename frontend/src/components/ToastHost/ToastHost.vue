@@ -1,13 +1,13 @@
 <template>
-    <div class="toast-host" role="status" aria-live="polite">
-        <div
-            v-for="toast in toasts"
-            :key="toast.id"
-            class="toast-host__toast"
-            :class="`toast-host__toast--${toast.variant}`">
-            {{ toast.message }}
-        </div>
+  <div class="toast-host" role="status" aria-live="polite">
+    <div
+      v-for="toast in toasts"
+      :key="toast.id"
+      class="toast-host__toast"
+      :class="`toast-host__toast--${toast.variant}`">
+      {{ toast.message }}
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">

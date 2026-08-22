@@ -1,44 +1,52 @@
-import { reactive } from 'vue'
+import { reactive } from "vue";
 
-import type { DependencyStatus, InstallResult, OutputStream, Skill, SkillGroup, SkillTag, UiPreferences } from '../types'
-import { defaultPreferences } from '../types'
+import type {
+  DependencyStatus,
+  InstallResult,
+  OutputStream,
+  Skill,
+  SkillGroup,
+  SkillTag,
+  UiPreferences,
+} from "../types";
+import { defaultPreferences } from "../types";
 
-export type PerSkillInstallStatus = 'pending' | 'installed' | 'alreadyInstalled' | 'failed' | 'skipped'
+export type PerSkillInstallStatus = "pending" | "installed" | "alreadyInstalled" | "failed" | "skipped";
 
 export interface InstallOutputLine {
-  skillId: string
-  line: string
-  stream: OutputStream | 'command'
+  skillId: string;
+  line: string;
+  stream: OutputStream | "command";
 }
 
 export interface InstallationState {
-  isInstalling: boolean
-  currentSkillId: string | null
-  currentIndex: number
-  total: number
-  outputLines: InstallOutputLine[]
-  perSkillStatus: Record<string, PerSkillInstallStatus>
-  displayNames: Record<string, string>
-  result: InstallResult | null
-  error: string | null
+  isInstalling: boolean;
+  currentSkillId: string | null;
+  currentIndex: number;
+  total: number;
+  outputLines: InstallOutputLine[];
+  perSkillStatus: Record<string, PerSkillInstallStatus>;
+  displayNames: Record<string, string>;
+  result: InstallResult | null;
+  error: string | null;
 }
 
 interface AppState {
-  skills: Skill[]
-  groups: SkillGroup[]
-  tags: SkillTag[]
-  selectedSkillIds: Set<string>
-  searchQuery: string
-  skillBeingEditedId: string | null
-  groupBeingEditedId: string | null
-  isAddDialogOpen: boolean
-  preferences: UiPreferences
-  dependencyStatus: DependencyStatus | null
-  installation: InstallationState
-  sourcePath: string | null
-  isEmbeddedDefault: boolean
-  projectRoot: string
-  loaded: boolean
+  skills: Skill[];
+  groups: SkillGroup[];
+  tags: SkillTag[];
+  selectedSkillIds: Set<string>;
+  searchQuery: string;
+  skillBeingEditedId: string | null;
+  groupBeingEditedId: string | null;
+  isAddDialogOpen: boolean;
+  preferences: UiPreferences;
+  dependencyStatus: DependencyStatus | null;
+  installation: InstallationState;
+  sourcePath: string | null;
+  isEmbeddedDefault: boolean;
+  projectRoot: string;
+  loaded: boolean;
 }
 
 function freshInstallationState(): InstallationState {
@@ -52,7 +60,7 @@ function freshInstallationState(): InstallationState {
     displayNames: {},
     result: null,
     error: null,
-  }
+  };
 }
 
 /**
@@ -68,7 +76,7 @@ const state = reactive<AppState>({
   groups: [],
   tags: [],
   selectedSkillIds: new Set<string>(),
-  searchQuery: '',
+  searchQuery: "",
   skillBeingEditedId: null,
   groupBeingEditedId: null,
   isAddDialogOpen: false,
@@ -77,14 +85,14 @@ const state = reactive<AppState>({
   installation: freshInstallationState(),
   sourcePath: null,
   isEmbeddedDefault: false,
-  projectRoot: '',
+  projectRoot: "",
   loaded: false,
-})
+});
 
 export function useAppState() {
-  return state
+  return state;
 }
 
 export function resetInstallationState() {
-  state.installation = freshInstallationState()
+  state.installation = freshInstallationState();
 }

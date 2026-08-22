@@ -41,7 +41,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .close-button { transition: none; }
+  .close-button {
+    transition: none;
+  }
 }
 
 @media (pointer: coarse) {

@@ -1,7 +1,7 @@
-import { Channel } from '@tauri-apps/api/core'
-import { open } from '@tauri-apps/plugin-dialog'
+import { Channel } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 
-import { call } from './tauri/client'
+import { call } from "./tauri/client";
 import type {
   ApplicationConfig,
   DependencyStatus,
@@ -12,109 +12,129 @@ import type {
   Skill,
   SkillTag,
   UiPreferences,
-} from '../types'
+} from "../types";
 
 export interface AddSkillArgs {
-  url: string
-  displayName?: string | null
-  description?: string | null
-  groupId: string
-  tags?: string[]
-  preselected?: boolean
-  enabled?: boolean
+  url: string;
+  displayName?: string | null;
+  description?: string | null;
+  groupId: string;
+  tags?: string[];
+  preselected?: boolean;
+  enabled?: boolean;
 }
 
 export interface UpdateSkillArgs {
-  skillId: string
-  url?: string | null
-  displayName?: string | null
-  description?: string | null
-  groupId?: string | null
-  tags?: string[] | null
-  preselected?: boolean | null
-  enabled?: boolean | null
+  skillId: string;
+  url?: string | null;
+  displayName?: string | null;
+  description?: string | null;
+  groupId?: string | null;
+  tags?: string[] | null;
+  preselected?: boolean | null;
+  enabled?: boolean | null;
 }
 
 export async function getApplicationState(): Promise<ApplicationConfig> {
-  return call('get_application_state')
+  return call("get_application_state");
 }
 
 export async function getSkills(): Promise<Skill[]> {
-  return call('get_skills')
+  return call("get_skills");
 }
 
 export async function getInstalledSkills(): Promise<Skill[]> {
-  return call('get_installed_skills')
+  return call("get_installed_skills");
 }
 
 export async function previewSkillUrl(rawUrl: string): Promise<ParsedSkillSource> {
-  return call('preview_skill_url', { rawUrl })
+  return call("preview_skill_url", { rawUrl });
 }
 
-export interface PackSkillPreview { name: string; description: string }
-export interface PackPreview { canonicalUrl: string; suggestedName: string; skills: PackSkillPreview[] }
-export interface ImportPackArgs { url: string; packName: string; color: string; groupId: string }
-export interface PackImportResult { tag: SkillTag; added: Skill[]; skipped: string[] }
+export interface PackSkillPreview {
+  name: string;
+  description: string;
+}
+export interface PackPreview {
+  canonicalUrl: string;
+  suggestedName: string;
+  skills: PackSkillPreview[];
+}
+export interface ImportPackArgs {
+  url: string;
+  packName: string;
+  color: string;
+  groupId: string;
+}
+export interface PackImportResult {
+  tag: SkillTag;
+  added: Skill[];
+  skipped: string[];
+}
 
 export async function previewPackUrl(rawUrl: string): Promise<PackPreview> {
-  return call('preview_pack_url', { rawUrl })
+  return call("preview_pack_url", { rawUrl });
 }
 
 export async function importPack(args: ImportPackArgs): Promise<PackImportResult> {
-  return call('import_pack', { args })
+  return call("import_pack", { args });
 }
 
 export async function addSkill(args: AddSkillArgs): Promise<Skill> {
-  return call('add_skill', { args })
+  return call("add_skill", { args });
 }
 
 export async function updateSkill(args: UpdateSkillArgs): Promise<Skill> {
-  return call('update_skill', { args })
+  return call("update_skill", { args });
 }
 
 export async function deleteSkill(skillId: string): Promise<void> {
-  return call('delete_skill', { skillId })
+  return call("delete_skill", { skillId });
 }
 
 export async function createTag(name: string, color: string): Promise<SkillTag> {
-  return call('create_tag', { args: { name, color } })
+  return call("create_tag", { args: { name, color } });
 }
 export async function updateTag(tagId: string, name: string, color: string): Promise<SkillTag> {
-  return call('update_tag', { args: { tagId, name, color } })
+  return call("update_tag", { args: { tagId, name, color } });
 }
-export async function deleteTag(tagId: string): Promise<void> { return call('delete_tag', { tagId }) }
-export async function reorderTags(tagIds: string[]): Promise<SkillTag[]> { return call('reorder_tags', { tagIds }) }
+export async function deleteTag(tagId: string): Promise<void> {
+  return call("delete_tag", { tagId });
+}
+export async function reorderTags(tagIds: string[]): Promise<SkillTag[]> {
+  return call("reorder_tags", { tagIds });
+}
 export async function assignTagToSkill(skillId: string, tagId: string): Promise<Skill> {
-  return call('assign_tag_to_skill', { skillId, tagId })
+  return call("assign_tag_to_skill", { skillId, tagId });
 }
 export async function unassignTagFromSkill(skillId: string, tagId: string): Promise<Skill> {
-  return call('unassign_tag_from_skill', { skillId, tagId })
+  return call("unassign_tag_from_skill", { skillId, tagId });
 }
 
 export async function getPreferences(): Promise<UiPreferences> {
-  return call('get_preferences')
+  return call("get_preferences");
 }
 
 export async function updatePreferences(preferences: UiPreferences): Promise<UiPreferences> {
-  return call('update_preferences', { preferences })
+  return call("update_preferences", { preferences });
 }
 
 export interface CliInstallResult {
-  commandPath: string
-  executablePath: string
-  pathConfigured: boolean
+  commandPath: string;
+  executablePath: string;
+  pathConfigured: boolean;
 }
 
 export async function installCliCommand(): Promise<CliInstallResult> {
-  return call('install_cli_command')
+  return call("install_cli_command");
 }
 
 export async function getDependencyStatus(): Promise<DependencyStatus> {
-  return call('get_dependency_status')
+  return call("get_dependency_status");
 }
 
 export async function validateInstallation(request: InstallRequest): Promise<void> {
-  return call('validate_installation', { request })
+  return call("validate_installation", { request });
 }
 
 /**
@@ -126,27 +146,31 @@ export async function installSkills(
   request: InstallRequest,
   onEvent: (event: InstallProgressEvent) => void,
 ): Promise<InstallResult> {
-  const channel = new Channel<InstallProgressEvent>()
-  channel.onmessage = onEvent
-  return call('install_skills', { request, onEvent: channel })
+  const channel = new Channel<InstallProgressEvent>();
+  channel.onmessage = onEvent;
+  return call("install_skills", { request, onEvent: channel });
 }
 
 export async function cancelInstallation(): Promise<void> {
-  return call('cancel_installation')
+  return call("cancel_installation");
 }
 
-export async function refresh(): Promise<ApplicationConfig> {
-  return call('refresh')
+export async function refresh(projectPath?: string): Promise<ApplicationConfig> {
+  return call("refresh", { projectPath });
 }
 
 export async function selectInstallationDirectory(defaultPath?: string): Promise<string | null> {
   const selected = await open({
-    title: 'Select installation folder',
+    title: "Select installation folder",
     directory: true,
     multiple: false,
     defaultPath: defaultPath || undefined,
-  })
-  return typeof selected === 'string' ? selected : null
+  });
+  return typeof selected === "string" ? selected : null;
 }
-export async function exportPortableConfiguration():Promise<string>{return call('export_portable_configuration')}
-export async function importPortableConfiguration(content:string):Promise<void>{return call('import_portable_configuration',{content})}
+export async function exportPortableConfiguration(): Promise<string> {
+  return call("export_portable_configuration");
+}
+export async function importPortableConfiguration(content: string): Promise<void> {
+  return call("import_portable_configuration", { content });
+}

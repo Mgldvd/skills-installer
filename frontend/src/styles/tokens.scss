@@ -3,121 +3,156 @@
 // nothing here should be duplicated in a component-level stylesheet.
 
 :root {
-    // --- Color: warm light theme -------------------------------------------
-    --bg-app: #f7f3ee;
-    --bg-panel: #fffaf7;
-    --bg-card: #ffffff;
-    --bg-card-hover: #fff7fa;
-    --bg-muted: #f1ebe5;
+  // --- Color: warm light theme -------------------------------------------
+  --bg-app: #f7f3ee;
+  --bg-panel: #fffaf7;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fff7fa;
+  --bg-muted: #f1ebe5;
 
-    --border-soft: #eadfd8;
-    --border-strong: #ddcec5;
+  --border-soft: #eadfd8;
+  --border-strong: #ddcec5;
 
-    --text-primary: #2c2528;
-    --text-secondary: #55494e;
-    --text-muted: #82767b;
+  --text-primary: #2c2528;
+  --text-secondary: #55494e;
+  --text-muted: #82767b;
 
-    --accent: #f43f75;
-    --accent-hover: #d92d63;
-    --accent-soft: #fde8ef;
-    --accent-soft-strong: #f8cfdd;
+  --accent: #f43f75;
+  --accent-hover: #d92d63;
+  --accent-soft: #fde8ef;
+  --accent-soft-strong: #f8cfdd;
 
-    --success: #3f7f57;
-    --success-soft: #e6f4eb;
+  --success: #3f7f57;
+  --success-soft: #e6f4eb;
 
-    --warning: #9c6a1f;
-    --warning-soft: #fff3dc;
+  --warning: #9c6a1f;
+  --warning-soft: #fff3dc;
 
-    --danger: #b53a48;
-    --danger-soft: #fdebec;
+  --danger: #b53a48;
+  --danger-soft: #fdebec;
 
-    --info: #45628a;
-    --info-soft: #eaf0f7;
+  --info: #45628a;
+  --info-soft: #eaf0f7;
 
-    --shadow-sm: 0 1px 2px rgba(56, 42, 48, 0.06);
-    --shadow-md: 0 8px 24px rgba(56, 42, 48, 0.1);
+  --shadow-sm: 0 1px 2px rgba(56, 42, 48, 0.06);
+  --shadow-md: 0 8px 24px rgba(56, 42, 48, 0.1);
 
-    --radius-sm: 2px;
-    --radius-md: 3px;
-    --radius-lg: 3px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
 
-    // --- Curated group color palette ---------------------------------------
-    // Kept in sync with `config::color::CURATED_PALETTE` in the Rust backend.
-    --palette-pink: #f43f75;
-    --palette-coral: #f05252;
-    --palette-orange: #f97316;
-    --palette-amber: #f59e0b;
-    --palette-green: #22c55e;
-    --palette-teal: #14b8a6;
-    --palette-cyan: #06b6d4;
-    --palette-blue: #3b82f6;
-    --palette-indigo: #6366f1;
-    --palette-violet: #a855f7;
+  // --- Curated group color palette ---------------------------------------
+  // Kept in sync with `config::color::CURATED_PALETTE` in the Rust backend.
+  --palette-pink: #f43f75;
+  --palette-coral: #f05252;
+  --palette-orange: #f97316;
+  --palette-amber: #f59e0b;
+  --palette-green: #22c55e;
+  --palette-teal: #14b8a6;
+  --palette-cyan: #06b6d4;
+  --palette-blue: #3b82f6;
+  --palette-indigo: #6366f1;
+  --palette-violet: #a855f7;
 
-    // --- Typography: proportional scaling -----------------------------------
-    // `--font-scale` is the only knob `usePreferences`/`FontScaleControl`
-    // ever touch; every semantic size token derives from it so nothing in
-    // the app hardcodes a literal rem value for text.
-    --font-scale: 1;
+  // --- Typography: proportional scaling -----------------------------------
+  // `--font-scale` is the only knob `usePreferences`/`FontScaleControl`
+  // ever touch; every semantic size token derives from it so nothing in
+  // the app hardcodes a literal rem value for text.
+  --font-scale: 1;
 
-    --font-size-xs: calc(0.75rem * var(--font-scale));
-    --font-size-sm: calc(0.875rem * var(--font-scale));
-    --font-size-md: calc(1rem * var(--font-scale));
-    --font-size-lg: calc(1.125rem * var(--font-scale));
-    --font-size-xl: calc(1.375rem * var(--font-scale));
-    --font-size-2xl: calc(1.625rem * var(--font-scale));
+  --font-size-xs: calc(0.75rem * var(--font-scale));
+  --font-size-sm: calc(0.875rem * var(--font-scale));
+  --font-size-md: calc(1rem * var(--font-scale));
+  --font-size-lg: calc(1.125rem * var(--font-scale));
+  --font-size-xl: calc(1.375rem * var(--font-scale));
+  --font-size-2xl: calc(1.625rem * var(--font-scale));
 
-    --line-height-tight: 1.25;
-    --line-height-normal: 1.5;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
 
-    --font-family-base:
-        -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
+  --font-family-base: -apple-system, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", Arial, sans-serif;
 
-    // --- Spacing (unscaled — layout rhythm, not text) -----------------------
-    --space-2xs: 0.25rem;
-    --space-xs: 0.5rem;
-    --space-sm: 0.75rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
+  // --- Spacing (unscaled — layout rhythm, not text) -----------------------
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
 
-    // --- Motion --------------------------------------------------------------
-    --transition-fast: 120ms ease;
-    --transition-base: 180ms ease;
+  // --- Motion --------------------------------------------------------------
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
 }
 
 :root[data-accent="coral"] {
-    --accent: #f05252;
-    --accent-hover: #d83f3f;
-    --accent-soft: #fbe9e7;
-    --accent-soft-strong: #f4d2cd;
+  --accent: #f05252;
+  --accent-hover: #d83f3f;
+  --accent-soft: #fbe9e7;
+  --accent-soft-strong: #f4d2cd;
 }
 :root[data-accent="blue"] {
-    --accent: #3b82f6;
-    --accent-hover: #2563d9;
-    --accent-soft: #eaf0fb;
-    --accent-soft-strong: #d5e0f6;
+  --accent: #3b82f6;
+  --accent-hover: #2563d9;
+  --accent-soft: #eaf0fb;
+  --accent-soft-strong: #d5e0f6;
 }
 :root[data-accent="teal"] {
-    --accent: #14b8a6;
-    --accent-hover: #0f8f82;
-    --accent-soft: #e6f3f1;
-    --accent-soft-strong: #cde6e3;
+  --accent: #14b8a6;
+  --accent-hover: #0f8f82;
+  --accent-soft: #e6f3f1;
+  --accent-soft-strong: #cde6e3;
 }
 :root[data-accent="violet"] {
-    --accent: #a855f7;
-    --accent-hover: #8b3ddb;
-    --accent-soft: #f1eaf7;
-    --accent-soft-strong: #e2d3ee;
+  --accent: #a855f7;
+  --accent-hover: #8b3ddb;
+  --accent-soft: #f1eaf7;
+  --accent-soft-strong: #e2d3ee;
 }
 :root[data-accent="green"] {
-    --accent: #22c55e;
-    --accent-hover: #158d42;
-    --accent-soft: #e8f4ed;
-    --accent-soft-strong: #d1e8da;
+  --accent: #22c55e;
+  --accent-hover: #158d42;
+  --accent-soft: #e8f4ed;
+  --accent-soft-strong: #d1e8da;
 }
 
 :root[data-theme="dark"] {
+  --bg-app: #211c1e;
+  --bg-panel: #2a2325;
+  --bg-card: #302729;
+  --bg-card-hover: #382c30;
+  --bg-muted: #3a2f32;
+
+  --border-soft: #453a3d;
+  --border-strong: #554749;
+
+  --text-primary: #f3ece9;
+  --text-secondary: #cbb9bd;
+  --text-muted: #9a878c;
+
+  --accent: #f43f75;
+  --accent-hover: #fb7199;
+  --accent-soft: #4a2c37;
+  --accent-soft-strong: #603346;
+
+  --success: #7fd19e;
+  --success-soft: #22362a;
+
+  --warning: #e0b25f;
+  --warning-soft: #3a2f1c;
+
+  --danger: #e8828d;
+  --danger-soft: #3d2226;
+
+  --info: #8fb0dc;
+  --info-soft: #23303f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
     --bg-app: #211c1e;
     --bg-panel: #2a2325;
     --bg-card: #302729;
@@ -150,41 +185,5 @@
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        --bg-app: #211c1e;
-        --bg-panel: #2a2325;
-        --bg-card: #302729;
-        --bg-card-hover: #382c30;
-        --bg-muted: #3a2f32;
-
-        --border-soft: #453a3d;
-        --border-strong: #554749;
-
-        --text-primary: #f3ece9;
-        --text-secondary: #cbb9bd;
-        --text-muted: #9a878c;
-
-        --accent: #f43f75;
-        --accent-hover: #fb7199;
-        --accent-soft: #4a2c37;
-        --accent-soft-strong: #603346;
-
-        --success: #7fd19e;
-        --success-soft: #22362a;
-
-        --warning: #e0b25f;
-        --warning-soft: #3a2f1c;
-
-        --danger: #e8828d;
-        --danger-soft: #3d2226;
-
-        --info: #8fb0dc;
-        --info-soft: #23303f;
-
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
-    }
+  }
 }
