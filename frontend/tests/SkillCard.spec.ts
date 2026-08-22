@@ -29,6 +29,18 @@ describe("SkillCard", () => {
     expect(wrapper.text()).not.toContain("Hidden details");
   });
 
+  it("hides description details in list mode, still selectable and editable", async () => {
+    const wrapper = mount(SkillCard, {
+      props: { skill: makeSkill({ id: "triage", description: "Hidden in list" }), selected: false, list: true },
+    });
+    expect(wrapper.classes()).toContain("is-list");
+    expect(wrapper.find(".skill-card__description").exists()).toBe(false);
+    expect(wrapper.text()).not.toContain("Hidden in list");
+
+    await wrapper.find(".skill-card__selection-surface").trigger("click");
+    expect(wrapper.emitted("toggle")).toEqual([["triage"]]);
+  });
+
   it("selects from the title and dead card surface without hijacking description", async () => {
     const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: "triage" }), selected: false } });
 

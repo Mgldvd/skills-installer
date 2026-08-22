@@ -3,7 +3,7 @@
     name="skill-grid"
     tag="div"
     class="skill-grid"
-    :class="{ 'skill-grid--compact': compact }"
+    :class="{ 'skill-grid--compact': compact, 'skill-grid--list': view === 'list' }"
     role="list">
     <p v-if="skills.length === 0" key="empty" class="skill-grid__empty">
       No skills match the current search and filter.
@@ -14,6 +14,7 @@
         :selected="selectedIds.has(skill.id)"
         :tags="tags"
         :compact="compact"
+        :list="view === 'list'"
         :installing="skill.id === installingSkillId"
         @toggle="(id) => emit('toggle', id)"
         @edit="(id) => emit('edit', id)" />
@@ -32,8 +33,9 @@ withDefaults(
     selectedIds: Set<string>;
     compact?: boolean;
     installingSkillId?: string | null;
+    view?: "grid" | "list";
   }>(),
-  { installingSkillId: null },
+  { installingSkillId: null, view: "grid" },
 );
 
 const emit = defineEmits<{

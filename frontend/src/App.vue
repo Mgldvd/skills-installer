@@ -1,25 +1,34 @@
 <template>
   <div class="app-shell">
-    <AppHeader
-      :project-path="state.projectRoot"
-      :dependency-status="state.dependencyStatus"
-      :scope="state.preferences.defaultScope"
-      :agents="state.preferences.defaultAgents"
-      @open-agents="isAgentsOpen = true"
-      @update:project-path="handleProjectPathUpdate" />
-
     <main class="app-shell__main">
+      <AppHeader
+        :project-path="state.projectRoot"
+        :dependency-status="state.dependencyStatus"
+        :scope="state.preferences.defaultScope"
+        :agents="state.preferences.defaultAgents"
+        @open-agents="isAgentsOpen = true"
+        @update:project-path="handleProjectPathUpdate" />
+
       <SkillToolbar
         :tags="state.tags"
         :skills="state.skills"
         :selected-ids="[...state.selectedSkillIds]"
-        :query="skillQuery"
-        :sort-by="skillSort"
         @toggle-tag="toggleTagSelection"
         @reorder-tags="handleReorderTags"
-        @clear-selection="clearSelection"
+        @clear-selection="clearSelection" />
+
+      <SkillFilterBar
+        :query="skillQuery"
+        :sort-by="skillSort"
+        :view="skillView"
+        :source-filter="skillSourceFilter"
+        :pack-filter="skillPackFilter"
+        :tags="state.tags"
         @update:query="skillQuery = $event"
-        @update:sort-by="skillSort = $event" />
+        @update:sort-by="skillSort = $event"
+        @update:view="skillView = $event"
+        @update:source-filter="skillSourceFilter = $event"
+        @update:pack-filter="skillPackFilter = $event" />
 
       <SkillGrid
         :skills="displayedSkills"
@@ -27,6 +36,7 @@
         :selected-ids="state.selectedSkillIds"
         :compact="state.preferences.compactCards"
         :installing-skill-id="installingSkillId"
+        :view="skillView"
         @toggle="toggleSelected"
         @edit="openEditDialog" />
 
@@ -141,6 +151,7 @@ import InstallConfirmDialog from "./components/InstallConfirmDialog/InstallConfi
 import InstallProgressPanel from "./components/InstallProgressPanel/InstallProgressPanel.vue";
 import TagsDialog from "./components/TagsDialog/TagsDialog.vue";
 import PreferencesDialog from "./components/PreferencesDialog/PreferencesDialog.vue";
+import SkillFilterBar from "./components/SkillFilterBar/SkillFilterBar.vue";
 import SkillGrid from "./components/SkillGrid/SkillGrid.vue";
 import SkillToolbar from "./components/SkillToolbar/SkillToolbar.vue";
 import ToastHost from "./components/ToastHost/ToastHost.vue";
@@ -179,6 +190,9 @@ const skillBeingEdited = computed<Skill | null>(
 const isInstallConfirmOpen = ref(false);
 const skillQuery = ref("");
 const skillSort = ref<"name" | "pack" | "local" | "remote">("name");
+const skillView = ref<"grid" | "list">("grid");
+const skillSourceFilter = ref<"all" | "local" | "remote">("all");
+const skillPackFilter = ref<string | null>(null);
 
 const displayedSkills = computed(() => {
   const query = skillQuery.value.trim().toLocaleLowerCase();
@@ -192,6 +206,12 @@ const displayedSkills = computed(() => {
         skill.displayName.toLocaleLowerCase().includes(query) ||
         skill.description.toLocaleLowerCase().includes(query),
     )
+    .filter((skill) => {
+      if (skillSourceFilter.value === "local") return skill.local;
+      if (skillSourceFilter.value === "remote") return !skill.local;
+      return true;
+    })
+    .filter((skill) => !skillPackFilter.value || skill.tags.includes(skillPackFilter.value))
     .slice()
     .sort((a, b) => {
       // Selected skills lead, then installed-but-unselected ones, then

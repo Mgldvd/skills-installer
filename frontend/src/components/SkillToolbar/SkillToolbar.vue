@@ -44,32 +44,6 @@
       @click="emit('clearSelection')">
       Clear
     </button>
-    <div class="skill-toolbar__controls">
-      <label class="skill-toolbar__search">
-        <span class="sr-only">Filter Skills</span>
-        <svg viewBox="0 0 20 20" aria-hidden="true">
-          <circle cx="8.5" cy="8.5" r="5.5" />
-          <path d="m13 13 4 4" />
-        </svg>
-        <input
-          type="search"
-          :value="query"
-          placeholder="Filter skills..."
-          @input="emit('update:query', ($event.target as HTMLInputElement).value)" />
-      </label>
-      <label class="skill-toolbar__sort">
-        <span>Sort by</span>
-        <select
-          :value="sortBy"
-          aria-label="Sort Skills"
-          @change="emit('update:sortBy', ($event.target as HTMLSelectElement).value as SortMode)">
-          <option value="name">Name</option>
-          <option value="pack">Pack</option>
-          <option value="local">Local</option>
-          <option value="remote">Remote</option>
-        </select>
-      </label>
-    </div>
   </section>
 </template>
 
@@ -79,22 +53,16 @@ import { computed, ref } from "vue";
 import type { Skill, SkillTag } from "../../types";
 import PackBadge from "../PackBadge/PackBadge.vue";
 
-type SortMode = "name" | "pack" | "local" | "remote";
-
 const props = withDefaults(
   defineProps<{
     tags?: SkillTag[];
     skills?: Skill[];
     selectedIds?: string[];
-    query?: string;
-    sortBy?: SortMode;
   }>(),
   {
     tags: () => [],
     skills: () => [],
     selectedIds: () => [],
-    query: "",
-    sortBy: "name",
   },
 );
 
@@ -102,8 +70,6 @@ const emit = defineEmits<{
   toggleTag: [tagId: string];
   reorderTags: [tagIds: string[]];
   clearSelection: [];
-  "update:query": [value: string];
-  "update:sortBy": [value: SortMode];
 }>();
 const draggedTagId = ref<string | null>(null);
 const dragOverTagId = ref<string | null>(null);

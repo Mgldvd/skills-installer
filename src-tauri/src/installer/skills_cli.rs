@@ -121,6 +121,18 @@ impl SkillsCliInstaller {
         Ok(args)
     }
 
+    /// The directory a batch's `skills` invocations run in: the GUI's
+    /// selected destination folder when set (trimmed; empty/whitespace
+    /// treated the same as unset, see `empty_project_path_falls_back_to_project_root`
+    /// test), otherwise this installer's own project root.
+    fn resolve_cwd(&self, project_path: Option<&str>) -> PathBuf {
+        project_path
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| self.project_root.clone())
+    }
+
     async fn run_and_collect(
         &self,
         program: &str,
@@ -302,16 +314,7 @@ impl Installer for SkillsCliInstaller {
             let spec = ProcessSpec {
                 program,
                 args: full_args,
-                cwd: Some(
-                    batch
-                        .options
-                        .project_path
-                        .as_deref()
-                        .map(str::trim)
-                        .filter(|s| !s.is_empty())
-                        .map(PathBuf::from)
-                        .unwrap_or_else(|| self.project_root.clone()),
-                ),
+                cwd: Some(self.resolve_cwd(batch.options.project_path.as_deref())),
                 env: Vec::new(),
             };
             let outcome = self.process_runner.run(spec, tx, cancel.clone()).await;
@@ -375,6 +378,17 @@ impl Installer for SkillsCliInstaller {
                 }
             }
         }
+
+        // The real `skills` CLI writes its own skills-lock.json (a
+        // package-lock-style manifest of what it has seen) into whatever
+        // directory it ran in — a file this app's users never asked for and
+        // don't want left behind. Best-effort: ignore the error when there's
+        // nothing to remove (dry runs, or every skill failing before the CLI
+        // ever wrote one).
+        let _ = std::fs::remove_file(
+            self.resolve_cwd(batch.options.project_path.as_deref())
+                .join("skills-lock.json"),
+        );
 
         let _ = progress.send(InstallProgressEvent::Complete {
             result: result.clone(),
@@ -862,6 +876,39 @@ mod tests {
 
         let call = process_runner.calls.lock().unwrap()[0].clone();
         assert_eq!(call.cwd, Some(PathBuf::from("/tmp/user-selected-folder")));
+    }
+
+    #[tokio::test]
+    async fn removes_the_skills_lock_file_the_real_cli_leaves_behind() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::success()]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let tmp = tempfile::tempdir().unwrap();
+        let installer = SkillsCliInstaller::with_resolver(
+            process_runner.clone(),
+            tmp.path().to_path_buf(),
+            resolver,
+        );
+
+        // The FakeProcessRunner never actually runs `skills`, so simulate the
+        // side effect the real CLI leaves behind in the install cwd.
+        let lock_file = tmp.path().join("skills-lock.json");
+        std::fs::write(&lock_file, "{}").unwrap();
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        let batch = InstallBatch {
+            skills: vec![remote_skill("triage")],
+            options: crate::domain::InstallOptions::default(),
+        };
+        installer
+            .install(batch, tx, CancellationToken::new())
+            .await
+            .unwrap();
+        drop(rx);
+
+        assert!(
+            !lock_file.exists(),
+            "skills-lock.json should be removed after install"
+        );
     }
 
     #[tokio::test]

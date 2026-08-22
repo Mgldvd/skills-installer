@@ -141,6 +141,20 @@ describe("App", () => {
     ]);
   });
 
+  it("switches the grid to list view from the toolbar toggle", async () => {
+    mockLoadedApp();
+    const wrapper = mount(App);
+    await flushPromises();
+
+    expect(wrapper.find(".skill-grid").classes()).not.toContain("skill-grid--list");
+    expect(wrapper.find(".skill-card").classes()).not.toContain("is-list");
+
+    await wrapper.get('[aria-label="List view"]').trigger("click");
+
+    expect(wrapper.find(".skill-grid").classes()).toContain("skill-grid--list");
+    expect(wrapper.find(".skill-card").classes()).toContain("is-list");
+  });
+
   it("leads with selected cards, then installed-but-unselected ones, then the rest", async () => {
     mockLoadedApp();
     const wrapper = mount(App);

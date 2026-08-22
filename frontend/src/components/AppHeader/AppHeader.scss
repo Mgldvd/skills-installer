@@ -5,7 +5,8 @@
   gap: var(--space-lg);
   padding: var(--space-sm) var(--space-lg);
   background: var(--bg-panel);
-  border-bottom: 1px solid var(--border-soft);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
 
   .app-header__brand {
     display: flex;

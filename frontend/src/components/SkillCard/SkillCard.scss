@@ -30,6 +30,33 @@
   &.is-compact {
     grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(1.75rem, auto);
   }
+  &.is-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: auto;
+    min-height: calc(3rem * var(--font-scale));
+    padding: var(--space-xs) var(--space-sm);
+    gap: var(--space-sm);
+
+    .skill-card__top {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: auto;
+      padding-right: 0;
+    }
+
+    .skill-card__title {
+      -webkit-line-clamp: 1;
+      max-height: none;
+    }
+
+    .skill-card__footer {
+      flex: 0 0 auto;
+      min-height: 0;
+      width: auto;
+    }
+  }
 
   .skill-card__selection-surface {
     position: absolute;
@@ -118,6 +145,17 @@
     clip-path: polygon(0 0, 100% 0, 100% 100%);
     pointer-events: none;
     transition: background-color var(--transition-fast);
+  }
+  // In list mode the corner triangle doesn't read well on a thin row, so it
+  // becomes a leading color strip instead — same status colors, same DOM
+  // node, just repositioned by CSS rather than duplicating the template.
+  &.is-list .skill-card__selection-ribbon {
+    position: static;
+    flex: 0 0 auto;
+    width: 0.3rem;
+    height: 1.5rem;
+    border-radius: var(--radius-sm);
+    clip-path: none;
   }
 
   &.is-selected .skill-card__selection-ribbon {

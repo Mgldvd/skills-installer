@@ -5,6 +5,7 @@
       'is-selected': selected,
       'is-disabled': !skill.enabled,
       'is-compact': compact,
+      'is-list': list,
       'is-installed': skill.installed,
       'is-installing': installing,
     }">
@@ -27,7 +28,7 @@
       </span>
     </header>
 
-    <div v-if="!compact" class="skill-card__description">
+    <div v-if="!compact && !list" class="skill-card__description">
       <span class="skill-card__description-text">{{ skill.description || "No description provided." }}</span>
     </div>
 
@@ -66,9 +67,10 @@ const props = withDefaults(
     selected: boolean;
     tags?: SkillTag[];
     compact?: boolean;
+    list?: boolean;
     installing?: boolean;
   }>(),
-  { tags: () => [], compact: false, installing: false },
+  { tags: () => [], compact: false, list: false, installing: false },
 );
 
 const emit = defineEmits<{

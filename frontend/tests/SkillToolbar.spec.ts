@@ -79,17 +79,4 @@ describe("SkillToolbar Pack preselection", () => {
     await clear.trigger("click");
     expect(wrapper.emitted("clearSelection")).toHaveLength(1);
   });
-
-  it("places filter and sorting controls beside preselection", async () => {
-    const wrapper = mount(SkillToolbar, {
-      props: { tags, skills: [makeSkill()], selectedIds: [], query: "", sortBy: "name" },
-    });
-    const search = wrapper.get('input[type="search"]');
-    await search.setValue("triage");
-    expect(wrapper.emitted("update:query")).toEqual([["triage"]]);
-    const sort = wrapper.get('select[aria-label="Sort Skills"]');
-    expect(sort.findAll("option").map((option) => option.text())).toEqual(["Name", "Pack", "Local", "Remote"]);
-    await sort.setValue("pack");
-    expect(wrapper.emitted("update:sortBy")).toEqual([["pack"]]);
-  });
 });
