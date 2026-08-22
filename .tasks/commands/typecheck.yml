@@ -1,0 +1,9 @@
+version: "3"
+
+tasks:
+  typecheck:
+    summary: Type-check both halves of the app without emitting anything.
+    deps: [frontend-deps]
+    cmds:
+      - npm run typecheck --prefix {{.FRONTEND_DIR}}
+      - cargo check --manifest-path {{.TAURI_DIR}}/Cargo.toml --all-targets

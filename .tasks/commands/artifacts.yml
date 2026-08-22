@@ -1,0 +1,9 @@
+version: "3"
+
+tasks:
+  artifacts:
+    summary: Build and copy the AppImage + .deb into dist/ with the documented naming patterns. Only runs inside the Docker release container (depends on build) — use `task docker:release`.
+    deps: [build]
+    cmds:
+      - mkdir -p {{.DIST_DIR}}
+      - bash .tasks/scripts/copy-artifacts.sh {{.TAURI_DIR}} {{.DIST_DIR}} {{.VERSION}}

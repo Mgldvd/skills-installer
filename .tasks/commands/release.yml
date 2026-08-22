@@ -1,0 +1,13 @@
+version: "3"
+
+tasks:
+  release:
+    summary: Full verification pipeline (typecheck, lint, test) plus every Linux artifact, copied into dist/. The artifact steps only run inside the Docker release container — use `task docker:release`.
+    cmds:
+      - task: typecheck
+      - task: lint
+      - task: test
+      - task: artifacts
+      - cp {{.TAURI_DIR}}/target/release/skills-installer {{.DIST_DIR}}/skills-installer
+      - echo "Release artifacts:"
+      - ls -la {{.DIST_DIR}}/

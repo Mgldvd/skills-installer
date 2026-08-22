@@ -1,0 +1,10 @@
+version: "3"
+
+tasks:
+  lint:
+    summary: Lint both halves of the app.
+    deps: [frontend-deps]
+    cmds:
+      - npm run lint --prefix {{.FRONTEND_DIR}}
+      - cargo fmt --manifest-path {{.TAURI_DIR}}/Cargo.toml -- --check
+      - cargo clippy --manifest-path {{.TAURI_DIR}}/Cargo.toml --all-targets -- -D warnings

@@ -1,0 +1,8 @@
+version: "3"
+
+tasks:
+  frontend-deps:
+    desc: Install frontend dependencies (npm no-ops when already up to date).
+    internal: true
+    cmds:
+      - npm install --prefix {{.FRONTEND_DIR}}

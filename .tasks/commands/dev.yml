@@ -1,0 +1,8 @@
+version: "3"
+
+tasks:
+  dev:
+    desc: Start the Tauri development app (hot-reloading Vue frontend + Rust backend).
+    deps: [frontend-deps]
+    cmds:
+      - "{{.TAURI_BIN}} dev"

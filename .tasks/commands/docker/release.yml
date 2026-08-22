@@ -1,0 +1,34 @@
+version: "3"
+
+tasks:
+  "docker:release":
+    desc: Run the full release pipeline inside Docker, matching CI exactly (replaces the old ./dist.sh).
+    preconditions:
+      - sh: command -v docker >/dev/null 2>&1
+        msg: "Docker no está instalado o no está disponible en PATH."
+      - sh: docker compose version >/dev/null 2>&1
+        msg: "Se requiere Docker Compose v2 (comando: docker compose)."
+      - sh: docker info >/dev/null 2>&1
+        msg: "El daemon de Docker no está activo o el usuario no tiene acceso."
+    vars:
+      HOST_UID:
+        sh: id -u
+      HOST_GID:
+        sh: id -g
+    env:
+      HOST_UID: "{{.HOST_UID}}"
+      HOST_GID: "{{.HOST_GID}}"
+    cmds:
+      # Pre-create every path a named volume mounts *under* the bind-mounted
+      # repo (see compose.yml). Docker itself — not the container's process —
+      # creates a missing mount-point directory on the host when a container
+      # starts, and it does so as whichever user runs the Docker daemon
+      # (root, on a typical Linux install), regardless of which user runs
+      # inside the container. Creating them here first, as the normal host
+      # user, means Docker never has to.
+      - mkdir -p {{.FRONTEND_DIR}}/node_modules {{.TAURI_DIR}}/target {{.DIST_DIR}}
+      - docker compose build dist
+      - docker compose run --rm --no-deps dist
+      - echo
+      - echo "Artifacts generados en {{.ROOT_DIR}}/{{.DIST_DIR}}"
+      - ls -lah {{.DIST_DIR}}

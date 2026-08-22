@@ -1,0 +1,13 @@
+version: "3"
+
+tasks:
+  smoke:
+    summary: Wipe test/ and install 5 random enabled skills into it through the real CLI (no mocks) — quick end-to-end sanity check.
+    deps: ["build:debug"]
+    preconditions:
+      - sh: command -v jq >/dev/null 2>&1
+        msg: "jq no está instalado — necesario para elegir skills al azar del catálogo."
+      - sh: command -v shuf >/dev/null 2>&1
+        msg: "shuf no está instalado (coreutils) — necesario para elegir skills al azar."
+    cmds:
+      - bash .tasks/scripts/smoke.sh {{.TEST_DIR}} {{.CLI_BIN}}

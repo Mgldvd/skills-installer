@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
 # https://taskfile.dev
 
 version: "3"
@@ -17,148 +18,43 @@ vars:
   VERSION:
     sh: grep -m1 '^version' src-tauri/Cargo.toml | cut -d '"' -f2
 
-tasks:
+includes:
   default:
-    desc: List all available tasks.
-    cmds:
-      - task --list --sort none
-
+    taskfile: .tasks/commands/default.yml
+    flatten: true
   frontend-deps:
-    desc: Install frontend dependencies (npm no-ops when already up to date).
-    internal: true
-    cmds:
-      - npm install --prefix {{.FRONTEND_DIR}}
-
+    taskfile: .tasks/commands/frontend-deps.yml
+    flatten: true
   dev:
-    desc: Start the Tauri development app (hot-reloading Vue frontend + Rust backend).
-    deps: [frontend-deps]
-    cmds:
-      - "{{.TAURI_BIN}} dev"
-
+    taskfile: .tasks/commands/dev.yml
+    flatten: true
   typecheck:
-    summary: Type-check both halves of the app without emitting anything.
-    deps: [frontend-deps]
-    cmds:
-      - npm run typecheck --prefix {{.FRONTEND_DIR}}
-      - cargo check --manifest-path {{.TAURI_DIR}}/Cargo.toml --all-targets
-
+    taskfile: .tasks/commands/typecheck.yml
+    flatten: true
   lint:
-    summary: Lint both halves of the app.
-    deps: [frontend-deps]
-    cmds:
-      - npm run lint --prefix {{.FRONTEND_DIR}}
-      - cargo fmt --manifest-path {{.TAURI_DIR}}/Cargo.toml -- --check
-      - cargo clippy --manifest-path {{.TAURI_DIR}}/Cargo.toml --all-targets -- -D warnings
-
+    taskfile: .tasks/commands/lint.yml
+    flatten: true
   test:
-    summary: Run both test suites. No real network calls or installs happen here — Rust tests use FakeInstaller/FakeProcessRunner, Vue tests use jsdom.
-    deps: [frontend-deps]
-    cmds:
-      - npm run test --prefix {{.FRONTEND_DIR}}
-      - cargo test --manifest-path {{.TAURI_DIR}}/Cargo.toml
-
+    taskfile: .tasks/commands/test.yml
+    flatten: true
   build:
-    summary: Build the release-grade raw executable and the configured bundles (AppImage + .deb, per src-tauri/tauri.conf.json's bundle.targets). Only runs inside the Docker release container — use `task docker:release`.
-    deps: [frontend-deps]
-    preconditions:
-      - sh: '[ "${SKILLS_INSTALLER_RELEASE_CONTAINER:-}" = "1" ]'
-        msg: "task build (and artifacts/release, which depend on it) only run inside the Docker release container, so every distributable artifact comes from the same fixed, reproducible environment. Run `task docker:release` instead."
-    cmds:
-      - "{{.TAURI_BIN}} build"
-
-  build:debug:
-    summary: Build a debug CLI binary (no frontend bundling, no AppImage/deb) for fast local install testing.
-    cmds:
-      - cargo build --manifest-path {{.TAURI_DIR}}/Cargo.toml --bin skills-installer
-
+    taskfile: .tasks/commands/build.yml
+    flatten: true
+  build_debug:
+    taskfile: .tasks/commands/build/debug.yml
+    flatten: true
   smoke:
-    summary: Wipe test/ and install 5 random enabled skills into it through the real CLI (no mocks) — quick end-to-end sanity check.
-    deps: [build:debug]
-    preconditions:
-      - sh: command -v jq >/dev/null 2>&1
-        msg: "jq no está instalado — necesario para elegir skills al azar del catálogo."
-      - sh: command -v shuf >/dev/null 2>&1
-        msg: "shuf no está instalado (coreutils) — necesario para elegir skills al azar."
-    cmds:
-      - |
-        rm -rf {{.TEST_DIR}}
-        mkdir -p {{.TEST_DIR}}
-        cd {{.TEST_DIR}}
-        ids=$(../{{.CLI_BIN}} list --json | jq -r '.[] | select(.enabled) | .id' | shuf -n 5)
-        echo "Installing: $ids"
-        ../{{.CLI_BIN}} install $ids --yes
-        echo
-        echo "Installed in {{.TEST_DIR}}/:"
-        ../{{.CLI_BIN}} list --installed
-
+    taskfile: .tasks/commands/smoke.yml
+    flatten: true
   artifacts:
-    summary: Build and copy the AppImage + .deb into dist/ with the documented naming patterns. Only runs inside the Docker release container (depends on build) — use `task docker:release`.
-    deps: [build]
-    cmds:
-      - mkdir -p {{.DIST_DIR}}
-      - |
-        appimage_src=$(find {{.TAURI_DIR}}/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage' | head -n1)
-        if [ -z "$appimage_src" ]; then
-          echo "No AppImage found under {{.TAURI_DIR}}/target/release/bundle/appimage" >&2
-          exit 1
-        fi
-        cp "$appimage_src" "{{.DIST_DIR}}/Skills-Installer-{{.VERSION}}-x86_64.AppImage"
-        echo "Copied $appimage_src -> {{.DIST_DIR}}/Skills-Installer-{{.VERSION}}-x86_64.AppImage"
-        cp "$appimage_src" "{{.DIST_DIR}}/skills-installer.AppImage"
-        echo "Copied $appimage_src -> {{.DIST_DIR}}/skills-installer.AppImage"
-
-        deb_src=$(find {{.TAURI_DIR}}/target/release/bundle/deb -maxdepth 1 -name '*.deb' | head -n1)
-        if [ -z "$deb_src" ]; then
-          echo "No .deb found under {{.TAURI_DIR}}/target/release/bundle/deb" >&2
-          exit 1
-        fi
-        cp "$deb_src" "{{.DIST_DIR}}/skills-installer_{{.VERSION}}_amd64.deb"
-        echo "Copied $deb_src -> {{.DIST_DIR}}/skills-installer_{{.VERSION}}_amd64.deb"
-
+    taskfile: .tasks/commands/artifacts.yml
+    flatten: true
   release:
-    summary: Full verification pipeline (typecheck, lint, test) plus every Linux artifact, copied into dist/. The artifact steps only run inside the Docker release container — use `task docker:release`.
-    cmds:
-      - task: typecheck
-      - task: lint
-      - task: test
-      - task: artifacts
-      - cp {{.TAURI_DIR}}/target/release/skills-installer {{.DIST_DIR}}/skills-installer
-      - echo "Release artifacts:"
-      - ls -la {{.DIST_DIR}}/
-
+    taskfile: .tasks/commands/release.yml
+    flatten: true
   clean:
-    summary: Remove build artifacts (src-tauri/target, frontend/dist, dist). Destructive — do not run without authorization.
-    cmds:
-      - rm -rf {{.TAURI_DIR}}/target {{.FRONTEND_DIR}}/dist {{.DIST_DIR}}
-
-  docker:release:
-    desc: Run the full release pipeline inside Docker, matching CI exactly (replaces the old ./dist.sh).
-    preconditions:
-      - sh: command -v docker >/dev/null 2>&1
-        msg: "Docker no está instalado o no está disponible en PATH."
-      - sh: docker compose version >/dev/null 2>&1
-        msg: "Se requiere Docker Compose v2 (comando: docker compose)."
-      - sh: docker info >/dev/null 2>&1
-        msg: "El daemon de Docker no está activo o el usuario no tiene acceso."
-    vars:
-      HOST_UID:
-        sh: id -u
-      HOST_GID:
-        sh: id -g
-    env:
-      HOST_UID: "{{.HOST_UID}}"
-      HOST_GID: "{{.HOST_GID}}"
-    cmds:
-      # Pre-create every path a named volume mounts *under* the bind-mounted
-      # repo (see compose.yml). Docker itself — not the container's process —
-      # creates a missing mount-point directory on the host when a container
-      # starts, and it does so as whichever user runs the Docker daemon
-      # (root, on a typical Linux install), regardless of which user runs
-      # inside the container. Creating them here first, as the normal host
-      # user, means Docker never has to.
-      - mkdir -p {{.FRONTEND_DIR}}/node_modules {{.TAURI_DIR}}/target {{.DIST_DIR}}
-      - docker compose build dist
-      - docker compose run --rm --no-deps dist
-      - echo
-      - echo "Artifacts generados en {{.ROOT_DIR}}/{{.DIST_DIR}}"
-      - ls -lah {{.DIST_DIR}}
+    taskfile: .tasks/commands/clean.yml
+    flatten: true
+  docker_release:
+    taskfile: .tasks/commands/docker/release.yml
+    flatten: true

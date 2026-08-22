@@ -1,0 +1,9 @@
+version: "3"
+
+tasks:
+  test:
+    summary: Run both test suites. No real network calls or installs happen here — Rust tests use FakeInstaller/FakeProcessRunner, Vue tests use jsdom.
+    deps: [frontend-deps]
+    cmds:
+      - npm run test --prefix {{.FRONTEND_DIR}}
+      - cargo test --manifest-path {{.TAURI_DIR}}/Cargo.toml

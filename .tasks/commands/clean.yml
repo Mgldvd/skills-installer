@@ -1,0 +1,7 @@
+version: "3"
+
+tasks:
+  clean:
+    summary: Remove build artifacts (src-tauri/target, frontend/dist, dist). Destructive — do not run without authorization.
+    cmds:
+      - rm -rf {{.TAURI_DIR}}/target {{.FRONTEND_DIR}}/dist {{.DIST_DIR}}
