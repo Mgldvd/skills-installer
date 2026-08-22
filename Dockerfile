@@ -20,7 +20,14 @@ ENV DEBIAN_FRONTEND=noninteractive \
     npm_config_fetch_retries=5 \
     npm_config_fetch_retry_mintimeout=10000 \
     npm_config_fetch_retry_maxtimeout=120000 \
-    npm_config_fetch_timeout=300000
+    npm_config_fetch_timeout=300000 \
+    SKILLS_INSTALLER_RELEASE_CONTAINER=1
+
+# Marks that we're running inside this image, so the Taskfile's release-
+# producing tasks (build/appimage/deb/release) can refuse to run on a bare
+# host and point people at `task docker:release` instead — the whole point
+# of building in Docker is a fixed, reproducible environment, which a task
+# quietly succeeding on the host would defeat.
 
 # mgldvd/tauri-vue defaults to a non-root USER, unlike the old
 # ivangabriele/tauri image — apt/rustup need root to install/modify

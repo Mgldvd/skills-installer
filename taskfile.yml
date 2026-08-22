@@ -36,14 +36,14 @@ tasks:
       - "{{.TAURI_BIN}} dev"
 
   typecheck:
-    desc: Type-check both halves of the app without emitting anything.
+    summary: Type-check both halves of the app without emitting anything.
     deps: [frontend-deps]
     cmds:
       - npm run typecheck --prefix {{.FRONTEND_DIR}}
       - cargo check --manifest-path {{.TAURI_DIR}}/Cargo.toml --all-targets
 
   lint:
-    desc: Lint both halves of the app.
+    summary: Lint both halves of the app.
     deps: [frontend-deps]
     cmds:
       - npm run lint --prefix {{.FRONTEND_DIR}}
@@ -51,25 +51,28 @@ tasks:
       - cargo clippy --manifest-path {{.TAURI_DIR}}/Cargo.toml --all-targets -- -D warnings
 
   test:
-    desc: Run both test suites. No real network calls or installs happen here — Rust tests use FakeInstaller/FakeProcessRunner, Vue tests use jsdom.
+    summary: Run both test suites. No real network calls or installs happen here — Rust tests use FakeInstaller/FakeProcessRunner, Vue tests use jsdom.
     deps: [frontend-deps]
     cmds:
       - npm run test --prefix {{.FRONTEND_DIR}}
       - cargo test --manifest-path {{.TAURI_DIR}}/Cargo.toml
 
   build:
-    desc: Build the release-grade raw executable and the configured bundles (AppImage + .deb, per src-tauri/tauri.conf.json's bundle.targets).
+    summary: Build the release-grade raw executable and the configured bundles (AppImage + .deb, per src-tauri/tauri.conf.json's bundle.targets). Only runs inside the Docker release container — use `task docker:release`.
     deps: [frontend-deps]
+    preconditions:
+      - sh: '[ "${SKILLS_INSTALLER_RELEASE_CONTAINER:-}" = "1" ]'
+        msg: "task build (and artifacts/release, which depend on it) only run inside the Docker release container, so every distributable artifact comes from the same fixed, reproducible environment. Run `task docker:release` instead."
     cmds:
       - "{{.TAURI_BIN}} build"
 
   build:debug:
-    desc: Build a debug CLI binary (no frontend bundling, no AppImage/deb) for fast local install testing.
+    summary: Build a debug CLI binary (no frontend bundling, no AppImage/deb) for fast local install testing.
     cmds:
       - cargo build --manifest-path {{.TAURI_DIR}}/Cargo.toml --bin skills-installer
 
   smoke:
-    desc: Wipe test/ and install 5 random enabled skills into it through the real CLI (no mocks) — quick end-to-end sanity check.
+    summary: Wipe test/ and install 5 random enabled skills into it through the real CLI (no mocks) — quick end-to-end sanity check.
     deps: [build:debug]
     preconditions:
       - sh: command -v jq >/dev/null 2>&1
@@ -88,48 +91,43 @@ tasks:
         echo "Installed in {{.TEST_DIR}}/:"
         ../{{.CLI_BIN}} list --installed
 
-  appimage:
-    desc: Build and copy the AppImage into dist/ with the documented naming pattern.
+  artifacts:
+    summary: Build and copy the AppImage + .deb into dist/ with the documented naming patterns. Only runs inside the Docker release container (depends on build) — use `task docker:release`.
     deps: [build]
     cmds:
       - mkdir -p {{.DIST_DIR}}
       - |
-        src=$(find {{.TAURI_DIR}}/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage' | head -n1)
-        if [ -z "$src" ]; then
+        appimage_src=$(find {{.TAURI_DIR}}/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage' | head -n1)
+        if [ -z "$appimage_src" ]; then
           echo "No AppImage found under {{.TAURI_DIR}}/target/release/bundle/appimage" >&2
           exit 1
         fi
-        cp "$src" "{{.DIST_DIR}}/Skills-Installer-{{.VERSION}}-x86_64.AppImage"
-        echo "Copied $src -> {{.DIST_DIR}}/Skills-Installer-{{.VERSION}}-x86_64.AppImage"
+        cp "$appimage_src" "{{.DIST_DIR}}/Skills-Installer-{{.VERSION}}-x86_64.AppImage"
+        echo "Copied $appimage_src -> {{.DIST_DIR}}/Skills-Installer-{{.VERSION}}-x86_64.AppImage"
+        cp "$appimage_src" "{{.DIST_DIR}}/skills-installer.AppImage"
+        echo "Copied $appimage_src -> {{.DIST_DIR}}/skills-installer.AppImage"
 
-  deb:
-    desc: Build and copy the .deb into dist/ with the documented naming pattern.
-    deps: [build]
-    cmds:
-      - mkdir -p {{.DIST_DIR}}
-      - |
-        src=$(find {{.TAURI_DIR}}/target/release/bundle/deb -maxdepth 1 -name '*.deb' | head -n1)
-        if [ -z "$src" ]; then
+        deb_src=$(find {{.TAURI_DIR}}/target/release/bundle/deb -maxdepth 1 -name '*.deb' | head -n1)
+        if [ -z "$deb_src" ]; then
           echo "No .deb found under {{.TAURI_DIR}}/target/release/bundle/deb" >&2
           exit 1
         fi
-        cp "$src" "{{.DIST_DIR}}/skills-installer_{{.VERSION}}_amd64.deb"
-        echo "Copied $src -> {{.DIST_DIR}}/skills-installer_{{.VERSION}}_amd64.deb"
+        cp "$deb_src" "{{.DIST_DIR}}/skills-installer_{{.VERSION}}_amd64.deb"
+        echo "Copied $deb_src -> {{.DIST_DIR}}/skills-installer_{{.VERSION}}_amd64.deb"
 
   release:
-    desc: Full verification pipeline (typecheck, lint, test) plus every Linux artifact, copied into dist/.
+    summary: Full verification pipeline (typecheck, lint, test) plus every Linux artifact, copied into dist/. The artifact steps only run inside the Docker release container — use `task docker:release`.
     cmds:
       - task: typecheck
       - task: lint
       - task: test
-      - task: appimage
-      - task: deb
+      - task: artifacts
       - cp {{.TAURI_DIR}}/target/release/skills-installer {{.DIST_DIR}}/skills-installer
       - echo "Release artifacts:"
       - ls -la {{.DIST_DIR}}/
 
   clean:
-    desc: Remove build artifacts (src-tauri/target, frontend/dist, dist). Destructive — do not run without authorization.
+    summary: Remove build artifacts (src-tauri/target, frontend/dist, dist). Destructive — do not run without authorization.
     cmds:
       - rm -rf {{.TAURI_DIR}}/target {{.FRONTEND_DIR}}/dist {{.DIST_DIR}}
 

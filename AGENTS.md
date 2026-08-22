@@ -130,7 +130,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 frontend/node_modules/.bin/tauri build --no-bundle
 ```
 
-Para cambios que afecten ambos lados, ejecuta ambas baterías. `task typecheck`, `task lint`, `task test` y `task build` son los equivalentes integrados. No uses `task clean` sin autorización: elimina artefactos y directorios de salida.
+Para cambios que afecten ambos lados, ejecuta ambas baterías. `task typecheck`, `task lint` y `task test` son los equivalentes integrados. `task build` (y `artifacts`/`release`, que dependen de él) ya no corren en el host: solo dentro del contenedor Docker (`task docker:release`), para que todo artefacto distribuible salga del mismo entorno fijo y reproducible. No uses `task clean` sin autorización: elimina artefactos y directorios de salida.
 
 Para cambios exclusivamente documentales basta con revisar rutas y comandos afectados y ejecutar `git diff --check`; no presentes las suites de aplicación como ejecutadas si no lo fueron.
 
