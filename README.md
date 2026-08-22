@@ -8,9 +8,9 @@
 <div align="center">
   <img src=".images/icon.png" alt="Skills Installer logo" width="128">
 
-  # Skills Installer
+# Skills Installer
 
-  A simple desktop app for finding, organizing, and installing Agent Skills.
+A simple desktop app for finding, organizing, and installing Agent Skills.
 </div>
 
 Skills Installer gives you one place to manage the skills you use with AI coding agents. Add skills from [skills.sh](https://skills.sh), discover skills stored on your computer, group them into reusable Packs, and install them into the agents and projects you choose.

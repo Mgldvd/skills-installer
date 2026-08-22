@@ -1,13 +1,9 @@
 {
-    "printWidth": 120,
-    "tabWidth": 4,
-    "useTabs": false,
-    "bracketSameLine": true,
-    "htmlWhitespaceSensitivity": "ignore",
-    "embeddedLanguageFormatting": "auto",
-    "ignorePatterns": [
-        "node_modules/**",
-        "dist/**",
-        ".output/**"
-    ]
+  "printWidth": 120,
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSameLine": true,
+  "htmlWhitespaceSensitivity": "ignore",
+  "embeddedLanguageFormatting": "auto",
+  "ignorePatterns": ["node_modules/**", "dist/**", ".output/**"]
 }
