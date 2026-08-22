@@ -307,6 +307,8 @@ impl Installer for SkillsCliInstaller {
                         .options
                         .project_path
                         .as_deref()
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
                         .map(PathBuf::from)
                         .unwrap_or_else(|| self.project_root.clone()),
                 ),
@@ -555,10 +557,19 @@ mod tests {
         }
     }
 
+    // On overlayfs (Docker's default storage driver), a file just written
+    // and chmod'd can transiently exec-fail with ETXTBSY ("Text file busy")
+    // under concurrent `cargo test` threads — a known overlayfs copy-up
+    // race, not an incomplete write. An explicit `sync_all` before
+    // returning avoids it (see `platform::path_augment`'s `fake_shell`).
     fn resolver_with_fake_skills_executable() -> (DependencyResolver, tempfile::TempDir) {
+        use std::io::Write;
         let tmp = tempfile::tempdir().unwrap();
         let path = tmp.path().join("skills");
-        fs::write(&path, "#!/bin/sh\nexit 0\n").unwrap();
+        let mut file = fs::File::create(&path).unwrap();
+        file.write_all(b"#!/bin/sh\nexit 0\n").unwrap();
+        file.sync_all().unwrap();
+        drop(file);
         let mut perms = fs::metadata(&path).unwrap().permissions();
         perms.set_mode(0o755);
         fs::set_permissions(&path, perms).unwrap();
@@ -753,6 +764,104 @@ mod tests {
 
         assert!(result.cancelled);
         assert_eq!(process_runner.call_count(), 0);
+    }
+
+    // --- cwd resolution -----------------------------------------------
+    //
+    // The GUI sends `InstallOptions.project_path` straight from
+    // `state.projectRoot`, which starts out as `""` before the config load
+    // populates it (see frontend `useAppState.ts`). `Command::current_dir("")`
+    // fails to spawn at all (verified against the real OS: `ENOENT`), so an
+    // empty string must be treated the same as `None` — fall back to
+    // `project_root` — instead of being passed straight through.
+
+    #[tokio::test]
+    async fn empty_project_path_falls_back_to_project_root() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let project_root = PathBuf::from("/tmp/some-project-root");
+        let installer = SkillsCliInstaller::with_resolver(
+            process_runner.clone(),
+            project_root.clone(),
+            resolver,
+        );
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        let options = crate::domain::InstallOptions {
+            project_path: Some(String::new()),
+            ..Default::default()
+        };
+        let batch = InstallBatch {
+            skills: vec![remote_skill("triage")],
+            options,
+        };
+        installer
+            .install(batch, tx, CancellationToken::new())
+            .await
+            .unwrap();
+        drop(rx);
+
+        let call = process_runner.calls.lock().unwrap()[0].clone();
+        assert_eq!(call.cwd, Some(project_root));
+    }
+
+    #[tokio::test]
+    async fn whitespace_only_project_path_falls_back_to_project_root() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let project_root = PathBuf::from("/tmp/some-project-root");
+        let installer = SkillsCliInstaller::with_resolver(
+            process_runner.clone(),
+            project_root.clone(),
+            resolver,
+        );
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        let options = crate::domain::InstallOptions {
+            project_path: Some("   ".to_string()),
+            ..Default::default()
+        };
+        let batch = InstallBatch {
+            skills: vec![remote_skill("triage")],
+            options,
+        };
+        installer
+            .install(batch, tx, CancellationToken::new())
+            .await
+            .unwrap();
+        drop(rx);
+
+        let call = process_runner.calls.lock().unwrap()[0].clone();
+        assert_eq!(call.cwd, Some(project_root));
+    }
+
+    #[tokio::test]
+    async fn selected_project_path_is_used_as_cwd() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let installer = SkillsCliInstaller::with_resolver(
+            process_runner.clone(),
+            PathBuf::from("/tmp/some-project-root"),
+            resolver,
+        );
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        let options = crate::domain::InstallOptions {
+            project_path: Some("/tmp/user-selected-folder".to_string()),
+            ..Default::default()
+        };
+        let batch = InstallBatch {
+            skills: vec![remote_skill("triage")],
+            options,
+        };
+        installer
+            .install(batch, tx, CancellationToken::new())
+            .await
+            .unwrap();
+        drop(rx);
+
+        let call = process_runner.calls.lock().unwrap()[0].clone();
+        assert_eq!(call.cwd, Some(PathBuf::from("/tmp/user-selected-folder")));
     }
 
     #[tokio::test]

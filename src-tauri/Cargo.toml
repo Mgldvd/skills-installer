@@ -26,7 +26,16 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 tempfile = "3.27.0"
 thiserror = "2"
-tokio = { version = "1.53.1", features = ["process", "rt-multi-thread", "macros", "signal", "sync", "io-util", "fs", "time"] }
+tokio = { version = "1.53.1", features = [
+  "process",
+  "rt-multi-thread",
+  "macros",
+  "signal",
+  "sync",
+  "io-util",
+  "fs",
+  "time",
+] }
 tokio-util = "0.7.19"
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }

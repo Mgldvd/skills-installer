@@ -3,10 +3,5 @@
   "identifier": "default",
   "description": "Minimum permissions required by the main window, including native folder selection for the installation destination.",
   "windows": ["main"],
-  "permissions": [
-    "core:default",
-    "core:window:default",
-    "core:event:default",
-    "dialog:allow-open"
-  ]
+  "permissions": ["core:default", "core:window:default", "core:event:default", "dialog:allow-open"]
 }

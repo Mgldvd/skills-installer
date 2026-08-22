@@ -90,8 +90,21 @@ pub enum OutputStream {
 /// Variant names deliberately mirror the `install:start` / `install:progress` /
 /// ... naming the product spec calls for; the discriminated-union shape is what
 /// the current Tauri v2 IPC guidance recommends for high-frequency streaming.
+///
+/// `rename_all` only covers the `event` tag itself ("skill-error", ...) —
+/// without `rename_all_fields` too, each variant's own fields (`skill_id`,
+/// `display_name`, ...) serialize under their literal snake_case Rust names,
+/// which the frontend's `event.data.skillId`/`.displayName` never match, so
+/// every live per-skill row silently read as `undefined` (confirmed against
+/// the real serialized JSON). `SkillInstallOutcome`/`InstallResult` never hit
+/// this because they're separate structs with their own `rename_all`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "event", content = "data", rename_all = "kebab-case")]
+#[serde(
+    tag = "event",
+    content = "data",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase"
+)]
 pub enum InstallProgressEvent {
     Start {
         total: usize,
@@ -123,4 +136,82 @@ pub enum InstallProgressEvent {
     Complete {
         result: InstallResult,
     },
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Regression coverage for a real bug: `rename_all = "kebab-case"` on
+    // this enum only ever covered the `event` tag itself. Every variant's
+    // own fields kept serializing under their literal snake_case Rust
+    // names, so the frontend's `event.data.skillId`/`.displayName` reads
+    // were always `undefined` — the live per-skill row in the install
+    // progress panel showed "undefined" for every install, every skill,
+    // silently, because the final summary numbers (a separate struct with
+    // its own `rename_all`) still happened to be correct and masked it.
+
+    #[test]
+    fn progress_event_fields_serialize_as_camel_case() {
+        let event = InstallProgressEvent::Progress {
+            current: 1,
+            total: 2,
+            skill_id: "triage".into(),
+            display_name: "Issue Triage".into(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["event"], "progress");
+        assert_eq!(json["data"]["skillId"], "triage");
+        assert_eq!(json["data"]["displayName"], "Issue Triage");
+    }
+
+    #[test]
+    fn skill_error_event_fields_serialize_as_camel_case() {
+        let event = InstallProgressEvent::SkillError {
+            skill_id: "triage".into(),
+            display_name: "Issue Triage".into(),
+            message: "boom".into(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["event"], "skill-error");
+        assert_eq!(json["data"]["skillId"], "triage");
+        assert_eq!(json["data"]["displayName"], "Issue Triage");
+        assert_eq!(json["data"]["message"], "boom");
+    }
+
+    #[test]
+    fn skill_success_event_fields_serialize_as_camel_case() {
+        let event = InstallProgressEvent::SkillSuccess {
+            skill_id: "triage".into(),
+            display_name: "Issue Triage".into(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["event"], "skill-success");
+        assert_eq!(json["data"]["skillId"], "triage");
+        assert_eq!(json["data"]["displayName"], "Issue Triage");
+    }
+
+    #[test]
+    fn output_event_fields_serialize_as_camel_case() {
+        let event = InstallProgressEvent::Output {
+            skill_id: "triage".into(),
+            line: "installing...".into(),
+            stream: OutputStream::Stdout,
+        };
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["event"], "output");
+        assert_eq!(json["data"]["skillId"], "triage");
+        assert_eq!(json["data"]["line"], "installing...");
+    }
+
+    #[test]
+    fn command_event_fields_serialize_as_camel_case() {
+        let event = InstallProgressEvent::Command {
+            skill_id: "triage".into(),
+            command: "skills add ...".into(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["event"], "command");
+        assert_eq!(json["data"]["skillId"], "triage");
+    }
 }

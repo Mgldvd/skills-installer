@@ -61,7 +61,25 @@ pub fn cancel_installation(state: State<'_, AppState>) -> Result<(), AppError> {
     Ok(())
 }
 
+/// `project_path` is the folder currently selected in the GUI header, so
+/// the "Installed" badge is recomputed against wherever the user is
+/// actually pointed right now rather than the app's launch directory. An
+/// empty/whitespace-only value (or `None`, from the CLI which has no such
+/// concept) falls back to that launch directory — see `SkillsService`.
 #[tauri::command]
-pub fn refresh(state: State<'_, AppState>) -> Result<ApplicationConfig, AppError> {
-    state.services.skills.load_state()
+pub fn refresh(
+    state: State<'_, AppState>,
+    project_path: Option<String>,
+) -> Result<ApplicationConfig, AppError> {
+    match project_path
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    {
+        Some(path) => state
+            .services
+            .skills
+            .load_state_for(std::path::Path::new(path)),
+        None => state.services.skills.load_state(),
+    }
 }

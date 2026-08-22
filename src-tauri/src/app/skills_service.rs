@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::config::migrate::dedupe_id;
 use crate::config::{validate_and_normalize_color, ConfigurationService};
@@ -319,8 +319,18 @@ impl SkillsService {
     /// listed separately when there is no matching configured entry
     /// (otherwise it would show up as two cards for the same thing).
     pub fn load_state(&self) -> Result<ApplicationConfig, AppError> {
+        self.load_state_for(&self.project_root)
+    }
+
+    /// Same as `load_state`, but scans `project_root` for installed Skills
+    /// instead of the app's launch-time directory. The GUI calls this with
+    /// whatever folder the user currently has selected in the header — the
+    /// "Installed" badge must track that selection, not the folder the app
+    /// happened to start in, or picking an empty folder would still show
+    /// Skills as installed from wherever the app launched.
+    pub fn load_state_for(&self, project_root: &Path) -> Result<ApplicationConfig, AppError> {
         let mut config = self.config_service.load()?;
-        let installed_skills = discover_local_skills(&self.project_root);
+        let installed_skills = discover_local_skills(project_root);
         let local_source = self
             .preferences
             .load()?
@@ -367,7 +377,7 @@ impl SkillsService {
                 .cmp(&b.display_name.to_lowercase())
         });
         config.groups.sort_by_key(|g| g.order);
-        config.project_root = self.project_root.display().to_string();
+        config.project_root = project_root.display().to_string();
 
         Ok(config)
     }
@@ -1030,5 +1040,44 @@ skills:
         );
         assert!(matching[0].installed);
         assert!(state.skills.iter().any(|s| s.display_name == "Only Local"));
+    }
+
+    #[test]
+    fn load_state_for_scopes_installed_status_to_the_given_project_root() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = service_with_curated_config(tmp.path());
+
+        let skill_dir = tmp.path().join(".agents").join("skills").join("triage");
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(
+            skill_dir.join("SKILL.md"),
+            "---\nname: triage\ndescription: local copy\n---\n",
+        )
+        .unwrap();
+
+        // The app's own launch-time project root does have `triage` installed.
+        let here = service.load_state().unwrap();
+        let triage_here = here
+            .skills
+            .iter()
+            .find(|s| s.skill_name == "triage")
+            .unwrap();
+        assert!(triage_here.installed);
+
+        // A different, empty folder the user just selected in the GUI must
+        // not inherit that status — this is the exact bug report: picking
+        // an empty destination folder still showed Skills as installed.
+        let empty_folder = tempfile::tempdir().unwrap();
+        let elsewhere = service.load_state_for(empty_folder.path()).unwrap();
+        let triage_elsewhere = elsewhere
+            .skills
+            .iter()
+            .find(|s| s.skill_name == "triage")
+            .unwrap();
+        assert!(!triage_elsewhere.installed);
+        assert_eq!(
+            elsewhere.project_root,
+            empty_folder.path().display().to_string()
+        );
     }
 }

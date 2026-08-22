@@ -1,19 +1,85 @@
 use std::env;
 use std::ffi::OsStr;
+use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use std::time::{Duration, Instant};
 
 /// GUI-launched Linux processes (desktop entry, AppImage) frequently see a
 /// `PATH` that excludes directories a login shell picks up from
 /// `.bashrc`/`.profile`/nvm/pnpm init scripts — the official Tauri Linux
 /// distribution docs call this out explicitly. Dependency discovery
 /// (`installer::dependency`) therefore never trusts `PATH` alone: it probes
-/// a fixed list of common Node/npm install locations and appends whichever
-/// of them actually exist, preserving the original `PATH` order first so an
-/// explicit user `PATH` entry always wins.
+/// a fixed list of common Node/npm install locations, appends whichever of
+/// them actually exist, and — since any fixed list is inevitably incomplete
+/// for less common setups (asdf, mise, or a bespoke tool directory a user's
+/// shell rc exports directly) — also asks `$SHELL` itself for its resolved
+/// `PATH`, exactly like the "fix-path-env" trick VS Code and others use for
+/// the same GUI-launch problem. The original `PATH` order is preserved
+/// first, so an explicit user `PATH` entry always wins.
 pub fn augmented_search_paths() -> Vec<PathBuf> {
     let path_var = env::var_os("PATH");
     let home = env::var("HOME").ok();
-    compute_augmented_paths(path_var.as_deref(), home.as_deref())
+    let mut paths = compute_augmented_paths(path_var.as_deref(), home.as_deref());
+    let shell = env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+    for dir in login_shell_path_dirs(&shell, Duration::from_secs(3)) {
+        if !paths.contains(&dir) {
+            paths.push(dir);
+        }
+    }
+    paths
+}
+
+/// Runs `$SHELL -ilc 'echo -n "$PATH"'` and parses the result. `-i`
+/// (interactive) is included alongside `-l` (login) because PATH exports
+/// commonly live in interactive-only rc files (`.bashrc`/`.zshrc`) rather
+/// than login ones (`.profile`/`.zprofile`), and shells only source those
+/// when actually running interactively. Bounded by `timeout` and run
+/// without a controlling tty (`Stdio::null()` for stdin) so a hung or
+/// prompting rc script can never block dependency discovery indefinitely —
+/// on timeout, or on any spawn/parse failure, this simply contributes no
+/// extra paths rather than erroring.
+fn login_shell_path_dirs(shell: &str, timeout: Duration) -> Vec<PathBuf> {
+    let mut child = match Command::new(shell)
+        .arg("-ilc")
+        .arg("echo -n \"$PATH\"")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(_) => return Vec::new(),
+    };
+
+    let deadline = Instant::now() + timeout;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                if !status.success() {
+                    return Vec::new();
+                }
+                let mut output = String::new();
+                if let Some(mut stdout) = child.stdout.take() {
+                    let _ = stdout.read_to_string(&mut output);
+                }
+                let trimmed = output.trim();
+                if trimmed.is_empty() {
+                    return Vec::new();
+                }
+                return env::split_paths(trimmed).collect();
+            }
+            Ok(None) => {
+                if Instant::now() >= deadline {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return Vec::new();
+                }
+                std::thread::sleep(Duration::from_millis(20));
+            }
+            Err(_) => return Vec::new(),
+        }
+    }
 }
 
 fn compute_augmented_paths(path_var: Option<&OsStr>, home: Option<&str>) -> Vec<PathBuf> {
@@ -94,6 +160,82 @@ mod tests {
         // No .cargo/bin created under this home.
         let result = compute_augmented_paths(None, Some(tmp.path().to_str().unwrap()));
         assert!(!result.contains(&tmp.path().join(".cargo/bin")));
+    }
+
+    // --- login_shell_path_dirs -------------------------------------------
+
+    #[cfg(unix)]
+    // On overlayfs (Docker's default storage driver), a file that was just
+    // written and chmod'd can transiently exec-fail with ETXTBSY
+    // ("Text file busy") under concurrent `cargo test` threads — a known
+    // overlayfs copy-up race, not anything about the write itself being
+    // incomplete. An explicit `sync_all` before returning consistently
+    // avoided it in practice (reproduced with a tight repeated-run loop).
+    fn fake_shell(dir: &Path, name: &str, script: &str) -> PathBuf {
+        use std::io::Write;
+        use std::os::unix::fs::PermissionsExt;
+        let path = dir.join(name);
+        let mut file = fs::File::create(&path).unwrap();
+        file.write_all(script.as_bytes()).unwrap();
+        file.sync_all().unwrap();
+        drop(file);
+        let mut perms = fs::metadata(&path).unwrap().permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&path, perms).unwrap();
+        path
+    }
+
+    #[test]
+    fn login_shell_path_dirs_parses_the_shells_reported_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let shell = fake_shell(
+            tmp.path(),
+            "fake-shell",
+            "#!/bin/sh\necho -n \"/opt/custom/bin:/another/bin\"\n",
+        );
+
+        let result = login_shell_path_dirs(shell.to_str().unwrap(), Duration::from_secs(2));
+
+        assert_eq!(
+            result,
+            vec![
+                PathBuf::from("/opt/custom/bin"),
+                PathBuf::from("/another/bin")
+            ]
+        );
+    }
+
+    #[test]
+    fn login_shell_path_dirs_returns_empty_for_a_nonexistent_shell() {
+        let result = login_shell_path_dirs("/no/such/shell", Duration::from_secs(2));
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn login_shell_path_dirs_returns_empty_when_the_shell_exits_nonzero() {
+        let tmp = tempfile::tempdir().unwrap();
+        let shell = fake_shell(tmp.path(), "fake-shell", "#!/bin/sh\nexit 1\n");
+
+        let result = login_shell_path_dirs(shell.to_str().unwrap(), Duration::from_secs(2));
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn login_shell_path_dirs_times_out_instead_of_hanging() {
+        let tmp = tempfile::tempdir().unwrap();
+        // Simulates a broken/prompting rc script that never returns.
+        let shell = fake_shell(tmp.path(), "fake-shell", "#!/bin/sh\nsleep 30\n");
+
+        let start = Instant::now();
+        let result = login_shell_path_dirs(shell.to_str().unwrap(), Duration::from_millis(200));
+        let elapsed = start.elapsed();
+
+        assert!(result.is_empty());
+        assert!(
+            elapsed < Duration::from_secs(2),
+            "expected the timeout to cut this short, took {elapsed:?}"
+        );
     }
 
     #[test]

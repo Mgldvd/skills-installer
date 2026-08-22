@@ -31,12 +31,7 @@
     "active": true,
     "targets": ["appimage", "deb"],
     "publisher": "Skills Installer Contributors",
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.png"
-    ],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
     "category": "Development",
     "shortDescription": "Discover, configure, and install agent skills",
     "longDescription": "Skills Installer maintains a curated remote and local Skill catalog, reusable Tags, and project or global installation targets for supported coding agents.",
