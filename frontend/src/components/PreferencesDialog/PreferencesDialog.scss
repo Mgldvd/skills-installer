@@ -11,16 +11,17 @@
     @include dialog.menu-header;
   }
 
+  // Sections stack full-width, one after another — pairing two side by
+  // side (as this used to) left a visible gap under whichever one was
+  // shorter, since a section is never stretched to match a taller
+  // neighbor (see `.preferences-dialog__section-content` below). Full
+  // width also gives sections with their own 2-item sub-grid (Appearance,
+  // Organize, Application tools) room to lay those out side by side
+  // instead of squeezed into half the dialog.
   .preferences-dialog__body {
     @include dialog.menu-body;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    // `start`, not the grid default `stretch` — otherwise a section paired
-    // with a taller neighbor gets stretched to match it, leaving empty
-    // padded space inside its own border instead of just being its own
-    // natural height.
-    align-items: start;
-    align-content: start;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-md);
   }
 
@@ -29,10 +30,6 @@
   .preferences-dialog__section {
     min-width: 0;
     border: 1px solid var(--border-soft);
-  }
-
-  .preferences-dialog__section--wide {
-    grid-column: 1 / -1;
   }
 
   .preferences-dialog__section-heading {
@@ -212,9 +209,6 @@
   }
 
   @media (max-width: 780px) {
-    .preferences-dialog__body {
-      grid-template-columns: 1fr;
-    }
     .preferences-dialog__tools {
       grid-template-columns: 1fr;
     }

@@ -20,15 +20,15 @@
             <h3>Appearance</h3>
             <p>Adjust the scale and visual accent of the interface.</p>
           </div>
-          <div class="preferences-dialog__section-content">
-            <div class="preferences-dialog__field">
+          <div class="preferences-dialog__section-content preferences-dialog__tools">
+            <div class="preferences-dialog__field preferences-dialog__tool">
               <span class="preferences-dialog__label">Interface size</span>
               <FontScaleControl
                 variant="full"
                 :model-value="preferences.fontScale"
                 @update:model-value="(v) => emit('update', { fontScale: v })" />
             </div>
-            <div class="preferences-dialog__field">
+            <div class="preferences-dialog__field preferences-dialog__tool">
               <span class="preferences-dialog__label">Accent color</span>
               <ColorPalettePicker
                 :model-value="preferences.accent"
@@ -101,7 +101,7 @@
           </div>
         </section>
 
-        <section class="preferences-dialog__section preferences-dialog__section--wide">
+        <section class="preferences-dialog__section">
           <div class="preferences-dialog__section-heading">
             <h3>Organize</h3>
             <p>Jump straight to the other places Skills Installer keeps things organized.</p>
@@ -124,7 +124,7 @@
           </div>
         </section>
 
-        <section class="preferences-dialog__section preferences-dialog__section--wide">
+        <section class="preferences-dialog__section">
           <div class="preferences-dialog__section-heading">
             <h3>Application tools</h3>
             <p>Install terminal access, manage the local catalog, or move settings between devices.</p>
