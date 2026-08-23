@@ -33,14 +33,29 @@ describe("SkillFilterBar", () => {
     expect(wrapper.emitted("update:sortBy")).toEqual([["pack"]]);
   });
 
-  it("toggles between Grid and List view, reflecting the active one via aria-pressed", async () => {
+  it("toggles between Grid, Compact grid, and List view, reflecting the active one via aria-pressed", async () => {
     const wrapper = mount(SkillFilterBar, { props: { view: "grid" } });
-    const [gridBtn, listBtn] = wrapper.findAll('[aria-label="Grid view"], [aria-label="List view"]');
+    const gridBtn = wrapper.get('[aria-label="Grid view"]');
+    const listBtn = wrapper.get('[aria-label="List view"]');
+    const compactBtn = wrapper.get('[aria-label="Compact grid view"]');
     expect(gridBtn.attributes("aria-pressed")).toBe("true");
     expect(listBtn.attributes("aria-pressed")).toBe("false");
+    expect(compactBtn.attributes("aria-pressed")).toBe("false");
 
     await listBtn.trigger("click");
     expect(wrapper.emitted("update:view")).toEqual([["list"]]);
+
+    await compactBtn.trigger("click");
+    expect(wrapper.emitted("update:view")).toEqual([["list"], ["compact"]]);
+  });
+
+  it("prefixes the Local/Remote filters with a decorative source icon, not a second accessible name", () => {
+    const wrapper = mount(SkillFilterBar, { props: { sourceFilter: "all" } });
+    const [local, remote] = wrapper.findAll(".skill-filter-bar__source button");
+    expect(local.get(".source-icon").classes()).toContain("source-icon--local");
+    expect(local.get(".source-icon").attributes("aria-hidden")).toBe("true");
+    expect(remote.get(".source-icon").classes()).toContain("source-icon--remote");
+    expect(remote.get(".source-icon").attributes("aria-hidden")).toBe("true");
   });
 
   it("toggles Local/Remote quick filters, deactivating on a second click", async () => {
@@ -55,6 +70,27 @@ describe("SkillFilterBar", () => {
     await wrapper.setProps({ sourceFilter: "local" });
     await local.trigger("click");
     expect(wrapper.emitted("update:sourceFilter")).toEqual([["local"], ["all"]]);
+  });
+
+  it("shows how many Skills need agents, disables the button when there are none, and toggles the filter", async () => {
+    const empty = mount(SkillFilterBar, { props: { needsAgentsCount: 0 } });
+    const emptyButton = empty.get(".skill-filter-bar__source button:nth-child(3)");
+    expect(emptyButton.text()).toBe("Needs agents");
+    expect(emptyButton.attributes("disabled")).toBeDefined();
+
+    const wrapper = mount(SkillFilterBar, { props: { needsAgentsCount: 3, needsAgentsOnly: false } });
+    const button = wrapper.get(".skill-filter-bar__source button:nth-child(3)");
+    expect(button.text()).toBe("Needs agents (3)");
+    expect(button.attributes("disabled")).toBeUndefined();
+    expect(button.attributes("aria-pressed")).toBe("false");
+
+    await button.trigger("click");
+    expect(wrapper.emitted("update:needsAgentsOnly")).toEqual([[true]]);
+  });
+
+  it("never renders a selection action — filtering and selecting are separate concerns", () => {
+    const wrapper = mount(SkillFilterBar, { props: { needsAgentsOnly: true, needsAgentsCount: 3 } });
+    expect(wrapper.find(".skill-filter-bar__select-all").exists()).toBe(false);
   });
 
   it("offers an All Packs option plus one option per Pack, and emits null when reset", async () => {

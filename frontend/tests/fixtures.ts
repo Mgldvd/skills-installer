@@ -27,6 +27,7 @@ export function makeSkill(overrides: Partial<Skill> = {}): Skill {
     preselected: false,
     local: false,
     installed: false,
+    installedAgents: [],
     enabled: true,
     ...overrides,
   };

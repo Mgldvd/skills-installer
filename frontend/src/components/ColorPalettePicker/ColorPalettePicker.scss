@@ -1,0 +1,43 @@
+.color-palette-picker {
+  display: grid;
+  grid-template-columns: repeat(8, 1.55rem);
+  gap: var(--space-xs);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.color-palette-picker__swatch {
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  &.is-selected {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+  }
+}
+
+.color-palette-picker__custom {
+  position: relative;
+  display: block;
+  // A fixed rainbow swatch (not the color it currently holds) so it always
+  // reads as "pick any color" rather than looking like one more preset —
+  // the `is-selected` outline is what shows it's the active choice.
+  background: conic-gradient(from 180deg, #f43f75, #f97316, #eab308, #22c55e, #06b6d4, #6366f1, #a855f7, #f43f75);
+
+  input {
+    cursor: pointer;
+  }
+}
+
+.color-palette-picker__custom-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}

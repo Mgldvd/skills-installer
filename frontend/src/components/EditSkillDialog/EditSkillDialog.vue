@@ -29,69 +29,70 @@
 
       <section class="edit-skill-dialog__details">
         <div class="edit-skill-dialog__fields">
-          <label v-if="!skill.local" class="edit-skill-dialog__field edit-skill-dialog__field--wide">
-            <span>Skills.sh URL</span>
-            <input v-model="url" type="url" class="edit-skill-dialog__input" @input="handleUrlInput" />
-          </label>
-          <p v-if="urlError" class="edit-skill-dialog__error edit-skill-dialog__field--wide" role="alert">
-            {{ urlError }}
-          </p>
-          <div v-else-if="preview" class="edit-skill-dialog__preview edit-skill-dialog__field--wide">
-            <p>
-              Detected skill:
-              <strong>{{ preview.skillName }}</strong>
+          <div class="edit-skill-dialog__fields-primary">
+            <label v-if="!skill.local" class="edit-skill-dialog__field">
+              <span>Skills.sh URL</span>
+              <input v-model="url" type="url" class="edit-skill-dialog__input" @input="handleUrlInput" />
+            </label>
+            <p v-if="urlError" class="edit-skill-dialog__error" role="alert">
+              {{ urlError }}
             </p>
-            <p>
-              Repository:
-              <strong>{{ preview.owner }}/{{ preview.repository }}</strong>
-            </p>
+            <div v-else-if="preview" class="edit-skill-dialog__preview">
+              <p>
+                Detected skill:
+                <strong>{{ preview.skillName }}</strong>
+              </p>
+              <p>
+                Repository:
+                <strong>{{ preview.owner }}/{{ preview.repository }}</strong>
+              </p>
+            </div>
+
+            <label class="edit-skill-dialog__field">
+              <span>Display Name</span>
+              <input v-model="displayName" type="text" required class="edit-skill-dialog__input" />
+            </label>
+
+            <div class="edit-skill-dialog__checkboxes">
+              <label class="edit-skill-dialog__checkbox">
+                <input v-model="preselected" type="checkbox" />
+                <span>Preselected by default</span>
+              </label>
+              <label class="edit-skill-dialog__checkbox">
+                <input v-model="enabled" type="checkbox" />
+                <span>Enabled</span>
+              </label>
+            </div>
           </div>
 
-          <label class="edit-skill-dialog__field">
-            <span>Display Name</span>
-            <input v-model="displayName" type="text" required class="edit-skill-dialog__input" />
-          </label>
-
-          <label class="edit-skill-dialog__field">
+          <label class="edit-skill-dialog__field edit-skill-dialog__field--secondary">
             <span>Description</span>
             <textarea
               v-model="description"
               class="edit-skill-dialog__input edit-skill-dialog__textarea"
-              rows="3"
               maxlength="320" />
             <small>Short summary displayed on the Skill card.</small>
           </label>
-
-          <div class="edit-skill-dialog__checkboxes edit-skill-dialog__field--wide">
-            <label class="edit-skill-dialog__checkbox">
-              <input v-model="preselected" type="checkbox" />
-              <span>Preselected by default</span>
-            </label>
-            <label class="edit-skill-dialog__checkbox">
-              <input v-model="enabled" type="checkbox" />
-              <span>Enabled</span>
-            </label>
-          </div>
-
-          <fieldset class="edit-skill-dialog__packs edit-skill-dialog__field--wide">
-            <legend>Packs</legend>
-            <p>Assign this Skill to one or more installation packs.</p>
-            <div v-if="enabledTags.length" class="edit-skill-dialog__pack-list">
-              <PackBadge
-                v-for="tag in enabledTags"
-                :key="tag.id"
-                :name="tag.name"
-                :color="tag.color"
-                interactive
-                compact
-                :selected="selectedTagIds.includes(tag.id)"
-                :muted="!selectedTagIds.includes(tag.id)"
-                :aria-label="`${selectedTagIds.includes(tag.id) ? 'Unassign' : 'Assign'} ${tag.name}`"
-                @click="toggleTag(tag.id)" />
-            </div>
-            <p v-else class="edit-skill-dialog__packs-empty">No enabled packs are available.</p>
-          </fieldset>
         </div>
+
+        <fieldset class="edit-skill-dialog__packs">
+          <legend>Packs</legend>
+          <p>Assign this Skill to one or more installation packs.</p>
+          <div v-if="enabledTags.length" class="edit-skill-dialog__pack-list">
+            <PackBadge
+              v-for="tag in enabledTags"
+              :key="tag.id"
+              :name="tag.name"
+              :color="tag.color"
+              interactive
+              compact
+              :selected="selectedTagIds.includes(tag.id)"
+              :muted="!selectedTagIds.includes(tag.id)"
+              :aria-label="`${selectedTagIds.includes(tag.id) ? 'Unassign' : 'Assign'} ${tag.name}`"
+              @click="toggleTag(tag.id)" />
+          </div>
+          <p v-else class="edit-skill-dialog__packs-empty">No enabled packs are available.</p>
+        </fieldset>
       </section>
 
       <p v-if="submitError" class="edit-skill-dialog__error" role="alert">

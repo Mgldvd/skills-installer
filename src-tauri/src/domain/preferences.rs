@@ -52,5 +52,5 @@ fn default_agents() -> Vec<String> {
     vec!["universal".to_string()]
 }
 fn default_accent() -> String {
-    "pink".to_string()
+    "#F43F75".to_string()
 }

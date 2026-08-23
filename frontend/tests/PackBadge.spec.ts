@@ -14,7 +14,7 @@ describe("PackBadge", () => {
     expect(wrapper.attributes("aria-pressed")).toBeUndefined();
   });
 
-  it("uses button semantics, aria-pressed, and a non-color check when selected", async () => {
+  it("uses button semantics and aria-pressed when selected, without a checkmark icon", async () => {
     const wrapper = mount(PackBadge, {
       props: { name: "Frontend", color: "#3B82F6", interactive: true, selected: true },
     });
@@ -22,12 +22,13 @@ describe("PackBadge", () => {
     expect(wrapper.element.tagName).toBe("BUTTON");
     expect(wrapper.attributes("type")).toBe("button");
     expect(wrapper.attributes("aria-pressed")).toBe("true");
-    expect(wrapper.find(".pack-badge__state svg").exists()).toBe(true);
+    expect(wrapper.classes()).toContain("pack-badge--selected");
+    expect(wrapper.find(".pack-badge__state").exists()).toBe(false);
     await wrapper.trigger("click");
     expect(wrapper.emitted("click")).toHaveLength(1);
   });
 
-  it("supports a neutral muted appearance for inactive assignment controls", () => {
+  it("supports a pale, tinted-by-its-own-color muted appearance for inactive assignment controls", () => {
     const wrapper = mount(PackBadge, { props: { name: "Frontend", color: "#3B82F6", interactive: true, muted: true } });
 
     expect(wrapper.classes()).toContain("pack-badge--muted");

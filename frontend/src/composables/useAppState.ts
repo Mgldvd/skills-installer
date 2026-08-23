@@ -4,6 +4,7 @@ import type {
   DependencyStatus,
   InstallResult,
   OutputStream,
+  Project,
   Skill,
   SkillGroup,
   SkillTag,
@@ -45,6 +46,9 @@ interface AppState {
   groupBeingEditedId: string | null;
   isAddDialogOpen: boolean;
   preferences: UiPreferences;
+  /** Saved skill preselections, independent of any one project folder —
+   * see `useProjects`. */
+  projects: Project[];
   dependencyStatus: DependencyStatus | null;
   installation: InstallationState;
   sourcePath: string | null;
@@ -86,6 +90,7 @@ const state = reactive<AppState>({
   groupBeingEditedId: null,
   isAddDialogOpen: false,
   preferences: defaultPreferences(),
+  projects: [],
   dependencyStatus: null,
   installation: freshInstallationState(),
   sourcePath: null,

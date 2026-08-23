@@ -60,6 +60,9 @@ impl PreferencesService {
         if preferences.default_agents.is_empty() {
             preferences.default_agents.push("universal".into());
         }
+        if let Some(hex) = legacy_named_accent_to_hex(&preferences.accent) {
+            preferences.accent = hex.to_string();
+        }
         validate_preferences(&preferences)?;
         Ok(preferences)
     }
@@ -101,6 +104,21 @@ impl Default for PreferencesService {
     }
 }
 
+/// Preferences saved before the accent picker switched from six named
+/// presets to freeform hex map onto their old hex value, so existing
+/// users' saved files keep working instead of failing to load.
+fn legacy_named_accent_to_hex(accent: &str) -> Option<&'static str> {
+    Some(match accent {
+        "pink" => "#F43F75",
+        "coral" => "#F05252",
+        "blue" => "#3B82F6",
+        "teal" => "#14B8A6",
+        "violet" => "#A855F7",
+        "green" => "#22C55E",
+        _ => return None,
+    })
+}
+
 fn validate_preferences(preferences: &UiPreferences) -> Result<(), AppError> {
     if !(FONT_SCALE_MIN..=FONT_SCALE_MAX).contains(&preferences.font_scale) {
         return Err(AppError::Validation(format!(
@@ -121,12 +139,11 @@ fn validate_preferences(preferences: &UiPreferences) -> Result<(), AppError> {
             )));
         }
     }
-    if !matches!(
-        preferences.accent.as_str(),
-        "pink" | "coral" | "blue" | "teal" | "violet" | "green"
-    ) {
+    // Same curated-plus-custom scheme as Pack colors (see `commands::tags`):
+    // any valid 6-digit hex is accepted, not just a fixed preset name.
+    if crate::config::validate_and_normalize_color(&preferences.accent).is_err() {
         return Err(AppError::Validation(format!(
-            "unsupported accent \"{}\"",
+            "accent \"{}\" must be a 6-digit hex color, e.g. #F43F75",
             preferences.accent
         )));
     }
@@ -206,6 +223,58 @@ mod tests {
         let service = PreferencesService::with_path(tmp.path().join("preferences.json"));
         let preferences = UiPreferences {
             default_agents: vec!["bad agent!!".into()],
+            ..UiPreferences::default()
+        };
+        assert!(service.save(&preferences).is_err());
+    }
+
+    #[test]
+    fn save_accepts_any_hex_accent_not_just_the_old_named_presets() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = PreferencesService::with_path(tmp.path().join("preferences.json"));
+        // A curated color, and one that only a custom picker would produce —
+        // both are just hex now, no fixed preset list to check against.
+        for accent in ["#F43F75", "#00ffAA"] {
+            let preferences = UiPreferences {
+                accent: accent.into(),
+                ..UiPreferences::default()
+            };
+            assert!(
+                service.save(&preferences).is_ok(),
+                "{accent} should be a valid accent"
+            );
+        }
+    }
+
+    #[test]
+    fn load_migrates_a_legacy_named_accent_preset_to_its_hex_value() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("preferences.json");
+        std::fs::write(&path, r#"{"fontScale":1.0,"defaultAgents":["universal"],"copyByDefault":true,"defaultScope":"project","confirmBeforeInstall":true,"continueAfterFailure":true,"accent":"violet"}"#).unwrap();
+        let service = PreferencesService::with_path(path);
+
+        let preferences = service.load().unwrap();
+
+        assert_eq!(preferences.accent, "#A855F7");
+    }
+
+    #[test]
+    fn save_rejects_an_old_style_named_accent_preset() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = PreferencesService::with_path(tmp.path().join("preferences.json"));
+        let preferences = UiPreferences {
+            accent: "pink".into(),
+            ..UiPreferences::default()
+        };
+        assert!(service.save(&preferences).is_err());
+    }
+
+    #[test]
+    fn save_rejects_a_malformed_hex_accent() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = PreferencesService::with_path(tmp.path().join("preferences.json"));
+        let preferences = UiPreferences {
+            accent: "#GGG".into(),
             ..UiPreferences::default()
         };
         assert!(service.save(&preferences).is_err());

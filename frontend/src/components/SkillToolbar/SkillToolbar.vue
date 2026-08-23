@@ -1,6 +1,16 @@
 <template>
   <section class="skill-toolbar" aria-label="Skill preselection Packs">
-    <span class="skill-toolbar__label">Preselect</span>
+    <span class="skill-toolbar__label">Pack select</span>
+    <button
+      type="button"
+      class="skill-toolbar__manage-packs"
+      aria-label="Manage Packs"
+      title="Manage Packs"
+      @click="emit('openPacks')">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+      </svg>
+    </button>
     <div v-if="orderedTags.length" class="skill-toolbar__tags">
       <div
         v-for="tag in orderedTags"
@@ -38,6 +48,18 @@
     <p v-else class="skill-toolbar__empty">Create Packs from the Packs menu to build reusable selections.</p>
     <button
       type="button"
+      class="skill-toolbar__select-missing"
+      :disabled="needsAgentsCount === 0"
+      :title="
+        needsAgentsCount
+          ? `Add the ${needsAgentsCount} Skill${needsAgentsCount === 1 ? '' : 's'} still missing an agent to the selection`
+          : 'Every installed Skill already covers every targeted agent'
+      "
+      @click="emit('selectMissing')">
+      Select missing{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
+    </button>
+    <button
+      type="button"
       class="skill-toolbar__clear"
       :disabled="selectedIds.length === 0"
       aria-label="Clear all selected Skills"
@@ -58,11 +80,13 @@ const props = withDefaults(
     tags?: SkillTag[];
     skills?: Skill[];
     selectedIds?: string[];
+    needsAgentsCount?: number;
   }>(),
   {
     tags: () => [],
     skills: () => [],
     selectedIds: () => [],
+    needsAgentsCount: 0,
   },
 );
 
@@ -70,6 +94,8 @@ const emit = defineEmits<{
   toggleTag: [tagId: string];
   reorderTags: [tagIds: string[]];
   clearSelection: [];
+  selectMissing: [];
+  openPacks: [];
 }>();
 const draggedTagId = ref<string | null>(null);
 const dragOverTagId = ref<string | null>(null);

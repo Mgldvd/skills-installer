@@ -14,6 +14,7 @@ use crate::config::ConfigurationService;
 use crate::installer::{Installer, SkillsCliInstaller};
 use crate::preferences::PreferencesService;
 use crate::process::{ProcessRunner, TokioProcessRunner};
+use crate::projects::ProjectsService;
 
 /// The composition root: everything the Tauri command layer and the CLI
 /// both depend on, wired exactly once, with exactly one real `Installer`
@@ -22,6 +23,7 @@ use crate::process::{ProcessRunner, TokioProcessRunner};
 pub struct ApplicationServices {
     pub skills: SkillsService,
     pub preferences: PreferencesService,
+    pub projects: ProjectsService,
     pub installation: InstallationService,
 }
 
@@ -30,6 +32,7 @@ impl ApplicationServices {
         let config_service = ConfigurationService::new(config_override, project_root.clone());
         let preferences = PreferencesService::new();
         let skills = SkillsService::new(config_service, project_root.clone(), preferences.clone());
+        let projects = ProjectsService::new();
 
         let process_runner: Arc<dyn ProcessRunner> = Arc::new(TokioProcessRunner);
         let installer: Arc<dyn Installer> =
@@ -39,6 +42,7 @@ impl ApplicationServices {
         Self {
             skills,
             preferences,
+            projects,
             installation,
         }
     }

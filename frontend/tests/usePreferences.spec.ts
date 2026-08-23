@@ -19,6 +19,7 @@ describe("usePreferences", () => {
     resetState(state);
     vi.clearAllMocks();
     document.documentElement.style.removeProperty("--font-scale");
+    document.documentElement.style.removeProperty("--accent");
   });
 
   it("load() restores the persisted font scale onto the document root", async () => {
@@ -29,6 +30,28 @@ describe("usePreferences", () => {
 
     expect(document.documentElement.style.getPropertyValue("--font-scale")).toBe("1.25");
     expect(state.preferences.fontScale).toBe(1.25);
+  });
+
+  it("load() restores the persisted accent color onto the document root as --accent", async () => {
+    vi.mocked(backend.getPreferences).mockResolvedValue({ ...defaultPreferences(), accent: "#A855F7" });
+
+    const { load } = usePreferences();
+    await load();
+
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#A855F7");
+    expect(state.preferences.accent).toBe("#A855F7");
+  });
+
+  it("update({ accent }) applies to the document root and persists, restoring the previous value on failure", async () => {
+    vi.mocked(backend.getPreferences).mockResolvedValue({ ...defaultPreferences(), accent: "#F43F75" });
+    const { load, update } = usePreferences();
+    await load();
+
+    vi.mocked(backend.updatePreferences).mockRejectedValue(new Error("nope"));
+    await expect(update({ accent: "#22C55E" })).rejects.toThrow("nope");
+
+    expect(document.documentElement.style.getPropertyValue("--accent")).toBe("#F43F75");
+    expect(state.preferences.accent).toBe("#F43F75");
   });
 
   it("update({ fontScale }) applies to the document root and persists", async () => {

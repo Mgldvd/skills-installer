@@ -1,6 +1,5 @@
 .app-header {
-  display: grid;
-  grid-template-columns: auto minmax(18rem, 1fr) minmax(12rem, auto) auto;
+  display: flex;
   align-items: center;
   gap: var(--space-lg);
   padding: var(--space-sm) var(--space-lg);
@@ -10,6 +9,7 @@
 
   .app-header__brand {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     gap: var(--space-xs);
     min-width: 0;
@@ -32,28 +32,17 @@
 
   .app-header__item {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     min-width: 0;
     gap: var(--space-xs);
   }
 
-  .app-header__agents {
-    padding: var(--space-2xs) var(--space-xs);
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .app-header__agents:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-  }
-
-  body.is-keyboard-navigation .app-header__agents:focus-visible {
-    border-color: var(--accent);
-    background: var(--accent-soft);
+  // Everything else stays hugged to the left; "Install to" is the one item
+  // that belongs on the right edge of the header.
+  .app-header__destination {
+    margin-left: auto;
+    max-width: 22rem;
   }
 
   .app-header__label {
@@ -110,52 +99,16 @@
     }
   }
 
-  .app-header__status-row {
-    white-space: nowrap;
-  }
-
-  .app-header__dependency {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-  }
-
-  .app-header__dependency-dot {
-    width: 0.5em;
-    height: 0.5em;
-    min-width: 6px;
-    min-height: 6px;
-    border-radius: var(--radius-md);
-    background: var(--text-muted);
-  }
-
-  .app-header__dependency.is-ready {
-    color: var(--success);
-  }
-  .app-header__dependency.is-ready .app-header__dependency-dot {
-    background: var(--success);
-  }
-  .app-header__dependency.is-missing {
-    color: var(--danger);
-  }
-  .app-header__dependency.is-missing .app-header__dependency-dot {
-    background: var(--danger);
-  }
-
   @media (max-width: 900px) {
-    grid-template-columns: auto minmax(14rem, 1fr) auto;
     gap: var(--space-sm);
-    .app-header__agents {
-      display: none;
-    }
   }
 
   @media (max-width: 680px) {
-    grid-template-columns: 1fr auto;
     .app-header__brand {
       display: none;
+    }
+    .app-header__destination {
+      max-width: none;
     }
   }
 }

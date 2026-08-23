@@ -26,6 +26,9 @@
             <span class="agents-dialog__check" aria-hidden="true">
               {{ selected.includes(agent.id) ? "✓" : "" }}
             </span>
+            <span class="agents-dialog__icon">
+              <AgentIcon :agent-id="agent.id" />
+            </span>
             <span>
               <strong>{{ agent.label }}</strong>
               <small>{{ scope === "global" ? agent.globalPath : agent.projectPath }}</small>
@@ -40,6 +43,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useNativeDialog } from "../../composables/useNativeDialog";
+import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import CloseButton from "../CloseButton/CloseButton.vue";
 import { SUPPORTED_AGENTS, type InstallScope } from "../../types";
 const props = defineProps<{

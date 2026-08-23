@@ -8,9 +8,7 @@ vi.mock("../src/services/backend", () => ({ selectInstallationDirectory: vi.fn()
 
 const baseProps = {
   projectPath: "/home/user/current-project",
-  dependencyStatus: null,
   scope: "project" as const,
-  agents: [],
 };
 
 describe("AppHeader installation destination", () => {
@@ -21,14 +19,6 @@ describe("AppHeader installation destination", () => {
     const brand = wrapper.get(".app-header__brand");
     expect(brand.find("img.app-header__logo").exists()).toBe(true);
     expect(brand.get("h1").text()).toBe("Skills Installer");
-  });
-
-  it("requests the Agents dialog from the Agents summary", async () => {
-    const wrapper = mount(AppHeader, { props: baseProps });
-
-    await wrapper.get(".app-header__agents").trigger("click");
-
-    expect(wrapper.emitted("open-agents")).toEqual([[]]);
   });
 
   it("opens the native directory picker and emits the selected folder", async () => {

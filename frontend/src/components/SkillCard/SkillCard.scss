@@ -20,6 +20,24 @@
   &:hover {
     border-color: var(--border-strong);
   }
+  // Already installed reads as "done" — recede toward the app's own
+  // background instead of the same bright white every other card uses, so
+  // it visually steps back rather than competing for attention. The border
+  // gets only a whisper of color (same idea as the muted Pack badges) so it
+  // reads as "done" at a glance without the loud green tag this replaced.
+  // Declared before `.is-selected` so re-selecting a partially-installed
+  // card (to close an agent gap) still shows the more actionable accent
+  // background.
+  &.is-installed {
+    background: var(--bg-app);
+    border-color: color-mix(in srgb, var(--success) 18%, var(--border-soft));
+  }
+  // Comes after `.is-installed` so a gap for some targeted agents shows the
+  // same pale-amber hint the ribbon/"Missing N agents" badge already use,
+  // instead of the plain "done" green.
+  &.is-partially-installed {
+    border-color: color-mix(in srgb, var(--warning) 22%, var(--border-soft));
+  }
   &.is-selected {
     border-color: var(--accent);
     background: var(--accent-soft);
@@ -101,16 +119,6 @@
     max-height: calc(2.7rem * var(--font-scale));
   }
 
-  .skill-card__installed {
-    flex: 0 0 auto;
-    padding: var(--space-2xs) var(--space-xs);
-    border-radius: var(--radius-md);
-    background: var(--success-soft);
-    color: var(--success);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-  }
-
   .skill-card__installing {
     display: inline-flex;
     flex: 0 0 auto;
@@ -122,6 +130,17 @@
     color: var(--info);
     font-size: var(--font-size-xs);
     font-weight: 600;
+  }
+
+  .skill-card__partial {
+    flex: 0 0 auto;
+    padding: var(--space-2xs) var(--space-xs);
+    border-radius: var(--radius-md);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    white-space: nowrap;
   }
 
   .skill-card__spinner {
@@ -167,8 +186,13 @@
   &.is-installed .skill-card__selection-ribbon {
     background: var(--success);
   }
-  // Comes last so an active install visibly wins over both selected and
-  // (briefly, for an already-installed re-run) installed ribbon colors.
+  // Comes after .is-installed so a gap for some targeted agents visibly
+  // wins over the plain "installed" green — there's still an action to take.
+  &.is-partially-installed .skill-card__selection-ribbon {
+    background: var(--warning);
+  }
+  // Comes last so an active install visibly wins over selected, installed,
+  // and partially-installed ribbon colors.
   &.is-installing .skill-card__selection-ribbon {
     background: var(--info);
   }
@@ -224,17 +248,6 @@
     overflow: hidden;
   }
 
-  .skill-card__local,
-  .skill-card__remote {
-    padding: var(--space-2xs) var(--space-xs);
-    flex: 0 0 auto;
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-sm);
-    background: var(--bg-muted);
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-  }
-
   .skill-card__update {
     position: relative;
     z-index: 2;
@@ -251,6 +264,29 @@
     &:hover {
       background: var(--warning);
       color: var(--bg-panel);
+    }
+  }
+
+  .skill-card__agents {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: var(--space-2xs);
+    padding-left: var(--space-2xs);
+  }
+
+  .skill-card__agent-icon {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--bg-muted);
+
+    .agent-icon {
+      width: 1rem;
+      height: 1rem;
     }
   }
 

@@ -17,6 +17,7 @@
         :list="view === 'list'"
         :installing="skill.id === installingSkillId"
         :has-update="skillsWithUpdates.has(skill.id)"
+        :target-agents="targetAgents"
         @toggle="(id) => emit('toggle', id)"
         @edit="(id) => emit('edit', id)"
         @update="(id) => emit('update', id)" />
@@ -36,6 +37,7 @@ withDefaults(
     compact?: boolean;
     installingSkillId?: string | null;
     skillsWithUpdates?: Set<string>;
+    targetAgents: string[];
     view?: "grid" | "list";
   }>(),
   { installingSkillId: null, skillsWithUpdates: () => new Set<string>(), view: "grid" },

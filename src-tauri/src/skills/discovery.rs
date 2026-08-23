@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::Path;
 
 use serde::Deserialize;
@@ -38,6 +39,39 @@ pub fn extract_front_matter(content: &str) -> Option<FrontMatter> {
 /// which `app::skills_service` applies on top of this base list.
 pub fn discover_local_skills(project_root: &Path) -> Vec<Skill> {
     discover_skills_in_directory(&project_root.join(".agents").join("skills"))
+}
+
+/// Project-relative install destinations that are distinguishable on disk,
+/// paired with the single agent id each one reports as. `.agents/skills` is
+/// deliberately reported as `universal` only, never as the other agents that
+/// also happen to read that same convention path (codex, gemini-cli, cursor,
+/// opencode, github-copilot per `SUPPORTED_AGENTS` in the frontend's
+/// `preferences.ts`) — a skill placed there can't be attributed to any one of
+/// them over the others, so claiming it was installed "for Codex" would be a
+/// guess the filesystem can't back up. Only destinations no other agent
+/// shares get their own badge.
+const AGENT_PROJECT_DIRS: &[(&[&str], &str)] = &[
+    (&[".agents", "skills"], "universal"),
+    (&[".claude", "skills"], "claude-code"),
+    (&[".windsurf", "skills"], "windsurf"),
+];
+
+/// Maps each installed skill's directory name (`skill_name`) to the ids of
+/// the agents whose install destination under `project_root` contains it.
+pub fn discover_installed_agents(project_root: &Path) -> HashMap<String, Vec<String>> {
+    let mut agents_by_skill: HashMap<String, Vec<String>> = HashMap::new();
+    for (segments, agent_id) in AGENT_PROJECT_DIRS {
+        let dir = segments
+            .iter()
+            .fold(project_root.to_path_buf(), |acc, part| acc.join(part));
+        for skill in discover_skills_in_directory(&dir) {
+            agents_by_skill
+                .entry(skill.skill_name)
+                .or_default()
+                .push(agent_id.to_string());
+        }
+    }
+    agents_by_skill
 }
 
 /// Scans a user-configured source catalog. The directory contains Skill
@@ -89,6 +123,7 @@ pub fn discover_skills_in_directory(skills_dir: &Path) -> Vec<Skill> {
             preselected: false,
             local: true,
             installed: true,
+            installed_agents: Vec::new(),
             enabled: true,
         });
     }

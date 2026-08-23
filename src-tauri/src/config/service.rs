@@ -345,6 +345,7 @@ mod tests {
                 preselected: true,
                 local: false,
                 installed: false,
+                installed_agents: Vec::new(),
                 enabled: true,
             }],
             source_path,

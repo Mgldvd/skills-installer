@@ -96,23 +96,42 @@
     text-transform: uppercase;
   }
 
+  // No enclosing card border — an empty-looking bordered box reads as
+  // broken when a Skill has little to show (no URL, no preview). Content
+  // just sits directly on the dialog background instead.
   .edit-skill-dialog__details {
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-height: 0;
     overflow-y: auto;
+    padding: var(--space-md) 0;
   }
 
+  // Two columns: the left stacks every short field tightly; the right is a
+  // single, tall field (Description) that fills the same height instead of
+  // leaving the shorter fields beside it stranded in empty stretched space.
   .edit-skill-dialog__fields {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    min-height: 0;
-    overflow: visible;
-    gap: var(--space-md);
-    padding: var(--space-md);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: var(--space-lg);
   }
 
-  .edit-skill-dialog__field--wide {
-    grid-column: 1 / -1;
+  .edit-skill-dialog__fields-primary {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: var(--space-sm);
+  }
+
+  .edit-skill-dialog__field--secondary {
+    min-width: 0;
+  }
+
+  .edit-skill-dialog__field--secondary .edit-skill-dialog__textarea {
+    flex: 1;
+    min-height: 8rem;
   }
 
   .edit-skill-dialog__field {
@@ -250,8 +269,8 @@
     .edit-skill-dialog__fields {
       grid-template-columns: 1fr;
     }
-    .edit-skill-dialog__field--wide {
-      grid-column: 1;
+    .edit-skill-dialog__field--secondary .edit-skill-dialog__textarea {
+      min-height: 6rem;
     }
     .edit-skill-dialog__delete-confirm {
       align-items: stretch;

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import InstallProgressPanel from "../src/components/InstallProgressPanel/InstallProgressPanel.vue";
 import type { InstallationState } from "../src/composables/useAppState";
+import { makeSkill } from "./fixtures";
 
 function baseInstallation(overrides: Partial<InstallationState> = {}): InstallationState {
   return {
@@ -90,6 +91,30 @@ describe("InstallProgressPanel", () => {
     expect(wrapper.text()).toContain("2 installed");
     expect(wrapper.text()).toContain("1 already installed");
     expect(wrapper.text()).toContain("1 failed");
+  });
+
+  it("closes the loop by showing which agents each skill now installed for", () => {
+    const wrapper = mount(InstallProgressPanel, {
+      props: {
+        installation: baseInstallation({
+          perSkillStatus: { a: "installed", b: "failed" },
+          displayNames: { a: "Skill A", b: "Skill B" },
+          result: { requested: 2, installed: 1, alreadyInstalled: 0, failed: 1, cancelled: false, perSkill: [] },
+        }),
+        skills: [
+          makeSkill({ id: "a", installed: true, installedAgents: ["universal", "claude-code"] }),
+          makeSkill({ id: "b", installed: false, installedAgents: [] }),
+        ],
+      },
+    });
+
+    const rows = wrapper.findAll(".install-progress-panel__result-row");
+    expect(rows).toHaveLength(2);
+    expect(rows[0].findAll(".agent-icon")).toHaveLength(2);
+    expect(rows[0].get(".install-progress-panel__result-agents").attributes("title")).toBe(
+      "Installed for: Universal (.agents), Claude Code",
+    );
+    expect(rows[1].find(".install-progress-panel__result-agents").exists()).toBe(false);
   });
 
   it("renders a persistent error message, not just a transient state", () => {

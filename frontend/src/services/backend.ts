@@ -9,6 +9,7 @@ import type {
   InstallRequest,
   InstallResult,
   ParsedSkillSource,
+  Project,
   Skill,
   SkillTag,
   UiPreferences,
@@ -119,6 +120,22 @@ export async function updatePreferences(preferences: UiPreferences): Promise<UiP
   return call("update_preferences", { preferences });
 }
 
+export interface SaveProjectArgs {
+  name: string;
+  gitUrl?: string | null;
+  skillNames: string[];
+}
+
+export async function getProjects(): Promise<Project[]> {
+  return call("get_projects");
+}
+export async function saveProject(args: SaveProjectArgs): Promise<Project> {
+  return call("save_project", { args });
+}
+export async function deleteProject(projectId: string): Promise<void> {
+  return call("delete_project", { projectId });
+}
+
 export interface CliInstallResult {
   commandPath: string;
   executablePath: string;
@@ -167,6 +184,15 @@ export async function checkLocalSkillUpdates(projectPath?: string): Promise<stri
 export async function selectInstallationDirectory(defaultPath?: string): Promise<string | null> {
   const selected = await open({
     title: "Select installation folder",
+    directory: true,
+    multiple: false,
+    defaultPath: defaultPath || undefined,
+  });
+  return typeof selected === "string" ? selected : null;
+}
+export async function selectLocalCatalogDirectory(defaultPath?: string): Promise<string | null> {
+  const selected = await open({
+    title: "Select local Skills catalog folder",
     directory: true,
     multiple: false,
     defaultPath: defaultPath || undefined,

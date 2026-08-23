@@ -8,6 +8,7 @@ pub mod installer;
 pub mod platform;
 pub mod preferences;
 pub mod process;
+pub mod projects;
 pub mod skills;
 
 use std::path::PathBuf;
@@ -145,6 +146,7 @@ fn run_gui(config_override: Option<PathBuf>) {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(state)
         .invoke_handler(tauri::generate_handler![
             commands::skills::get_application_state,
@@ -169,6 +171,9 @@ fn run_gui(config_override: Option<PathBuf>) {
             commands::preferences::get_preferences,
             commands::preferences::update_preferences,
             commands::preferences::install_cli_command,
+            commands::projects::get_projects,
+            commands::projects::save_project,
+            commands::projects::delete_project,
             commands::installation::get_dependency_status,
             commands::installation::validate_installation,
             commands::installation::install_skills,

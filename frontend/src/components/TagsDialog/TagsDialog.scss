@@ -9,19 +9,6 @@
 
   .tags-dialog__header {
     @include dialog.menu-header;
-
-    h2,
-    p {
-      margin: 0;
-    }
-    h2 {
-      font-size: var(--font-size-lg);
-    }
-    p {
-      margin-top: var(--space-2xs);
-      color: var(--text-secondary);
-      font-size: var(--font-size-sm);
-    }
   }
 
   .tags-dialog__header-actions {
@@ -39,43 +26,34 @@
     overflow: hidden;
   }
 
+  // Blends into the dialog's own surface instead of sitting in a bright
+  // white card on top of it — this is the default, always-present state of
+  // the menu now, not a modal-like overlay that needs to stand apart.
+  // `align-items: center` (not the old `end`) is what actually makes the
+  // inline Name field, the color row, and the actions line up harmoniously
+  // now that Name no longer stacks its label above the input.
   .tags-dialog__editor {
     display: grid;
     grid-template-columns: minmax(12rem, 1fr) auto auto;
-    align-items: end;
+    align-items: center;
     gap: var(--space-md);
     padding: var(--space-md);
     border: 1px solid var(--border-soft);
-    background: var(--bg-card);
+    background: var(--bg-panel);
 
     .tags-dialog__editor-field {
-      display: grid;
-      gap: var(--space-2xs);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
       min-width: 0;
       color: var(--text-secondary);
       font-size: var(--font-size-xs);
       font-weight: 600;
+      white-space: nowrap;
     }
     input {
       @include dialog.text-input;
       width: 100%;
-    }
-  }
-
-  .tags-dialog__palette {
-    display: grid;
-    grid-template-columns: repeat(10, 1.55rem);
-    gap: var(--space-xs);
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-
-    legend {
-      margin-bottom: var(--space-2xs);
-      color: var(--text-secondary);
-      font-size: var(--font-size-xs);
-      font-weight: 600;
     }
   }
 
@@ -93,16 +71,29 @@
     background: var(--danger-soft);
     color: var(--danger);
   }
+  // Shares one row with the Packs catalog instead of taking a full row of
+  // its own — the search box sits to the right of the Pack badges, so
+  // filtering doesn't cost extra vertical space in the dialog.
+  .tags-dialog__catalog-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
   .tags-dialog__catalog {
     display: flex;
+    flex: 1 1 auto;
     flex-wrap: wrap;
     gap: var(--space-xs);
+    min-width: 0;
   }
   .tags-dialog__search {
     @include dialog.text-input;
-    width: 100%;
+    flex: 0 1 16rem;
+    min-width: 8rem;
+    margin-left: auto;
   }
-
   .tags-dialog__skills {
     min-height: 0;
     overflow: auto;
@@ -159,16 +150,6 @@
   .link-button--danger {
     color: var(--danger);
   }
-  .color {
-    width: 1.55rem;
-    height: 1.55rem;
-    border: 2px solid transparent;
-    border-radius: var(--radius-md);
-  }
-  .color.selected {
-    outline: 2px solid var(--text-primary);
-    outline-offset: 2px;
-  }
   .catalog-tag__edit {
     width: 0.8rem;
     height: 0.8rem;
@@ -188,11 +169,11 @@
       font-weight: 400;
       line-height: 1.25;
     }
-    .tags-dialog__tags {
+    .skill-row__tags {
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: var(--space-xs);
+      gap: var(--space-sm);
       min-width: 0;
     }
     .tags-dialog__empty {
@@ -206,7 +187,7 @@
       grid-template-columns: 1fr;
       align-items: stretch;
     }
-    .tags-dialog__palette {
+    :deep(.color-palette-picker) {
       grid-template-columns: repeat(auto-fit, 1.55rem);
     }
     .tags-dialog__editor-actions {
@@ -222,6 +203,10 @@
     }
     .tags-dialog__columns {
       display: none;
+    }
+    .tags-dialog__search {
+      flex: 1 1 auto;
+      min-width: 0;
     }
     .skill-row {
       grid-template-columns: 1fr;

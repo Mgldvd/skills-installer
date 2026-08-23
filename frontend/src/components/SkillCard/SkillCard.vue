@@ -7,6 +7,7 @@
       'is-compact': compact,
       'is-list': list,
       'is-installed': skill.installed,
+      'is-partially-installed': isPartiallyInstalled,
       'is-installing': installing,
     }">
     <button
@@ -14,17 +15,23 @@
       class="skill-card__selection-surface"
       :aria-pressed="selected"
       :aria-label="ariaLabel"
-      :disabled="!skill.enabled || skill.installed"
+      :disabled="!skill.enabled || isFullyInstalled"
       @click="emit('toggle', skill.id)" />
 
     <span class="skill-card__selection-ribbon" aria-hidden="true" />
 
     <header class="skill-card__top">
       <h3 class="skill-card__title">{{ skill.displayName }}</h3>
-      <span v-if="skill.installed" class="skill-card__installed">Installed</span>
-      <span v-else-if="installing" class="skill-card__installing">
+      <!-- A fully-installed, non-partial card stays quiet here on purpose:
+           the green ribbon/border already say "done" — a stale `installing`
+           prop lingering a beat after completion shouldn't flash a spinner
+           back on top of it. -->
+      <span v-if="installing && !isFullyInstalled" class="skill-card__installing">
         <span class="skill-card__spinner" aria-hidden="true" />
         Installing…
+      </span>
+      <span v-else-if="isPartiallyInstalled" class="skill-card__partial" :title="missingAgentsTitle">
+        Missing {{ missingAgents.length }} agent{{ missingAgents.length === 1 ? "" : "s" }}
       </span>
     </header>
 
@@ -34,8 +41,7 @@
 
     <footer class="skill-card__footer">
       <div class="skill-card__meta">
-        <span v-if="skill.local" class="skill-card__local">Local</span>
-        <span v-else class="skill-card__remote">Remote</span>
+        <SourceIcon class="skill-card__source" :local="skill.local" />
         <button
           v-if="showUpdateButton"
           type="button"
@@ -48,6 +54,11 @@
         <div v-if="assignedTags.length" class="skill-card__packs" aria-label="Assigned packs">
           <PackBadge v-for="tag in assignedTags" :key="tag.id" :name="tag.name" :color="tag.color" compact />
         </div>
+      </div>
+      <div v-if="skill.installedAgents.length" class="skill-card__agents" :title="installedAgentsTitle" aria-label="Installed for">
+        <span v-for="id in skill.installedAgents" :key="id" class="skill-card__agent-icon">
+          <AgentIcon :agent-id="id" />
+        </span>
       </div>
       <button
         type="button"
@@ -68,19 +79,24 @@
 import { computed } from "vue";
 
 import type { Skill, SkillTag } from "../../types";
+import { agentLabel } from "../../utils/agents";
+import { agentsNeedingInstall } from "../../utils/skillInstall";
+import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import PackBadge from "../PackBadge/PackBadge.vue";
+import SourceIcon from "../SourceIcon/SourceIcon.vue";
 
 const props = withDefaults(
   defineProps<{
     skill: Skill;
     selected: boolean;
+    targetAgents?: string[];
     tags?: SkillTag[];
     compact?: boolean;
     list?: boolean;
     installing?: boolean;
     hasUpdate?: boolean;
   }>(),
-  { tags: () => [], compact: false, list: false, installing: false, hasUpdate: false },
+  { targetAgents: () => [], tags: () => [], compact: false, list: false, installing: false, hasUpdate: false },
 );
 
 const emit = defineEmits<{
@@ -89,12 +105,25 @@ const emit = defineEmits<{
   update: [skillId: string];
 }>();
 
+// Installed for *some* but not *every* currently targeted agent — still
+// selectable, so re-installing can close the gap (see `agentsNeedingInstall`).
+const missingAgents = computed(() => agentsNeedingInstall(props.skill, props.targetAgents));
+const isPartiallyInstalled = computed(() => props.skill.installed && missingAgents.value.length > 0);
+const isFullyInstalled = computed(() => props.skill.installed && !isPartiallyInstalled.value);
+
 const ariaLabel = computed(() => {
-  if (props.skill.installed) return `${props.skill.displayName}, already installed`;
+  if (isFullyInstalled.value) return `${props.skill.displayName}, already installed`;
   if (props.installing) return `${props.skill.displayName}, installing`;
+  if (isPartiallyInstalled.value) {
+    return `${props.skill.displayName}, installed for ${props.skill.installedAgents
+      .map(agentLabel)
+      .join(", ")}, not yet installed for ${missingAgents.value.map(agentLabel).join(", ")}`;
+  }
   return `${props.skill.displayName}${props.selected ? ", selected" : ", not selected"}`;
 });
 const assignedTags = computed(() => props.tags.filter((tag) => props.skill.tags.includes(tag.id)));
+const installedAgentsTitle = computed(() => `Installed for: ${props.skill.installedAgents.map(agentLabel).join(", ")}`);
+const missingAgentsTitle = computed(() => `Not yet installed for: ${missingAgents.value.map(agentLabel).join(", ")}`);
 // Defensive against a stale `skillsWithUpdates` (e.g. after switching the
 // selected project folder changes what's installed): only ever show the
 // Update button for a skill that's still both local and installed.

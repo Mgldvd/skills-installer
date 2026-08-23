@@ -3,7 +3,7 @@
 
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2xs);
+  gap: var(--space-xs);
   min-width: 0;
   max-width: 100%;
   min-height: 2rem;
@@ -23,6 +23,28 @@
     border-color var(--transition-fast),
     background-color var(--transition-fast),
     color var(--transition-fast);
+
+  // Base dot/label styling has to come *before* every `@at-root` state
+  // block below. Both this rule and e.g. `.pack-badge--muted .pack-badge__dot`
+  // compile to a two-class descendant selector — identical specificity — so
+  // whichever is later in the stylesheet wins outright, regardless of which
+  // state class is actually present. Declared first, a state override always
+  // wins as intended instead of silently losing to this default every time.
+  .pack-badge__dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    flex: 0 0 0.625rem;
+    border-radius: var(--radius-sm);
+    background: var(--pack-color);
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--pack-color) 20%, transparent),
+      0 1px 2px color-mix(in srgb, var(--pack-color) 45%, transparent);
+  }
+
+  .pack-badge__label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 
   @at-root .pack-badge--compact {
     min-height: 1.75rem;
@@ -58,70 +80,36 @@
     background: color-mix(in srgb, var(--pack-color) 18%, var(--bg-card));
     color: var(--text-primary);
     font-weight: 650;
-    box-shadow: inset 3px 0 0 var(--pack-color);
   }
 
   @at-root .pack-badge--partial {
     border-style: dashed;
   }
 
-  // Assignment controls keep unassigned Packs intentionally neutral so the
-  // configured color remains a strong, immediate cue for assigned Packs.
+  // Unassigned Packs read as near-neutral text and fill — almost grey — with
+  // only the dot carrying a pale hint of the Pack's own hue, so "selected"
+  // (solid fill, full-strength dot, bold text) is unmistakably the stronger
+  // state by comparison rather than two shades of the same saturated color.
   @at-root .pack-badge--muted {
-    border-color: var(--border-soft);
-    background: var(--bg-muted);
+    border-color: color-mix(in srgb, var(--pack-color) 6%, var(--border-soft));
+    background: color-mix(in srgb, var(--pack-color) 2%, var(--bg-card));
     color: var(--text-muted);
     box-shadow: none;
 
     .pack-badge__dot {
-      background: var(--text-muted);
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-muted) 14%, transparent);
+      background: color-mix(in srgb, var(--pack-color) 10%, var(--bg-card));
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--pack-color) 4%, transparent);
     }
 
     &.pack-badge--interactive:hover:not(:disabled) {
-      border-color: var(--border-strong);
-      background: var(--bg-card-hover);
+      border-color: color-mix(in srgb, var(--pack-color) 55%, var(--border-strong));
+      background: color-mix(in srgb, var(--pack-color) 15%, var(--bg-card));
       color: var(--text-primary);
 
       .pack-badge__dot {
         background: var(--pack-color);
         box-shadow: 0 0 0 2px color-mix(in srgb, var(--pack-color) 20%, transparent);
       }
-    }
-  }
-
-  .pack-badge__dot {
-    width: 0.625rem;
-    height: 0.625rem;
-    flex: 0 0 0.625rem;
-    border-radius: var(--radius-sm);
-    background: var(--pack-color);
-    box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--pack-color) 20%, transparent),
-      0 1px 2px color-mix(in srgb, var(--pack-color) 45%, transparent);
-  }
-
-  .pack-badge__label {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-
-  .pack-badge__state {
-    display: grid;
-    place-items: center;
-    width: 0.75rem;
-    height: 0.75rem;
-    flex: 0 0 0.75rem;
-    color: var(--text-primary);
-
-    svg {
-      width: 100%;
-      height: 100%;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linecap: round;
-      stroke-linejoin: round;
     }
   }
 }

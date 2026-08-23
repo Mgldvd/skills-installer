@@ -1,6 +1,8 @@
 import { computed } from "vue";
 
 import * as backend from "../services/backend";
+import type { Skill } from "../types";
+import { agentsNeedingInstall } from "../utils/skillInstall";
 import { useAppState } from "./useAppState";
 
 /**
@@ -10,6 +12,14 @@ import { useAppState } from "./useAppState";
  */
 export function useSkills() {
   const state = useAppState();
+
+  /** A skill can't be (re-)selected once it's installed for every agent
+   * currently targeted for installation — there's nothing left to install.
+   * If it's only installed for some of them, selecting it again just closes
+   * the gap for the rest (see `agentsNeedingInstall`). */
+  function isFullyInstalledForTargets(skill: Skill) {
+    return agentsNeedingInstall(skill, state.preferences.defaultAgents).length === 0;
+  }
 
   async function loadAll() {
     const config = await backend.getApplicationState();
@@ -39,22 +49,25 @@ export function useSkills() {
   }
 
   /** Resets selection to exactly the currently configured preselected set —
-   * used both on first load and by the toolbar's "Defaults" action. Already-
-   * installed skills are never selectable (see toggleSelected), so they're
-   * excluded here too even if preselected. */
+   * used both on first load and by the toolbar's "Defaults" action. A skill
+   * already installed for every currently targeted agent is never
+   * selectable (see toggleSelected), so it's excluded here too even if
+   * preselected. */
   function restoreDefaultSelection() {
     const next = new Set<string>();
     for (const skill of state.skills) {
-      if (skill.preselected && skill.enabled && !skill.installed) next.add(skill.id);
+      if (skill.preselected && skill.enabled && !isFullyInstalledForTargets(skill)) next.add(skill.id);
     }
     state.selectedSkillIds = next;
   }
 
   function pruneInstalledFromSelection() {
     if (!state.selectedSkillIds.size) return;
-    const installedIds = new Set(state.skills.filter((s) => s.installed).map((s) => s.id));
-    if (![...state.selectedSkillIds].some((id) => installedIds.has(id))) return;
-    state.selectedSkillIds = new Set([...state.selectedSkillIds].filter((id) => !installedIds.has(id)));
+    const doneIds = new Set(
+      state.skills.filter((s) => isFullyInstalledForTargets(s)).map((s) => s.id),
+    );
+    if (![...state.selectedSkillIds].some((id) => doneIds.has(id))) return;
+    state.selectedSkillIds = new Set([...state.selectedSkillIds].filter((id) => !doneIds.has(id)));
   }
 
   function clearSelection() {
@@ -63,11 +76,13 @@ export function useSkills() {
 
   function toggleSelected(skillId: string) {
     const alreadySelected = state.selectedSkillIds.has(skillId);
-    // Already-installed skills can only be removed from selection, never
-    // added — there's nothing left to install, so selecting one would just
-    // let a batch install silently re-request something already done.
+    // A skill fully installed for every targeted agent can only be removed
+    // from selection, never added — there's nothing left to install, so
+    // selecting it would just let a batch install silently re-request
+    // something already done. One only installed for *some* targeted
+    // agents stays selectable, so re-installing can close the gap.
     const skill = state.skills.find((s) => s.id === skillId);
-    if (!alreadySelected && skill?.installed) return;
+    if (!alreadySelected && skill && isFullyInstalledForTargets(skill)) return;
     const next = new Set(state.selectedSkillIds);
     if (alreadySelected) next.delete(skillId);
     else next.add(skillId);

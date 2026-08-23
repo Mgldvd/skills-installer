@@ -6,7 +6,7 @@ function applyFontScale(scale: number) {
   document.documentElement.style.setProperty("--font-scale", String(scale));
 }
 function applyAccent(accent: UiPreferences["accent"]) {
-  document.documentElement.dataset.accent = accent;
+  document.documentElement.style.setProperty("--accent", accent);
 }
 
 export function usePreferences() {

@@ -74,13 +74,35 @@ describe("Packs assignment matrix", () => {
     expect(wrapper.emitted("unassign")).toEqual([["b", "frontend"]]);
   });
 
-  it("keeps global creation and removes every per-Skill Add Pack control", async () => {
+  it("shows the create-Pack form as part of the layout, with no +New Pack toggle or per-Skill Add controls", () => {
     const wrapper = matrix();
-    expect(wrapper.get(".tags-dialog__header").text()).toContain("+ New Pack");
+    expect(wrapper.find(".tags-dialog__editor").exists()).toBe(true);
+    expect(wrapper.text()).not.toContain("+ New Pack");
     expect(wrapper.text()).not.toContain("+ Add Tag");
     expect(wrapper.text()).not.toContain("+ Create New Tag");
-    await wrapper.get(".tags-dialog__header .button").trigger("click");
-    expect(wrapper.find(".tags-dialog__editor").exists()).toBe(true);
+  });
+
+  it("starts blank with no Cancel/Delete, ready to type a new Pack name", () => {
+    const wrapper = matrix();
+    const editor = wrapper.get(".tags-dialog__editor");
+    expect((editor.get("input").element as HTMLInputElement).value).toBe("");
+    expect(editor.find(".link-button--danger").exists()).toBe(false);
+    expect(editor.find(".link-button").exists()).toBe(false);
+    expect(editor.get("button[type=submit]").text()).toBe("Create");
+  });
+
+  it("switches the same form into editing an existing Pack, with Cancel returning it to blank", async () => {
+    const wrapper = matrix();
+    await wrapper.get(".catalog-tag").trigger("click");
+
+    const editor = wrapper.get(".tags-dialog__editor");
+    expect((editor.get("input").element as HTMLInputElement).value).toBe("Recommended");
+    expect(editor.get("button[type=submit]").text()).toBe("Save");
+    expect(editor.get(".link-button--danger").text()).toBe("Delete");
+
+    await editor.get(".link-button:not(.link-button--danger)").trigger("click");
+    expect((editor.get("input").element as HTMLInputElement).value).toBe("");
+    expect(editor.get("button[type=submit]").text()).toBe("Create");
   });
 
   it("shows a newly supplied global Pack inactive on every row", async () => {
@@ -100,6 +122,42 @@ describe("Packs assignment matrix", () => {
     expect(wrapper.text()).toContain("Skill B");
     await wrapper.get('[aria-label="Search skills"]').setValue("hidden");
     expect(wrapper.findAll(".skill-row")).toHaveLength(0);
+  });
+
+  it("offers 15 curated colors plus a Custom color picker in the Pack editor", async () => {
+    const wrapper = matrix();
+    await wrapper.get(".tags-dialog__header .button").trigger("click");
+
+    const swatches = wrapper.findAll(".color-palette-picker__swatch");
+    expect(swatches).toHaveLength(16);
+    expect(wrapper.find(".color-palette-picker__custom").exists()).toBe(true);
+    // The very first curated swatch is the default for a brand-new Pack.
+    expect(wrapper.find(".color-palette-picker__swatch.is-selected").exists()).toBe(true);
+    expect(wrapper.find(".color-palette-picker__custom.is-selected").exists()).toBe(false);
+  });
+
+  it("picking a Custom color selects the Custom swatch and saves that exact color", async () => {
+    const wrapper = matrix();
+    await wrapper.get(".tags-dialog__header .button").trigger("click");
+    await wrapper.get(".tags-dialog__editor-field input").setValue("New Pack");
+
+    await wrapper.get(".color-palette-picker__custom input[type='color']").setValue("#abcdef");
+
+    expect(wrapper.get(".color-palette-picker__custom").attributes("aria-pressed")).toBe("true");
+    expect(wrapper.findAll(".color-palette-picker__swatch.is-selected")).toHaveLength(1);
+
+    await wrapper.get(".tags-dialog__editor").trigger("submit");
+    expect(wrapper.emitted("create")).toEqual([["New Pack", "#ABCDEF"]]);
+  });
+
+  it("picking a curated swatch again deselects the Custom color", async () => {
+    const wrapper = matrix();
+    await wrapper.get(".tags-dialog__header .button").trigger("click");
+    await wrapper.get(".color-palette-picker__custom input[type='color']").setValue("#abcdef");
+    expect(wrapper.get(".color-palette-picker__custom").attributes("aria-pressed")).toBe("true");
+
+    await wrapper.findAll(".color-palette-picker__swatch")[2].trigger("click");
+    expect(wrapper.get(".color-palette-picker__custom").attributes("aria-pressed")).toBe("false");
   });
 
   it("disables only the pending relationship without moving layout", () => {

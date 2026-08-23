@@ -30,27 +30,11 @@
             </div>
             <div class="preferences-dialog__field">
               <span class="preferences-dialog__label">Accent color</span>
-              <div class="preferences-dialog__accents" role="radiogroup" aria-label="Application accent">
-                <button
-                  v-for="item in accents"
-                  :key="item.id"
-                  type="button"
-                  :class="{
-                    'is-active': preferences.accent === item.id,
-                  }"
-                  :aria-label="item.label"
-                  :aria-pressed="preferences.accent === item.id"
-                  :style="{ backgroundColor: item.color }"
-                  @click="emit('update', { accent: item.id })" />
-              </div>
+              <ColorPalettePicker
+                :model-value="preferences.accent"
+                aria-label="Application accent"
+                @update:model-value="(v) => emit('update', { accent: v })" />
             </div>
-            <label class="preferences-dialog__checkbox">
-              <span>
-                <strong>Compact cards</strong>
-                <small>Hide descriptions and show more Skills in the grid.</small>
-              </span>
-              <input type="checkbox" :checked="preferences.compactCards" @change="handleCompactCardsChange" />
-            </label>
           </div>
         </section>
 
@@ -117,35 +101,33 @@
           </div>
         </section>
 
-        <section class="preferences-dialog__section">
+        <section class="preferences-dialog__section preferences-dialog__section--wide">
           <div class="preferences-dialog__section-heading">
-            <h3>Skill source</h3>
-            <p>Manage the local catalog shown in the installer.</p>
+            <h3>Organize</h3>
+            <p>Jump straight to the other places Skills Installer keeps things organized.</p>
           </div>
-          <div class="preferences-dialog__section-content">
-            <div class="preferences-dialog__field">
-              <label class="preferences-dialog__label" for="local-skill-source">Local catalog folder</label>
-              <span class="preferences-dialog__help">
-                This is a source of installable Skills, not an installation destination.
-              </span>
-              <input
-                id="local-skill-source"
-                v-model="localSource"
-                class="preferences-dialog__input"
-                type="text"
-                placeholder="~/.control/skill" />
-              <div class="preferences-dialog__source-actions">
-                <button type="button" :disabled="!canSaveLocalSource" @click="saveLocalSource">Change Folder</button>
-                <button type="button" @click="emit('refreshLocalSource')">Refresh Catalog</button>
-              </div>
+          <div class="preferences-dialog__section-content preferences-dialog__tools">
+            <div class="preferences-dialog__field preferences-dialog__tool">
+              <span class="preferences-dialog__label">Packs</span>
+              <span class="preferences-dialog__help">Group Skills into reusable installation selections.</span>
+              <button type="button" class="preferences-dialog__tool-button" @click="emit('openPacks')">
+                Manage Packs
+              </button>
+            </div>
+            <div class="preferences-dialog__field preferences-dialog__tool">
+              <span class="preferences-dialog__label">Agents</span>
+              <span class="preferences-dialog__help">Choose which coding agents Skills install for by default.</span>
+              <button type="button" class="preferences-dialog__tool-button" @click="emit('openAgents')">
+                Manage Agents
+              </button>
             </div>
           </div>
         </section>
 
-        <section class="preferences-dialog__section">
+        <section class="preferences-dialog__section preferences-dialog__section--wide">
           <div class="preferences-dialog__section-heading">
             <h3>Application tools</h3>
-            <p>Install terminal access or move settings between devices.</p>
+            <p>Install terminal access, manage the local catalog, or move settings between devices.</p>
           </div>
           <div class="preferences-dialog__section-content preferences-dialog__tools">
             <div class="preferences-dialog__field preferences-dialog__tool">
@@ -170,6 +152,27 @@
                 <input ref="fileInput" type="file" accept="application/json,.json" hidden @change="handleImport" />
               </div>
             </div>
+            <div class="preferences-dialog__field preferences-dialog__tool preferences-dialog__tool--wide">
+              <label class="preferences-dialog__label" for="local-skill-source">Local catalog folder</label>
+              <span class="preferences-dialog__help">
+                This is a source of installable Skills, not an installation destination.
+              </span>
+              <div class="preferences-dialog__source-row">
+                <input
+                  id="local-skill-source"
+                  v-model="localSource"
+                  class="preferences-dialog__input"
+                  type="text"
+                  placeholder="~/.control/skill"
+                  title="Press Enter, or click away, to save"
+                  @keydown.enter.prevent="saveLocalSource"
+                  @blur="saveLocalSource" />
+                <div class="preferences-dialog__source-actions">
+                  <button type="button" @click="handleBrowseLocalSource">Browse…</button>
+                  <button type="button" @click="emit('refreshLocalSource')">Refresh Catalog</button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -181,7 +184,9 @@
 import { computed, ref, watch } from "vue";
 
 import { useNativeDialog } from "../../composables/useNativeDialog";
-import type { AccentColor, UiPreferences } from "../../types";
+import * as backend from "../../services/backend";
+import type { UiPreferences } from "../../types";
+import ColorPalettePicker from "../ColorPalettePicker/ColorPalettePicker.vue";
 import CloseButton from "../CloseButton/CloseButton.vue";
 import FontScaleControl from "../FontScaleControl/FontScaleControl.vue";
 
@@ -198,6 +203,8 @@ const emit = defineEmits<{
   updateLocalSource: [path: string];
   refreshLocalSource: [];
   installCli: [];
+  openPacks: [];
+  openAgents: [];
 }>();
 
 const dialogEl = ref<HTMLDialogElement | null>(null);
@@ -227,14 +234,17 @@ function saveLocalSource() {
   if (canSaveLocalSource.value) emit("updateLocalSource", localSource.value.trim());
 }
 
-const accents: { id: AccentColor; label: string; color: string }[] = [
-  { id: "pink", label: "Pink", color: "#F43F75" },
-  { id: "coral", label: "Red / Coral", color: "#F05252" },
-  { id: "blue", label: "Blue", color: "#3B82F6" },
-  { id: "teal", label: "Teal", color: "#14B8A6" },
-  { id: "violet", label: "Violet", color: "#A855F7" },
-  { id: "green", label: "Green", color: "#22C55E" },
-];
+// Picking a folder from the native dialog is already an explicit
+// confirmation, so it saves immediately — no separate "Change Folder" step
+// to click through afterward, same as the "Install to" picker in the
+// header. Typing the path by hand still saves via Enter or on blur.
+async function handleBrowseLocalSource() {
+  const selected = await backend.selectLocalCatalogDirectory(localSource.value.trim() || undefined);
+  if (!selected) return;
+  localSource.value = selected;
+  saveLocalSource();
+}
+
 function handleCopyChange(event: Event) {
   emit("update", {
     copyByDefault: (event.target as HTMLInputElement).checked,
@@ -248,11 +258,6 @@ function handleConfirmChange(event: Event) {
 function handleContinueChange(event: Event) {
   emit("update", {
     continueAfterFailure: (event.target as HTMLInputElement).checked,
-  });
-}
-function handleCompactCardsChange(event: Event) {
-  emit("update", {
-    compactCards: (event.target as HTMLInputElement).checked,
   });
 }
 async function handleImport(event: Event) {

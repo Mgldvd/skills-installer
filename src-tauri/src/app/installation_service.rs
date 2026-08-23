@@ -145,6 +145,7 @@ mod tests {
             preselected: false,
             local: false,
             installed: false,
+            installed_agents: Vec::new(),
             enabled,
         }
     }

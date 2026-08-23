@@ -2,6 +2,7 @@ version: "3"
 
 tasks:
   "docker:release":
+    aliases: [deploy]
     desc: Run the full release pipeline inside Docker, matching CI exactly (replaces the old ./dist.sh).
     preconditions:
       - sh: command -v docker >/dev/null 2>&1

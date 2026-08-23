@@ -54,7 +54,7 @@ describe("useSkills", () => {
       groups: [makeGroup()],
       skills: [
         makeSkill({ id: "a", preselected: true, installed: false }),
-        makeSkill({ id: "b", preselected: true, installed: true }),
+        makeSkill({ id: "b", preselected: true, installed: true, installedAgents: ["universal"] }),
       ],
       sourcePath: null,
       isEmbeddedDefault: true,
@@ -73,7 +73,10 @@ describe("useSkills", () => {
       version: 1,
       defaults: { agent: null, copy: true, scope: "project" },
       groups: [makeGroup()],
-      skills: [makeSkill({ id: "a", installed: true }), makeSkill({ id: "b", installed: false })],
+      skills: [
+        makeSkill({ id: "a", installed: true, installedAgents: ["universal"] }),
+        makeSkill({ id: "b", installed: false }),
+      ],
       sourcePath: null,
       isEmbeddedDefault: true,
     });
@@ -85,7 +88,7 @@ describe("useSkills", () => {
   });
 
   it("toggleSelected refuses to newly select an already-installed skill, but still allows deselecting one", () => {
-    state.skills = [makeSkill({ id: "a", installed: true })];
+    state.skills = [makeSkill({ id: "a", installed: true, installedAgents: ["universal"] })];
 
     const { toggleSelected } = useSkills();
     toggleSelected("a");
@@ -96,6 +99,16 @@ describe("useSkills", () => {
     expect(state.selectedSkillIds.has("a")).toBe(false);
   });
 
+  it("toggleSelected still allows selecting a skill installed for only some of the targeted agents", () => {
+    // Default target agents is ["universal"] (see defaultPreferences) — this
+    // skill is only installed for claude-code, so there's still a gap.
+    state.skills = [makeSkill({ id: "a", installed: true, installedAgents: ["claude-code"] })];
+
+    const { toggleSelected } = useSkills();
+    toggleSelected("a");
+    expect(state.selectedSkillIds.has("a")).toBe(true);
+  });
+
   it("restoreDefaultSelection resets selection to exactly the current preselected set", () => {
     state.skills = [makeSkill({ id: "a", preselected: true }), makeSkill({ id: "b", preselected: false })];
     state.selectedSkillIds = new Set(["a", "b"]);
@@ -103,6 +116,19 @@ describe("useSkills", () => {
     const { restoreDefaultSelection } = useSkills();
     restoreDefaultSelection();
 
+    expect(state.selectedSkillIds).toEqual(new Set(["a"]));
+  });
+
+  it("restoreDefaultSelection still includes a preselected skill that's only partially installed", () => {
+    state.skills = [
+      makeSkill({ id: "a", preselected: true, installed: true, installedAgents: ["claude-code"] }),
+      makeSkill({ id: "b", preselected: true, installed: true, installedAgents: ["universal"] }),
+    ];
+
+    const { restoreDefaultSelection } = useSkills();
+    restoreDefaultSelection();
+
+    // Default target agents is ["universal"]: "a" is missing it, "b" already has it.
     expect(state.selectedSkillIds).toEqual(new Set(["a"]));
   });
 

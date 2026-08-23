@@ -15,6 +15,7 @@ export interface Skill {
   preselected: boolean;
   local: boolean;
   installed: boolean;
+  installedAgents: string[];
   enabled: boolean;
 }
 

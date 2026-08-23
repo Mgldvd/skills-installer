@@ -3,32 +3,35 @@
     <main class="app-shell__main">
       <AppHeader
         :project-path="state.projectRoot"
-        :dependency-status="state.dependencyStatus"
         :scope="state.preferences.defaultScope"
-        :agents="state.preferences.defaultAgents"
-        @open-agents="isAgentsOpen = true"
         @update:project-path="handleProjectPathUpdate" />
 
       <SkillToolbar
         :tags="state.tags"
         :skills="state.skills"
         :selected-ids="[...state.selectedSkillIds]"
+        :needs-agents-count="skillsNeedingAgentsCount"
         @toggle-tag="toggleTagSelection"
         @reorder-tags="handleReorderTags"
-        @clear-selection="clearSelection" />
+        @clear-selection="clearSelection"
+        @select-missing="handleSelectMissingAgents"
+        @open-packs="isTagsOpen = !isTagsOpen" />
 
       <SkillFilterBar
         :query="skillQuery"
         :sort-by="skillSort"
-        :view="skillView"
+        :view="displayMode"
         :source-filter="skillSourceFilter"
         :pack-filter="skillPackFilter"
         :tags="state.tags"
+        :needs-agents-only="skillNeedsAgentsFilter"
+        :needs-agents-count="skillsNeedingAgentsCount"
         @update:query="skillQuery = $event"
         @update:sort-by="skillSort = $event"
-        @update:view="skillView = $event"
+        @update:view="handleDisplayModeChange"
         @update:source-filter="skillSourceFilter = $event"
-        @update:pack-filter="skillPackFilter = $event" />
+        @update:pack-filter="skillPackFilter = $event"
+        @update:needs-agents-only="skillNeedsAgentsFilter = $event" />
 
       <SkillGrid
         :skills="displayedSkills"
@@ -37,6 +40,7 @@
         :compact="state.preferences.compactCards"
         :installing-skill-id="installingSkillId"
         :skills-with-updates="state.skillsWithUpdates"
+        :target-agents="state.preferences.defaultAgents"
         :view="skillView"
         @toggle="toggleSelected"
         @edit="openEditDialog"
@@ -45,54 +49,87 @@
       <InstallProgressPanel
         v-if="state.installation.isInstalling || state.installation.result || state.installation.error"
         :installation="state.installation"
+        :skills="state.skills"
         @cancel="handleCancelInstall"
         @dismiss="dismissInstallPanel" />
     </main>
 
     <footer class="app-shell__footer">
-      <div class="app-shell__footer-left">
-        <button type="button" class="app-shell__footer-btn app-shell__footer-btn--add" @click="openAddDialog">
-          Add Skill
-        </button>
-        <button type="button" class="app-shell__footer-btn" @click="isAgentsOpen = true">Agents</button>
-        <button type="button" class="app-shell__footer-btn" @click="isTagsOpen = !isTagsOpen">Packs</button>
-        <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
-          Preferences
-        </button>
-        <button
-          type="button"
-          class="app-shell__footer-btn"
-          :disabled="isCheckingForUpdates"
-          title="Compare installed Local skills against your Local Skill Source catalog"
-          @click="handleCheckForUpdates">
-          {{ isCheckingForUpdates ? "Checking…" : "Check for Updates" }}
-        </button>
+      <div class="app-shell__footer-row">
+        <div class="app-shell__footer-left">
+          <button type="button" class="app-shell__footer-btn app-shell__footer-btn--add" @click="openAddDialog">
+            Add Skill
+          </button>
+          <button type="button" class="app-shell__footer-btn" @click="isProjectsOpen = !isProjectsOpen">
+            Projects
+          </button>
+          <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
+            Preferences
+          </button>
+          <button
+            type="button"
+            class="app-shell__footer-btn app-shell__footer-btn--icon"
+            :class="{ 'is-loading': isCheckingForUpdates }"
+            :disabled="isCheckingForUpdates"
+            :aria-label="isCheckingForUpdates ? 'Checking for Skills updates…' : 'Check for Skills updates'"
+            title="Check for Skills updates"
+            @click="handleCheckForUpdates">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+        </div>
+        <div class="app-shell__footer-actions">
+          <label
+            class="app-shell__toggle"
+            :title="
+              state.preferences.confirmBeforeInstall
+                ? 'Install Selected will ask for confirmation first'
+                : 'Install Selected will run immediately, no confirmation'
+            ">
+            <input
+              type="checkbox"
+              class="app-shell__toggle-input"
+              :checked="!state.preferences.confirmBeforeInstall"
+              @change="toggleSkipConfirm" />
+            <span class="app-shell__toggle-track" aria-hidden="true">
+              <span class="app-shell__toggle-thumb"></span>
+            </span>
+            <span class="app-shell__toggle-label">Skip confirmation</span>
+          </label>
+          <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
+          <button
+            type="button"
+            class="app-shell__footer-btn app-shell__footer-btn--primary"
+            :disabled="selectedSkills.length === 0 || state.installation.isInstalling"
+            @click="handleInstallClick">
+            Install Selected
+          </button>
+        </div>
       </div>
-      <div class="app-shell__footer-actions">
-        <label
-          class="app-shell__toggle"
-          :title="
-            state.preferences.confirmBeforeInstall
-              ? 'Install Selected will ask for confirmation first'
-              : 'Install Selected will run immediately, no confirmation'
-          ">
-          <input
-            type="checkbox"
-            class="app-shell__toggle-input"
-            :checked="!state.preferences.confirmBeforeInstall"
-            @change="toggleSkipConfirm" />
-          <span class="app-shell__toggle-track" aria-hidden="true">
-            <span class="app-shell__toggle-thumb"></span>
-          </span>
-          <span class="app-shell__toggle-label">Skip confirmation</span>
-        </label>
-        <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
+      <div class="app-shell__footer-status">
+        <span class="app-shell__dependency" :class="dependencyClass">
+          <span class="app-shell__dependency-dot" aria-hidden="true" />
+          Skills CLI {{ dependencyLabel }}
+        </span>
         <button
           type="button"
-          class="app-shell__footer-btn app-shell__footer-btn--primary"
-          :disabled="selectedSkills.length === 0 || state.installation.isInstalling"
-          @click="handleInstallClick">
-          Install Selected
+          class="app-shell__agents-summary"
+          :aria-label="`Open Agents settings. Currently selected: ${agentLabels}`"
+          :title="agentLabels"
+          @click="isAgentsOpen = true">
+          <span class="app-shell__manage-agents" aria-hidden="true">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+            </svg>
+          </span>
+          Agents
+          <span v-if="state.preferences.defaultAgents.length" class="app-shell__agent-icons">
+            <AgentIcon v-for="id in state.preferences.defaultAgents" :key="id" :agent-id="id" />
+          </span>
+          <strong v-else class="app-shell__agent-none">None selected</strong>
         </button>
       </div>
     </footer>
@@ -102,14 +139,19 @@
       :default-group-id="defaultGroupId"
       :skills="state.skills"
       :submit-error="addSkillError"
+      :deleting="isDeletingCatalogSkills"
+      :delete-error="catalogDeleteError"
       @submit="handleAddSkillSubmit"
-      @import-pack="handleImportPack" />
+      @import-pack="handleImportPack"
+      @delete-skills="handleDeleteCatalogSkills"
+      @edit="handleEditSkillFromCatalog" />
 
     <EditSkillDialog
-      v-model:open="isEditDialogOpen"
+      :open="isEditDialogOpen"
       :skill="skillBeingEdited"
       :tags="state.tags"
       :submit-error="editSkillError"
+      @update:open="handleEditDialogOpenChange"
       @submit="handleEditSkillSubmit"
       @delete="handleDeleteSkill" />
 
@@ -128,7 +170,9 @@
       @refresh-local-source="handleLocalRefresh"
       @export-config="handleExportConfig"
       @import-config="handleImportConfig"
-      @install-cli="handleInstallCli" />
+      @install-cli="handleInstallCli"
+      @open-packs="handleOpenPacksFromPreferences"
+      @open-agents="handleOpenAgentsFromPreferences" />
     <AgentsDialog
       v-model:open="isAgentsOpen"
       :model-value="state.preferences.defaultAgents"
@@ -145,6 +189,14 @@
       @create="handleCreateTag"
       @update="handleUpdateTag"
       @delete="handleDeleteTag" />
+    <ProjectsDialog
+      v-model:open="isProjectsOpen"
+      :projects="state.projects"
+      :installed-skill-names="installedSkillNames"
+      :error="projectsError"
+      @save="handleSaveProject"
+      @load="handleLoadProject"
+      @delete="handleDeleteProject" />
 
     <ToastHost />
   </div>
@@ -154,12 +206,14 @@
 import { computed, onMounted, ref } from "vue";
 
 import AddSkillDialog from "./components/AddSkillDialog/AddSkillDialog.vue";
+import AgentIcon from "./components/AgentIcon/AgentIcon.vue";
 import AgentsDialog from "./components/AgentsDialog/AgentsDialog.vue";
 import AppHeader from "./components/AppHeader/AppHeader.vue";
 import EditSkillDialog from "./components/EditSkillDialog/EditSkillDialog.vue";
 import InstallConfirmDialog from "./components/InstallConfirmDialog/InstallConfirmDialog.vue";
 import InstallProgressPanel from "./components/InstallProgressPanel/InstallProgressPanel.vue";
 import TagsDialog from "./components/TagsDialog/TagsDialog.vue";
+import ProjectsDialog from "./components/ProjectsDialog/ProjectsDialog.vue";
 import PreferencesDialog from "./components/PreferencesDialog/PreferencesDialog.vue";
 import SkillFilterBar from "./components/SkillFilterBar/SkillFilterBar.vue";
 import SkillGrid from "./components/SkillGrid/SkillGrid.vue";
@@ -168,11 +222,14 @@ import ToastHost from "./components/ToastHost/ToastHost.vue";
 import { resetInstallationState, useAppState } from "./composables/useAppState";
 import { useInstallation } from "./composables/useInstallation";
 import { useTags } from "./composables/useTags";
+import { useProjects } from "./composables/useProjects";
 import { usePreferences } from "./composables/usePreferences";
 import { useSkills } from "./composables/useSkills";
 import { useToasts } from "./composables/useToasts";
 import * as backend from "./services/backend";
 import type { InstallRequest, Skill } from "./types";
+import { formatAgents } from "./utils/agents";
+import { agentsNeedingInstall } from "./utils/skillInstall";
 
 const state = useAppState();
 const {
@@ -187,6 +244,7 @@ const {
   checkForUpdates,
 } = useSkills();
 const tags = useTags();
+const projects = useProjects();
 const { install, cancel, checkDependencies } = useInstallation();
 const { load: loadPreferences, update: updatePreferencesPartial } = usePreferences();
 const { push: pushToast } = useToasts();
@@ -197,8 +255,12 @@ const isAgentsOpen = ref(false);
 const isTagsOpen = ref(false);
 const tagsError = ref<string | null>(null);
 const pendingTagKeys = ref(new Set<string>());
+const isProjectsOpen = ref(false);
+const projectsError = ref<string | null>(null);
 const isAddDialogOpen = ref(false);
 const addSkillError = ref<string | null>(null);
+const isDeletingCatalogSkills = ref(false);
+const catalogDeleteError = ref<string | null>(null);
 
 const isEditDialogOpen = ref(false);
 const editSkillError = ref<string | null>(null);
@@ -213,6 +275,44 @@ const skillSort = ref<"name" | "pack" | "local" | "remote">("name");
 const skillView = ref<"grid" | "list">("grid");
 const skillSourceFilter = ref<"all" | "local" | "remote">("all");
 const skillPackFilter = ref<string | null>(null);
+const skillNeedsAgentsFilter = ref(false);
+
+// The toolbar's view control reads as one 3-way choice (Grid / Compact /
+// List), but under the hood it's still the same two independent knobs
+// SkillGrid always took — `skillView` (grid vs. list layout) and the
+// persisted `compactCards` preference (grid density). Compact is a grid
+// variant, not a separate layout, so picking it keeps `skillView` on
+// "grid" and only flips the density preference.
+const displayMode = computed<"grid" | "compact" | "list">(() => {
+  if (skillView.value === "list") return "list";
+  return state.preferences.compactCards ? "compact" : "grid";
+});
+
+function handleDisplayModeChange(mode: "grid" | "compact" | "list") {
+  skillView.value = mode === "list" ? "list" : "grid";
+  const wantCompact = mode === "compact";
+  if (state.preferences.compactCards !== wantCompact) {
+    updatePreferencesPartial({ compactCards: wantCompact }).catch((error) => pushToast(describeError(error), "error"));
+  }
+}
+
+// Enabled Skills already installed for *some* but not *every* currently
+// targeted agent — changing "Agents" in the header can silently turn a
+// batch of previously-"Installed" cards into gaps like this. Deliberately
+// excludes Skills that were never installed anywhere: those aren't a gap to
+// close, they're just not selected yet, which the regular selection flow
+// already covers.
+const skillsNeedingAgents = computed(() =>
+  state.skills.filter(
+    (skill) =>
+      skill.enabled && skill.installed && agentsNeedingInstall(skill, state.preferences.defaultAgents).length > 0,
+  ),
+);
+const skillsNeedingAgentsCount = computed(() => skillsNeedingAgents.value.length);
+
+// What "Save Project" would capture right now — every currently installed
+// Skill's portable `skillName`, not the current checkbox selection.
+const installedSkillNames = computed(() => state.skills.filter((skill) => skill.installed).map((skill) => skill.skillName));
 
 const displayedSkills = computed(() => {
   const query = skillQuery.value.trim().toLocaleLowerCase();
@@ -232,6 +332,7 @@ const displayedSkills = computed(() => {
       return true;
     })
     .filter((skill) => !skillPackFilter.value || skill.tags.includes(skillPackFilter.value))
+    .filter((skill) => !skillNeedsAgentsFilter.value || skillsNeedingAgents.value.includes(skill))
     .slice()
     .sort((a, b) => {
       // Selected skills lead, then installed-but-unselected ones, then
@@ -265,6 +366,23 @@ const displayedSkills = computed(() => {
 
 const defaultGroupId = computed(() => state.groups.find((g) => g.id === "other")?.id ?? state.groups[0]?.id ?? null);
 
+// Moved here from AppHeader: the footer's Agents button now owns this
+// summary (icons instead of a plain label), replacing the header item that
+// used to sit next to the app title.
+const agentLabels = computed(() => formatAgents(state.preferences.defaultAgents) || "None selected");
+
+// Moved here from AppHeader: the footer's status row now owns this display,
+// so it reads straight off state instead of taking dependencyStatus as a prop.
+const dependencyClass = computed(() => {
+  if (!state.dependencyStatus) return "is-unknown";
+  return state.dependencyStatus.available ? "is-ready" : "is-missing";
+});
+
+const dependencyLabel = computed(() => {
+  if (!state.dependencyStatus) return "checking…";
+  return state.dependencyStatus.available ? "● Ready" : "● Not found";
+});
+
 // Skills install one at a time (see the backend's sequential install loop),
 // so at most one card is ever "currently installing".
 const installingSkillId = computed(() =>
@@ -286,20 +404,41 @@ function handleProjectPathUpdate(path: string) {
   refresh().catch((error) => pushToast(describeError(error), "error"));
 }
 
-function toggleTagSelection(tagId: string) {
-  // Already-installed skills are never selectable (see useSkills'
-  // toggleSelected) — a Pack toggle only ever acts on the rest of the pack.
-  const skillIds = state.skills
-    .filter((skill) => skill.enabled && !skill.installed && skill.tags.includes(tagId))
-    .map((skill) => skill.id);
-  if (!skillIds.length) return;
-  const allSelected = skillIds.every((id) => state.selectedSkillIds.has(id));
+// Shared by every Pack badge toggle: all-selected flips to none, anything
+// else flips to all — so a half-selected group always completes forward to
+// "all" first, matching SkillToolbar's own tagState.
+function toggleSelectionForIds(ids: string[]) {
+  if (!ids.length) return;
+  const allSelected = ids.every((id) => state.selectedSkillIds.has(id));
   const next = new Set(state.selectedSkillIds);
-  for (const id of skillIds) {
+  for (const id of ids) {
     if (allSelected) next.delete(id);
     else next.add(id);
   }
   state.selectedSkillIds = next;
+}
+
+function toggleTagSelection(tagId: string) {
+  // A skill fully installed for every targeted agent is never selectable
+  // (see useSkills' toggleSelected) — a Pack toggle only ever acts on the
+  // rest of the pack.
+  const skillIds = state.skills
+    .filter(
+      (skill) => skill.enabled && agentsNeedingInstall(skill, state.preferences.defaultAgents).length > 0 && skill.tags.includes(tagId),
+    )
+    .map((skill) => skill.id);
+  toggleSelectionForIds(skillIds);
+}
+
+// A selection action, not a filter one — deliberately independent of
+// whatever the Filter bar's search/source/pack/Needs-agents controls are
+// currently narrowing the grid to, so it always adds every gap skill in the
+// whole catalog. Adds to the current selection rather than replacing it, the
+// same way Pack toggle does.
+function handleSelectMissingAgents() {
+  const skillIds = skillsNeedingAgents.value.map((skill) => skill.id);
+  if (!skillIds.length) return;
+  state.selectedSkillIds = new Set([...state.selectedSkillIds, ...skillIds]);
 }
 
 function describeError(error: unknown): string {
@@ -308,7 +447,7 @@ function describeError(error: unknown): string {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadAll(), loadPreferences()]);
+    await Promise.all([loadAll(), loadPreferences(), projects.loadAll()]);
   } catch (error) {
     pushToast(describeError(error), "error");
   }
@@ -321,6 +460,14 @@ onMounted(async () => {
 
 function handlePreferencesUpdate(partial: Parameters<typeof updatePreferencesPartial>[0]) {
   updatePreferencesPartial(partial).catch((error) => pushToast(describeError(error), "error"));
+}
+function handleOpenPacksFromPreferences() {
+  isPreferencesOpen.value = false;
+  isTagsOpen.value = true;
+}
+function handleOpenAgentsFromPreferences() {
+  isPreferencesOpen.value = false;
+  isAgentsOpen.value = true;
 }
 async function handleExportConfig() {
   try {
@@ -417,6 +564,42 @@ function handleReorderTags(tagIds: string[]) {
   void tagAction(() => tags.reorder(tagIds), "Could not reorder Packs.");
 }
 
+async function handleSaveProject(name: string, gitUrl: string | null) {
+  try {
+    await projects.save(name, gitUrl, installedSkillNames.value);
+    projectsError.value = null;
+    pushToast(`Project "${name}" saved.`, "success");
+  } catch (error) {
+    projectsError.value = describeError(error);
+  }
+}
+
+// Replaces the current selection outright (matching "Load" semantics, not
+// "add to") — Skills the Project references that no longer exist here (a
+// different machine, a removed Skill, an unconfigured Local catalog) are
+// silently skipped rather than failing the whole load.
+function handleLoadProject(projectId: string) {
+  const project = state.projects.find((p) => p.id === projectId);
+  if (!project) return;
+  const names = new Set(project.skillNames);
+  const ids = state.skills.filter((skill) => skill.enabled && names.has(skill.skillName)).map((skill) => skill.id);
+  state.selectedSkillIds = new Set(ids);
+  isProjectsOpen.value = false;
+  const missing = project.skillNames.length - ids.length;
+  if (missing > 0) {
+    pushToast(
+      `Selected ${ids.length} of ${project.skillNames.length} Skills from "${project.name}" — ${missing} not found here.`,
+      ids.length ? "success" : "error",
+    );
+  } else {
+    pushToast(`Selected ${ids.length} Skills from "${project.name}".`, "success");
+  }
+}
+
+function handleDeleteProject(projectId: string) {
+  projects.remove(projectId).catch((error) => pushToast(describeError(error), "error"));
+}
+
 function openAddDialog() {
   addSkillError.value = null;
   isAddDialogOpen.value = true;
@@ -444,15 +627,58 @@ async function handleImportPack(payload: backend.ImportPackArgs) {
   }
 }
 
-function openEditDialog(skillId: string) {
+// Sequential, not Promise.all: each delete is a read-modify-write against
+// the same skills.yaml, so concurrent deletes could race and clobber one
+// another's change.
+async function handleDeleteCatalogSkills(skillIds: string[]) {
+  isDeletingCatalogSkills.value = true;
+  catalogDeleteError.value = null;
+  try {
+    for (const skillId of skillIds) {
+      await deleteSkill(skillId);
+    }
+    pushToast(skillIds.length === 1 ? "Skill deleted" : `${skillIds.length} Skills deleted`, "success");
+  } catch (error) {
+    catalogDeleteError.value = describeError(error);
+  } finally {
+    isDeletingCatalogSkills.value = false;
+  }
+}
+
+// Where Edit Skill was opened from — when set, dismissing it without
+// completing an action (Esc, backdrop click, or Cancel) reopens that dialog
+// instead of just dropping back to the main page, since the user was in the
+// middle of managing Skills there. A successful save or delete instead
+// finishes the flow, so those set `editSkillClosedByAction` to skip it.
+const editSkillOrigin = ref<"add-skill" | null>(null);
+const editSkillClosedByAction = ref(false);
+
+function openEditDialog(skillId: string, origin: "add-skill" | null = null) {
   editSkillError.value = null;
   skillBeingEditedId.value = skillId;
+  editSkillOrigin.value = origin;
   isEditDialogOpen.value = true;
+}
+
+function handleEditSkillFromCatalog(skillId: string) {
+  isAddDialogOpen.value = false;
+  openEditDialog(skillId, "add-skill");
+}
+
+function handleEditDialogOpenChange(open: boolean) {
+  isEditDialogOpen.value = open;
+  if (open) return;
+  if (editSkillOrigin.value === "add-skill" && !editSkillClosedByAction.value) {
+    isAddDialogOpen.value = true;
+  }
+  editSkillOrigin.value = null;
+  editSkillClosedByAction.value = false;
 }
 
 async function handleEditSkillSubmit(payload: backend.UpdateSkillArgs) {
   try {
     await updateSkill(payload);
+    editSkillClosedByAction.value = true;
     isEditDialogOpen.value = false;
     pushToast("Skill updated", "success");
   } catch (error) {
@@ -463,6 +689,7 @@ async function handleEditSkillSubmit(payload: backend.UpdateSkillArgs) {
 async function handleDeleteSkill(skillId: string) {
   try {
     await deleteSkill(skillId);
+    editSkillClosedByAction.value = true;
     isEditDialogOpen.value = false;
     skillBeingEditedId.value = null;
     pushToast("Skill deleted", "success");
@@ -484,10 +711,14 @@ function handleInstallClick() {
   }
 }
 
-async function runInstall() {
+// `agentsOverride` is the confirmation dialog's per-install agent selection
+// (a skipped chip there excludes that agent from just this run, without
+// touching the configured defaults) — falls back to those defaults when the
+// dialog was skipped entirely (see handleInstallClick).
+async function runInstall(agentsOverride?: string[]) {
   const request: InstallRequest = {
     selection: { skillIds: [...state.selectedSkillIds] },
-    options: installOptionsFromPreferences.value,
+    options: { ...installOptionsFromPreferences.value, agents: agentsOverride ?? installOptionsFromPreferences.value.agents },
   };
   try {
     await install(request);

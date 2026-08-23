@@ -8,6 +8,9 @@ vi.mock("../src/services/backend", () => ({
   previewSkillUrl: vi.fn(),
   previewPackUrl: vi.fn(),
 }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn().mockResolvedValue(undefined) }));
+
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 import * as backend from "../src/services/backend";
 
@@ -16,12 +19,11 @@ describe("AddSkillDialog", () => {
     vi.clearAllMocks();
   });
 
-  it("places a clickable Skills.sh link beside the title", () => {
+  it("places a clickable link to browse Skills.sh beside the URL field", () => {
     const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()] } });
-    const heading = wrapper.get(".add-skill-dialog__heading");
-    const link = heading.get("a");
-    expect(heading.get("h2").text()).toBe("Add Skill");
-    expect(link.text()).toBe("Skills.sh");
+    expect(wrapper.get("h2").text()).toBe("Add Skill");
+    const link = wrapper.get(".add-skill-dialog__browse");
+    expect(link.text()).toBe("Browse Skills.sh");
     expect(link.attributes()).toMatchObject({
       href: "https://skills.sh",
       target: "_blank",
@@ -175,6 +177,101 @@ describe("AddSkillDialog", () => {
       displayName: "triage",
       description: "mattpocock/skills",
       groupId: "testing",
+    });
+  });
+
+  describe("Skills.sh catalog table", () => {
+    const remote = makeSkill({ id: "remote-a", displayName: "Remote Skill A", source: { kind: "remote" } });
+    const remoteB = makeSkill({ id: "remote-b", displayName: "Remote Skill B", source: { kind: "remote" } });
+    const local = makeSkill({ id: "local-a", displayName: "Local Skill", source: { kind: "local", path: "/tmp/x" } });
+
+    it("lists only Skills sourced from Skills.sh, not ones discovered locally", () => {
+      const wrapper = mount(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote, remoteB, local] },
+      });
+
+      const rows = wrapper.findAll(".add-skill-dialog__row:not(.add-skill-dialog__row--header)");
+      expect(rows.map((r) => r.text())).toEqual([expect.stringContaining("Remote Skill A"), expect.stringContaining("Remote Skill B")]);
+      expect(wrapper.text()).not.toContain("Local Skill");
+    });
+
+    it("shows the Skill's name as plain text and its full add URL as the clickable link", () => {
+      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+
+      const name = wrapper.get(".add-skill-dialog__skill-name");
+      expect(name.text()).toBe("Remote Skill A");
+      expect(name.element.tagName).not.toBe("A");
+
+      const link = wrapper.get(".add-skill-dialog__skill-link");
+      expect(link.element.tagName).toBe("A");
+      expect(link.text()).toBe(remote.skillsUrl);
+    });
+
+    it("shows an empty state when no Skills have been added from Skills.sh", () => {
+      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [local] } });
+      expect(wrapper.get(".add-skill-dialog__catalog-empty").text()).toBe("No Skills added from Skills.sh yet.");
+    });
+
+    it("asks for confirmation before deleting a single row, and does nothing if declined", async () => {
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+
+      await wrapper.get(".add-skill-dialog__row-delete").trigger("click");
+      expect(confirmSpy).toHaveBeenCalled();
+      expect(wrapper.emitted("deleteSkills")).toBeUndefined();
+
+      confirmSpy.mockReturnValue(true);
+      await wrapper.get(".add-skill-dialog__row-delete").trigger("click");
+      expect(wrapper.emitted("deleteSkills")).toEqual([[["remote-a"]]]);
+
+      confirmSpy.mockRestore();
+    });
+
+    it("selects all Skills, then bulk-deletes the selection after confirming", async () => {
+      vi.spyOn(window, "confirm").mockReturnValue(true);
+      const wrapper = mount(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote, remoteB] },
+      });
+
+      expect(wrapper.find(".add-skill-dialog__bulk-delete").exists()).toBe(false);
+
+      await wrapper.get('[aria-label="Select all Skills from Skills.sh"]').setValue(true);
+      const headerRow = wrapper.get(".add-skill-dialog__row--header");
+      const bulkDelete = headerRow.get(".add-skill-dialog__bulk-delete");
+      expect(bulkDelete.attributes("aria-label")).toBe("Delete 2 selected Skills");
+      expect(bulkDelete.find("svg").exists()).toBe(true);
+      expect(bulkDelete.text()).toBe("");
+
+      await bulkDelete.trigger("click");
+      expect(wrapper.emitted("deleteSkills")).toEqual([[["remote-a", "remote-b"]]]);
+
+      vi.restoreAllMocks();
+    });
+
+    it("emits edit with the Skill's id from its row's edit button", async () => {
+      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+      await wrapper.get(".add-skill-dialog__row-edit").trigger("click");
+      expect(wrapper.emitted("edit")).toEqual([["remote-a"]]);
+    });
+
+    it("opens a Skill's Skills.sh URL through the plugin instead of navigating the webview", async () => {
+      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+      await wrapper.get(".add-skill-dialog__skill-link").trigger("click");
+      expect(vi.mocked(openUrl)).toHaveBeenCalledWith(remote.skillsUrl);
+    });
+
+    it("disables row and bulk controls while a delete is in flight", () => {
+      const wrapper = mount(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote], deleting: true },
+      });
+      expect(wrapper.get(".add-skill-dialog__row-delete").attributes("disabled")).toBeDefined();
+    });
+
+    it("shows a delete error when the backend rejects it", () => {
+      const wrapper = mount(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote], deleteError: "Could not delete Skill" },
+      });
+      expect(wrapper.get(".add-skill-dialog__catalog .add-skill-dialog__error").text()).toBe("Could not delete Skill");
     });
   });
 });

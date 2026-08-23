@@ -1,0 +1,243 @@
+@use "../../styles/dialog-base" as dialog;
+
+.projects-dialog {
+  // Same size as every other menu dialog (Agents, Packs, Preferences, Add
+  // Skill) — `menu-surface` + `menu-shell`/`menu-header`/`menu-body` is the
+  // one pairing that's actually safe together: `menu-shell` sets
+  // `height: 100%` on the panel, which only resolves correctly because
+  // `menu-surface` (unlike a plain `dialog.reset(Nrem)`) gives the dialog
+  // itself an explicit height to be a percentage of.
+  @include dialog.menu-surface;
+
+  .projects-dialog__panel {
+    @include dialog.menu-shell;
+  }
+
+  .projects-dialog__header {
+    @include dialog.menu-header;
+  }
+
+  // A column of full-width sections (form card, then the list) rather than
+  // a fixed grid — matches how Add Skill/Packs lay their own body out, so
+  // every section genuinely uses the dialog's full width instead of a
+  // narrow strip floating in a mostly-empty large surface.
+  .projects-dialog__body {
+    @include dialog.menu-body;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  // `minmax(0, 1fr)`, not bare `1fr`: an unconstrained `fr` track still
+  // won't shrink past its content's intrinsic width, so two text inputs
+  // could push the grid wider than its container and force a horizontal
+  // scrollbar. The explicit `0` minimum is what lets the fields actually
+  // shrink to fit, and the Save button gets its own full-width row so its
+  // fairly long label ("Save 12 installed Skills") never has to fight the
+  // fields for horizontal room.
+  .projects-dialog__form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    flex: 0 0 auto;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border: 1px solid var(--border-soft);
+    background: var(--bg-card);
+  }
+
+  .projects-dialog__field {
+    @include dialog.field-label;
+    min-width: 0;
+
+    em {
+      color: var(--text-muted);
+      font-style: normal;
+    }
+
+    input {
+      @include dialog.text-input;
+      box-sizing: border-box;
+      width: 100%;
+    }
+  }
+
+  .projects-dialog__submit {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .projects-dialog__hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .projects-dialog__error {
+    margin: 0;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .projects-dialog__empty {
+    display: grid;
+    flex: 1 1 auto;
+    place-items: center;
+    min-height: 8rem;
+    margin: 0;
+    padding: var(--space-lg);
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  // Grows to fill whatever vertical room the form/hint leave in the big
+  // dialog, scrolling on its own once there are more Projects than fit —
+  // the header/form stay put instead of the whole dialog scrolling.
+  .projects-dialog__list {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  .projects-dialog__row {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    transition: border-color var(--transition-fast);
+
+    &:hover {
+      border-color: var(--border-strong);
+    }
+  }
+
+  // Name, count, and URL sit as evenly spaced, vertically centered fields
+  // in one row — there's plenty of width in this size of dialog on desktop
+  // — and only stack when the window is genuinely narrow (see the 620px
+  // breakpoint below).
+  .projects-dialog__info {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: var(--space-lg);
+  }
+
+  .projects-dialog__name {
+    flex: 0 0 auto;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+  }
+
+  .projects-dialog__count {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  // Bigger and colored like the app's other links (see Add Skill's
+  // Skills.sh link) instead of the small muted caption it used to be, with
+  // a GitHub/GitLab mark when the host is recognized so it reads as a real
+  // clickable destination, not just a label.
+  .projects-dialog__git-url {
+    display: inline-flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: var(--space-2xs);
+    overflow: hidden;
+    color: var(--info);
+    font-size: var(--font-size-sm);
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &:hover {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+  }
+
+  .projects-dialog__git-icon {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    fill: currentColor;
+  }
+
+  .projects-dialog__actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .button {
+    @include dialog.button-base;
+  }
+  .button--primary {
+    @include dialog.button-primary;
+  }
+
+  // Icon-only, matching the small square icon buttons used elsewhere
+  // (e.g. the SkillCard edit action) — a trash icon reads clearly enough on
+  // its own that repeating the word "Delete" down every row was just noise.
+  .projects-dialog__delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+
+    svg {
+      width: 1rem;
+      height: 1rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    &:hover {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+  }
+
+  @media (max-width: 620px) {
+    .projects-dialog__form {
+      grid-template-columns: 1fr;
+    }
+    .projects-dialog__submit {
+      justify-self: stretch;
+    }
+    .projects-dialog__row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .projects-dialog__info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+    }
+  }
+}

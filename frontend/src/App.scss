@@ -16,13 +16,99 @@
 
   .app-shell__footer {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
+    flex-direction: column;
+    gap: var(--space-xs);
     padding: var(--space-sm) var(--space-lg);
     background: var(--bg-panel);
     border-top: 1px solid var(--border-soft);
+  }
+
+  .app-shell__footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
     flex-wrap: wrap;
+  }
+
+  .app-shell__footer-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding-top: var(--space-2xs);
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .app-shell__agents-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    body.is-keyboard-navigation &:focus-visible {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+  }
+
+  // Borderless "+" glyph in front of the "Agents" label — same visual
+  // treatment as the "+" beside "Pack select" in the toolbar, so managing
+  // Agents and managing Packs read as the same kind of control. Decorative
+  // only: the whole `.app-shell__agents-summary` button is what's clickable.
+  .app-shell__manage-agents {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--accent);
+
+    svg {
+      width: 0.9rem;
+      height: 0.9rem;
+    }
+  }
+
+  .app-shell__dependency {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+
+  .app-shell__dependency-dot {
+    width: 0.5em;
+    height: 0.5em;
+    min-width: 6px;
+    min-height: 6px;
+    border-radius: var(--radius-md);
+    background: var(--text-muted);
+  }
+
+  .app-shell__dependency.is-ready {
+    color: var(--success);
+  }
+  .app-shell__dependency.is-ready .app-shell__dependency-dot {
+    background: var(--success);
+  }
+  .app-shell__dependency.is-missing {
+    color: var(--danger);
+  }
+  .app-shell__dependency.is-missing .app-shell__dependency-dot {
+    background: var(--danger);
   }
 
   .app-shell__footer-left {
@@ -174,5 +260,50 @@
         color: var(--text-primary);
       }
     }
+
+    &--icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xs);
+
+      svg {
+        width: 1.1rem;
+        height: 1.1rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      &.is-loading svg {
+        animation: app-shell-spin 0.9s linear infinite;
+      }
+    }
+  }
+
+  .app-shell__agent-icons {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    color: var(--text-primary);
+  }
+
+  .app-shell__agent-none {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+}
+
+@keyframes app-shell-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__footer-btn--icon.is-loading svg {
+    animation: none;
   }
 }

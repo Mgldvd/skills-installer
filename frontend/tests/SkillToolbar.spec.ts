@@ -26,13 +26,12 @@ describe("SkillToolbar Pack preselection", () => {
     expect(wrapper.find(".skill-toolbar__tag").classes()).toContain("pack-badge--selected");
   });
 
-  it("exposes partial Pack selection as a non-color mixed state", () => {
+  it("exposes partial Pack selection as a dashed-border mixed state", () => {
     const skills = [makeSkill({ id: "a", tags: ["recommended"] }), makeSkill({ id: "b", tags: ["recommended"] })];
     const wrapper = mount(SkillToolbar, { props: { tags, skills, selectedIds: ["a"] } });
     const badge = wrapper.find(".skill-toolbar__tag");
     expect(badge.attributes("aria-pressed")).toBe("mixed");
     expect(badge.classes()).toContain("pack-badge--partial");
-    expect(badge.find(".pack-badge__state").exists()).toBe(true);
   });
 
   it("emits one Pack toggle without opening another menu", async () => {
@@ -69,7 +68,13 @@ describe("SkillToolbar Pack preselection", () => {
     expect(wrapper.emitted("reorderTags")).toEqual([[["testing", "recommended"]]]);
   });
 
-  it("keeps Clear with Preselect and disables it when nothing is selected", async () => {
+  it("emits openPacks from the manage-Packs button, next to the Pack select label", async () => {
+    const wrapper = mount(SkillToolbar, { props: { tags, skills: [makeSkill()], selectedIds: [] } });
+    await wrapper.get(".skill-toolbar__manage-packs").trigger("click");
+    expect(wrapper.emitted("openPacks")).toHaveLength(1);
+  });
+
+  it("keeps Clear with Pack select and disables it when nothing is selected", async () => {
     const wrapper = mount(SkillToolbar, { props: { tags, skills: [makeSkill()], selectedIds: [] } });
     const clear = wrapper.get(".skill-toolbar__clear");
     expect(clear.attributes("disabled")).toBeDefined();

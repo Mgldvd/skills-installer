@@ -3,6 +3,7 @@ export * from "./dependency";
 export * from "./group";
 export * from "./install";
 export * from "./preferences";
+export * from "./project";
 export * from "./skill";
 export * from "./tag";
 export * from "./url";

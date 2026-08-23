@@ -9,19 +9,6 @@
 
   .agents-dialog__header {
     @include dialog.menu-header;
-
-    h2,
-    p {
-      margin: 0;
-    }
-    h2 {
-      font-size: var(--font-size-lg);
-    }
-    p {
-      margin-top: var(--space-2xs);
-      color: var(--text-secondary);
-      font-size: var(--font-size-sm);
-    }
   }
 
   .agents-dialog__body {
@@ -83,6 +70,25 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
     color: #fff;
+  }
+
+  .agents-dialog__icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 2.2rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: var(--radius-md);
+    background: var(--bg-muted);
+
+    .agent-icon {
+      width: 1.3rem;
+      height: 1.3rem;
+    }
+  }
+
+  .is-active .agents-dialog__icon {
+    background: var(--bg-card);
   }
 
   .is-active .agents-dialog__check {

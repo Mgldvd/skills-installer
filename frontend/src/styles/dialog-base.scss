@@ -35,13 +35,28 @@
   height: 100%;
 }
 
+// Compact by design: these menus are opened often and re-opened mid-task, so
+// the header shouldn't cost more vertical space than the title/actions it
+// holds actually need — the body content is what the user is there for.
 @mixin menu-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-lg);
-  padding: var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
   border-bottom: 1px solid var(--border-soft);
+
+  h2 {
+    margin: 0;
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-tight);
+  }
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    line-height: var(--line-height-tight);
+  }
 }
 
 @mixin menu-body {

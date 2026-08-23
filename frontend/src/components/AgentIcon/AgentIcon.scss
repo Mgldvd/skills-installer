@@ -1,0 +1,22 @@
+.agent-icon {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 auto;
+}
+
+.agent-icon--mono path {
+  fill: currentColor;
+}
+
+.agent-icon--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+}

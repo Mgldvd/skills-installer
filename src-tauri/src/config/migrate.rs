@@ -171,6 +171,7 @@ pub fn migrate(
             preselected: disk_skill.preselected,
             local: false,
             installed: false,
+            installed_agents: Vec::new(),
             enabled: disk_skill.enabled,
         });
     }

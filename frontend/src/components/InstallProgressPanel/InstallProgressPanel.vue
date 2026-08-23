@@ -55,6 +55,21 @@
       </template>
     </div>
 
+    <ul v-if="installation.result" class="install-progress-panel__results">
+      <li v-for="skillId in orderedSkillIds" :key="skillId" class="install-progress-panel__result-row">
+        <span class="install-progress-panel__status-icon" :class="statusClass(skillId)">
+          {{ statusIcon(skillId) }}
+        </span>
+        <span class="install-progress-panel__result-name">{{ installation.displayNames[skillId] ?? skillId }}</span>
+        <span
+          v-if="installedAgentsFor(skillId).length"
+          class="install-progress-panel__result-agents"
+          :title="`Installed for: ${formatAgents(installedAgentsFor(skillId))}`">
+          <AgentIcon v-for="id in installedAgentsFor(skillId)" :key="id" :agent-id="id" />
+        </span>
+      </li>
+    </ul>
+
     <p v-if="installation.result" class="install-progress-panel__summary">
       {{ installation.result.requested }} requested, {{ installation.result.installed }} installed,
       {{ installation.result.alreadyInstalled }} already installed, {{ installation.result.failed }} failed
@@ -72,11 +87,18 @@
 import { computed, nextTick, ref, watch } from "vue";
 
 import type { InstallationState } from "../../composables/useAppState";
+import type { Skill } from "../../types";
+import { formatAgents } from "../../utils/agents";
+import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import CloseButton from "../CloseButton/CloseButton.vue";
 
-const props = defineProps<{
-  installation: InstallationState;
-}>();
+const props = withDefaults(
+  defineProps<{
+    installation: InstallationState;
+    skills?: Skill[];
+  }>(),
+  { skills: () => [] },
+);
 
 const emit = defineEmits<{
   cancel: [];
@@ -114,6 +136,14 @@ function statusClass(skillId: string) {
 
 function outputFor(skillId: string) {
   return props.installation.outputLines.filter((line) => line.skillId === skillId);
+}
+
+// `refresh()` (called right after the install finishes, before this result
+// is dismissed — see App.vue's runInstall) has already brought `skills` up
+// to date, so this is the skill's *current* installed-for list, not a
+// snapshot of what the request asked for.
+function installedAgentsFor(skillId: string): string[] {
+  return props.skills.find((s) => s.id === skillId)?.installedAgents ?? [];
 }
 
 watch(

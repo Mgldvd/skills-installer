@@ -17,10 +17,15 @@
   --text-secondary: #55494e;
   --text-muted: #82767b;
 
+  // `--accent` is the one token `usePreferences` sets directly (inline style
+  // on the root element, so it always wins over these `:root` values) — it
+  // can be any of the 16 Pack-picker colors, not a fixed preset, so the
+  // states derived from it are computed with `color-mix()` instead of being
+  // hand-tuned per preset.
   --accent: #f43f75;
-  --accent-hover: #d92d63;
-  --accent-soft: #fde8ef;
-  --accent-soft-strong: #f8cfdd;
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, black);
+  --accent-soft: color-mix(in srgb, var(--accent) 10%, white);
+  --accent-soft-strong: color-mix(in srgb, var(--accent) 18%, white);
 
   --success: #3f7f57;
   --success-soft: #e6f4eb;
@@ -85,37 +90,6 @@
   --transition-base: 180ms ease;
 }
 
-:root[data-accent="coral"] {
-  --accent: #f05252;
-  --accent-hover: #d83f3f;
-  --accent-soft: #fbe9e7;
-  --accent-soft-strong: #f4d2cd;
-}
-:root[data-accent="blue"] {
-  --accent: #3b82f6;
-  --accent-hover: #2563d9;
-  --accent-soft: #eaf0fb;
-  --accent-soft-strong: #d5e0f6;
-}
-:root[data-accent="teal"] {
-  --accent: #14b8a6;
-  --accent-hover: #0f8f82;
-  --accent-soft: #e6f3f1;
-  --accent-soft-strong: #cde6e3;
-}
-:root[data-accent="violet"] {
-  --accent: #a855f7;
-  --accent-hover: #8b3ddb;
-  --accent-soft: #f1eaf7;
-  --accent-soft-strong: #e2d3ee;
-}
-:root[data-accent="green"] {
-  --accent: #22c55e;
-  --accent-hover: #158d42;
-  --accent-soft: #e8f4ed;
-  --accent-soft-strong: #d1e8da;
-}
-
 :root[data-theme="dark"] {
   --bg-app: #211c1e;
   --bg-panel: #2a2325;
@@ -131,9 +105,9 @@
   --text-muted: #9a878c;
 
   --accent: #f43f75;
-  --accent-hover: #fb7199;
-  --accent-soft: #4a2c37;
-  --accent-soft-strong: #603346;
+  --accent-hover: color-mix(in srgb, var(--accent) 78%, white);
+  --accent-soft: color-mix(in srgb, var(--accent) 22%, black);
+  --accent-soft-strong: color-mix(in srgb, var(--accent) 34%, black);
 
   --success: #7fd19e;
   --success-soft: #22362a;
@@ -167,9 +141,9 @@
     --text-muted: #9a878c;
 
     --accent: #f43f75;
-    --accent-hover: #fb7199;
-    --accent-soft: #4a2c37;
-    --accent-soft-strong: #603346;
+    --accent-hover: color-mix(in srgb, var(--accent) 78%, white);
+    --accent-soft: color-mix(in srgb, var(--accent) 22%, black);
+    --accent-soft-strong: color-mix(in srgb, var(--accent) 34%, black);
 
     --success: #7fd19e;
     --success-soft: #22362a;

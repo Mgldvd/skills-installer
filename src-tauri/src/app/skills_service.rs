@@ -11,7 +11,7 @@ use crate::error::AppError;
 use crate::preferences::PreferencesService;
 use crate::skills::pack_import::{PackPreview, PackSkillPreview};
 use crate::skills::{
-    discover_local_skills, discover_skills_in_directory, SkillUrlParser, SkillsShUrlParser,
+    discover_installed_agents, discover_skills_in_directory, SkillUrlParser, SkillsShUrlParser,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -135,6 +135,7 @@ impl SkillsService {
                 preselected: false,
                 local: false,
                 installed: false,
+                installed_agents: Vec::new(),
                 enabled: true,
             };
             config.skills.push(skill.clone());
@@ -330,7 +331,7 @@ impl SkillsService {
     /// Skills as installed from wherever the app launched.
     pub fn load_state_for(&self, project_root: &Path) -> Result<ApplicationConfig, AppError> {
         let mut config = self.config_service.load()?;
-        let installed_skills = discover_local_skills(project_root);
+        let installed_agents = discover_installed_agents(project_root);
         let local_source = self.resolve_local_source()?;
         let local_skills = local_source
             .as_deref()
@@ -339,19 +340,20 @@ impl SkillsService {
 
         let configured_skill_names: HashSet<String> =
             config.skills.iter().map(|s| s.skill_name.clone()).collect();
-        let local_skill_names: HashSet<String> = installed_skills
-            .iter()
-            .map(|s| s.skill_name.clone())
-            .collect();
 
         for skill in config.skills.iter_mut() {
-            if local_skill_names.contains(&skill.skill_name) {
+            if let Some(agents) = installed_agents.get(&skill.skill_name) {
                 skill.installed = true;
+                skill.installed_agents = agents.clone();
             }
         }
 
         for mut local in local_skills {
-            local.installed = local_skill_names.contains(&local.skill_name);
+            local.installed_agents = installed_agents
+                .get(&local.skill_name)
+                .cloned()
+                .unwrap_or_default();
+            local.installed = !local.installed_agents.is_empty();
             if !configured_skill_names.contains(&local.skill_name) {
                 local.tags = config
                     .local_skill_tags
@@ -498,6 +500,7 @@ impl SkillsService {
             preselected: input.preselected,
             local: false,
             installed: false,
+            installed_agents: Vec::new(),
             enabled: input.enabled,
         };
 
@@ -1151,6 +1154,75 @@ skills:
             elsewhere.project_root,
             empty_folder.path().display().to_string()
         );
+    }
+
+    #[test]
+    fn load_state_reports_which_agents_a_skill_is_installed_for() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = service_with_curated_config(tmp.path());
+
+        // `.agents/skills` is shared by several agents by convention, so it
+        // can only ever be attributed to `universal` — see AGENT_PROJECT_DIRS.
+        let shared_dir = tmp.path().join(".agents").join("skills").join("triage");
+        std::fs::create_dir_all(&shared_dir).unwrap();
+        std::fs::write(
+            shared_dir.join("SKILL.md"),
+            "---\nname: triage\ndescription: shared copy\n---\n",
+        )
+        .unwrap();
+
+        let state = service.load_state().unwrap();
+        let triage = state
+            .skills
+            .iter()
+            .find(|s| s.skill_name == "triage")
+            .unwrap();
+        assert!(triage.installed);
+        assert_eq!(triage.installed_agents, vec!["universal"]);
+    }
+
+    #[test]
+    fn load_state_scopes_installed_agents_to_the_destination_that_actually_has_the_skill() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config_service = ConfigurationService::new(None, tmp.path().to_path_buf());
+        let preferences = PreferencesService::with_path(tmp.path().join("preferences.json"));
+        preferences
+            .save(&crate::domain::UiPreferences {
+                local_source_path: Some(tmp.path().join("catalog").display().to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        let service = SkillsService::new(config_service, tmp.path().to_path_buf(), preferences);
+
+        // Present in the catalog (so it's discovered as a Skill at all) and
+        // only actually installed under claude-code's own destination.
+        let catalog_dir = tmp.path().join("catalog").join("only-claude");
+        std::fs::create_dir_all(&catalog_dir).unwrap();
+        std::fs::write(
+            catalog_dir.join("SKILL.md"),
+            "---\nname: Only Claude\ndescription: claude-code only\n---\n",
+        )
+        .unwrap();
+        let claude_dir = tmp
+            .path()
+            .join(".claude")
+            .join("skills")
+            .join("only-claude");
+        std::fs::create_dir_all(&claude_dir).unwrap();
+        std::fs::write(
+            claude_dir.join("SKILL.md"),
+            "---\nname: Only Claude\ndescription: claude-code only\n---\n",
+        )
+        .unwrap();
+
+        let state = service.load_state().unwrap();
+        let only_claude = state
+            .skills
+            .iter()
+            .find(|s| s.skill_name == "only-claude")
+            .unwrap();
+        assert!(only_claude.installed);
+        assert_eq!(only_claude.installed_agents, vec!["claude-code"]);
     }
 
     #[test]

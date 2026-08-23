@@ -18,10 +18,6 @@
     @click="handleClick">
     <span class="pack-badge__dot" aria-hidden="true" />
     <span class="pack-badge__label">{{ name }}</span>
-    <span v-if="selected || partial" class="pack-badge__state" aria-hidden="true">
-      <svg v-if="selected" viewBox="0 0 12 12"><path d="m2.2 6.2 2.3 2.3 5.3-5.3" /></svg>
-      <svg v-else viewBox="0 0 12 12"><path d="M2.5 6h7" /></svg>
-    </span>
     <slot name="trailing" />
   </component>
 </template>

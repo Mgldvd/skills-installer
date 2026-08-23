@@ -63,34 +63,35 @@ describe("SkillCard", () => {
     expect(wrapper.text()).not.toContain("Selected for installation");
   });
 
-  it("marks an installed skill's corner ribbon the same green as its Installed tag", () => {
+  it("marks a fully installed skill with is-installed and stays quiet up top — no badge, no spinner", () => {
     const installed = mount(SkillCard, { props: { skill: makeSkill({ installed: true }), selected: false } });
     expect(installed.classes()).toContain("is-installed");
-    expect(installed.find(".skill-card__installed").text()).toBe("Installed");
+    expect(installed.classes()).not.toContain("is-partially-installed");
+    expect(installed.get(".skill-card__top").text()).toBe(installed.get(".skill-card__title").text());
 
     const notInstalled = mount(SkillCard, { props: { skill: makeSkill({ installed: false }), selected: false } });
     expect(notInstalled.classes()).not.toContain("is-installed");
-    expect(notInstalled.find(".skill-card__installed").exists()).toBe(false);
   });
 
-  it("tags a skill as Local or Remote depending on its source, never both", () => {
+  it("marks a skill as Local or Remote with the source icon, never both", () => {
     const local = mount(SkillCard, { props: { skill: makeSkill({ local: true }), selected: false } });
-    expect(local.find(".skill-card__local").text()).toBe("Local");
-    expect(local.find(".skill-card__remote").exists()).toBe(false);
+    const localIcon = local.get(".skill-card__source");
+    expect(localIcon.classes()).toContain("source-icon--local");
+    expect(localIcon.attributes("aria-label")).toBe("Local Skill");
 
     const remote = mount(SkillCard, { props: { skill: makeSkill({ local: false }), selected: false } });
-    expect(remote.find(".skill-card__remote").text()).toBe("Remote");
-    expect(remote.find(".skill-card__local").exists()).toBe(false);
+    const remoteIcon = remote.get(".skill-card__source");
+    expect(remoteIcon.classes()).toContain("source-icon--remote");
+    expect(remoteIcon.attributes("aria-label")).toBe("Remote Skill");
   });
 
-  it("shows a spinner while a skill is installing, and never alongside the Installed tag", () => {
+  it("shows a spinner while a skill is installing", () => {
     const installing = mount(SkillCard, {
       props: { skill: makeSkill({ installed: false }), selected: false, installing: true },
     });
     expect(installing.classes()).toContain("is-installing");
     expect(installing.find(".skill-card__spinner").exists()).toBe(true);
     expect(installing.find(".skill-card__installing").text()).toContain("Installing");
-    expect(installing.find(".skill-card__installed").exists()).toBe(false);
     expect(installing.find(".skill-card__selection-surface").attributes("aria-label")).toContain("installing");
 
     const notInstalling = mount(SkillCard, {
@@ -98,14 +99,14 @@ describe("SkillCard", () => {
     });
     expect(notInstalling.classes()).not.toContain("is-installing");
     expect(notInstalling.find(".skill-card__spinner").exists()).toBe(false);
+  });
 
-    // An already-installed skill never shows the spinner even if the
-    // `installing` prop is stale for a beat — the Installed tag wins.
+  it("never shows the spinner for a fully-installed skill even if `installing` is stale", () => {
     const alreadyInstalled = mount(SkillCard, {
       props: { skill: makeSkill({ installed: true }), selected: false, installing: true },
     });
     expect(alreadyInstalled.find(".skill-card__spinner").exists()).toBe(false);
-    expect(alreadyInstalled.find(".skill-card__installed").text()).toBe("Installed");
+    expect(alreadyInstalled.find(".skill-card__installing").exists()).toBe(false);
   });
 
   it("disables selection for an already-installed skill without hiding its edit action", async () => {
@@ -135,7 +136,7 @@ describe("SkillCard", () => {
     expect(wrapper.find(".skill-card__edit circle").exists()).toBe(true);
   });
 
-  it("renders assigned pack names and local/install status", () => {
+  it("renders assigned pack names and local status, with is-installed carrying the install state", () => {
     const wrapper = mount(SkillCard, {
       props: {
         skill: makeSkill({ local: true, installed: true, tags: ["workflow"] }),
@@ -144,9 +145,9 @@ describe("SkillCard", () => {
       },
     });
 
-    expect(wrapper.text()).toContain("Local");
-    expect(wrapper.text()).toContain("Installed");
+    expect(wrapper.get(".skill-card__source").classes()).toContain("source-icon--local");
     expect(wrapper.text()).toContain("Workflow");
+    expect(wrapper.classes()).toContain("is-installed");
   });
 
   it("does not render raw pack ids when pack metadata is unavailable", () => {
@@ -205,5 +206,70 @@ describe("SkillCard", () => {
 
     expect(wrapper.emitted("update")).toEqual([["triage"]]);
     expect(wrapper.emitted("toggle")).toBeUndefined();
+  });
+
+  it("shows one icon per agent the skill is installed for, with no overlap", () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ installed: true, installedAgents: ["universal", "claude-code"] }),
+        selected: false,
+      },
+    });
+
+    const agents = wrapper.get(".skill-card__agents");
+    expect(agents.findAll(".skill-card__agent-icon")).toHaveLength(2);
+    expect(agents.attributes("title")).toBe("Installed for: Universal (.agents), Claude Code");
+  });
+
+  it("shows every distinguishable installed agent without truncating", () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ installed: true, installedAgents: ["universal", "claude-code", "windsurf"] }),
+        selected: false,
+      },
+    });
+
+    expect(wrapper.get(".skill-card__agents").findAll(".skill-card__agent-icon")).toHaveLength(3);
+  });
+
+  it("shows no agent icons for a skill that isn't installed anywhere", () => {
+    const wrapper = mount(SkillCard, {
+      props: { skill: makeSkill({ installed: false, installedAgents: [] }), selected: false },
+    });
+    expect(wrapper.find(".skill-card__agents").exists()).toBe(false);
+  });
+
+  it("stays selectable and shows a Missing-agents badge when installed for only some of the targeted agents", async () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ installed: true, installedAgents: ["windsurf"] }),
+        selected: false,
+        targetAgents: ["windsurf", "claude-code"],
+      },
+    });
+
+    expect(wrapper.classes()).toContain("is-partially-installed");
+    expect(wrapper.get(".skill-card__partial").text()).toBe("Missing 1 agent");
+    expect(wrapper.find(".skill-card__selection-surface").attributes("disabled")).toBeUndefined();
+    expect(wrapper.find(".skill-card__selection-surface").attributes("aria-label")).toContain(
+      "not yet installed for Claude Code",
+    );
+
+    await wrapper.find(".skill-card__selection-surface").trigger("click");
+    expect(wrapper.emitted("toggle")).toEqual([[wrapper.props("skill").id]]);
+  });
+
+  it("disables selection once installed for every targeted agent, even if installed for extra ones too", () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ installed: true, installedAgents: ["windsurf", "claude-code", "universal"] }),
+        selected: false,
+        targetAgents: ["windsurf"],
+      },
+    });
+
+    expect(wrapper.classes()).not.toContain("is-partially-installed");
+    expect(wrapper.find(".skill-card__partial").exists()).toBe(false);
+    expect(wrapper.find(".skill-card__selection-surface").attributes("disabled")).toBeDefined();
   });
 });

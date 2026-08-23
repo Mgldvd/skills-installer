@@ -32,6 +32,12 @@ pub struct Skill {
     pub preselected: bool,
     pub local: bool,
     pub installed: bool,
+    /// Ids of the agents whose install destination (scoped to whichever
+    /// project root `installed` was computed against) actually contains this
+    /// skill. Several agent ids can share one destination directory, so they
+    /// always appear or disappear together — see `discover_installed_agents`.
+    #[serde(default)]
+    pub installed_agents: Vec<String>,
     pub enabled: bool,
 }
 

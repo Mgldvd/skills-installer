@@ -19,40 +19,22 @@
         </svg>
       </button>
     </div>
-    <button
-      type="button"
-      class="app-header__item app-header__agents"
-      aria-label="Open Agents settings"
-      title="Configure Agents"
-      @click="emit('open-agents')">
-      <span class="app-header__label">Agents</span>
-      <strong class="app-header__value">{{ agentLabels }}</strong>
-    </button>
-    <div class="app-header__status-row">
-      <span class="app-header__dependency" :class="dependencyClass">
-        <span class="app-header__dependency-dot" aria-hidden="true" />
-        Skills CLI {{ dependencyLabel }}
-      </span>
-    </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { ref } from "vue";
 
 import appLogo from "../../../../icon.png";
 import * as backend from "../../services/backend";
-import { SUPPORTED_AGENTS, type DependencyStatus, type InstallScope } from "../../types";
+import type { InstallScope } from "../../types";
 
 const props = defineProps<{
   projectPath: string;
-  dependencyStatus: DependencyStatus | null;
   scope: InstallScope;
-  agents: string[];
 }>();
 const emit = defineEmits<{
   "update:projectPath": [path: string];
-  "open-agents": [];
 }>();
 const selectingPath = ref(false);
 async function selectPath() {
@@ -65,21 +47,6 @@ async function selectPath() {
     selectingPath.value = false;
   }
 }
-const agentLabels = computed(
-  () =>
-    props.agents.map((id) => SUPPORTED_AGENTS.find((agent) => agent.id === id)?.label ?? id).join(", ") ||
-    "None selected",
-);
-
-const dependencyClass = computed(() => {
-  if (!props.dependencyStatus) return "is-unknown";
-  return props.dependencyStatus.available ? "is-ready" : "is-missing";
-});
-
-const dependencyLabel = computed(() => {
-  if (!props.dependencyStatus) return "checking…";
-  return props.dependencyStatus.available ? "● Ready" : "● Not found";
-});
 </script>
 
 <style scoped lang="scss" src="./AppHeader.scss"></style>

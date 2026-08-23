@@ -9,26 +9,30 @@
 
   .preferences-dialog__header {
     @include dialog.menu-header;
-
-    p {
-      margin-top: var(--space-2xs);
-      color: var(--text-secondary);
-      font-size: var(--font-size-sm);
-    }
   }
 
   .preferences-dialog__body {
     @include dialog.menu-body;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    // `start`, not the grid default `stretch` — otherwise a section paired
+    // with a taller neighbor gets stretched to match it, leaving empty
+    // padded space inside its own border instead of just being its own
+    // natural height.
+    align-items: start;
     align-content: start;
     gap: var(--space-md);
   }
 
+  // No card background — white/near-white fills are reserved for actual
+  // inputs (see `dialog.text-input`), not section containers.
   .preferences-dialog__section {
     min-width: 0;
     border: 1px solid var(--border-soft);
-    background: var(--bg-card);
+  }
+
+  .preferences-dialog__section--wide {
+    grid-column: 1 / -1;
   }
 
   .preferences-dialog__section-heading {
@@ -50,6 +54,7 @@
 
   .preferences-dialog__section-content {
     display: grid;
+    align-items: start;
     align-content: start;
     gap: var(--space-md);
     padding: var(--space-md);
@@ -62,7 +67,6 @@
   }
 
   .preferences-dialog__title {
-    font-size: var(--font-size-lg);
     font-weight: 600;
   }
 
@@ -81,12 +85,28 @@
     line-height: var(--line-height-normal);
   }
 
+  // Input and actions share one row now that this section spans the full
+  // dialog width, instead of stacking in what used to be a half-width
+  // column with room for little else.
+  .preferences-dialog__source-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+
+    .preferences-dialog__input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+  }
+
   .preferences-dialog__source-actions {
     display: flex;
+    flex: 0 0 auto;
     gap: var(--space-xs);
 
     button {
       @include dialog.button-base;
+      white-space: nowrap;
     }
   }
 
@@ -144,22 +164,6 @@
     }
   }
 
-  .preferences-dialog__accents {
-    display: flex;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
-    button {
-      width: 1.65rem;
-      height: 1.65rem;
-      border: 2px solid var(--bg-panel);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      &.is-active {
-        outline: 2px solid var(--text-primary);
-        outline-offset: 2px;
-      }
-    }
-  }
   .preferences-dialog__config-actions {
     display: flex;
     gap: var(--space-xs);
@@ -171,14 +175,32 @@
   .preferences-dialog__tools {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .preferences-dialog__tool + .preferences-dialog__tool {
+  .preferences-dialog__tool + .preferences-dialog__tool:not(.preferences-dialog__tool--wide) {
     padding-left: var(--space-md);
     border-left: 1px solid var(--border-soft);
   }
+  // A tool that needs the full row (the local catalog folder path + its
+  // actions) drops below its side-by-side siblings instead of squeezing
+  // into half a column — a divider above it, not to its left.
+  .preferences-dialog__tool--wide {
+    grid-column: 1 / -1;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-soft);
+  }
 
-  .preferences-dialog__cli-button {
+  .preferences-dialog__cli-button,
+  .preferences-dialog__tool-button {
     @include dialog.button-base;
     width: fit-content;
+  }
+
+  // Its label is a full sentence fragment, not a short verb — letting it
+  // wrap (button-base defaults to nowrap) is what stopped it overflowing
+  // past the button's own border in a narrower column.
+  .preferences-dialog__cli-button {
+    max-width: 100%;
+    white-space: normal;
+    text-align: left;
   }
 
   .preferences-dialog__btn {
@@ -201,6 +223,10 @@
       padding-left: 0;
       border-top: 1px solid var(--border-soft);
       border-left: 0;
+    }
+    .preferences-dialog__source-row {
+      flex-direction: column;
+      align-items: stretch;
     }
   }
 }

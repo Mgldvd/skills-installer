@@ -7,12 +7,11 @@ export interface UiPreferences {
   defaultScope: InstallScope;
   confirmBeforeInstall: boolean;
   continueAfterFailure: boolean;
-  accent: AccentColor;
+  accent: string;
   localSourcePath: string | null;
   compactCards: boolean;
 }
 
-export type AccentColor = "pink" | "coral" | "blue" | "teal" | "violet" | "green";
 export interface SupportedAgent {
   id: string;
   label: string;
@@ -56,7 +55,7 @@ export function defaultPreferences(): UiPreferences {
     defaultScope: "project",
     confirmBeforeInstall: true,
     continueAfterFailure: true,
-    accent: "pink",
+    accent: "#F43F75",
     localSourcePath: null,
     compactCards: false,
   };

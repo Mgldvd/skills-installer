@@ -4,6 +4,7 @@ mod group;
 mod install;
 mod parsed_source;
 pub mod preferences;
+mod project;
 mod skill;
 mod tag;
 mod validate;
@@ -17,6 +18,7 @@ pub use install::{
 };
 pub use parsed_source::ParsedSkillSource;
 pub use preferences::UiPreferences;
+pub use project::Project;
 pub use skill::{InstalledSkill, Skill, SkillSelection, SkillSource};
 pub use tag::SkillTag;
 pub use validate::{

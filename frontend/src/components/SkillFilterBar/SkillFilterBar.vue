@@ -30,6 +30,24 @@
         </button>
         <button
           type="button"
+          :aria-pressed="view === 'compact'"
+          title="Compact grid view"
+          aria-label="Compact grid view"
+          @click="emit('update:view', 'compact')">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="1" y="1" width="4" height="4" rx="0.75" />
+            <rect x="6" y="1" width="4" height="4" rx="0.75" />
+            <rect x="11" y="1" width="4" height="4" rx="0.75" />
+            <rect x="1" y="6" width="4" height="4" rx="0.75" />
+            <rect x="6" y="6" width="4" height="4" rx="0.75" />
+            <rect x="11" y="6" width="4" height="4" rx="0.75" />
+            <rect x="1" y="11" width="4" height="4" rx="0.75" />
+            <rect x="6" y="11" width="4" height="4" rx="0.75" />
+            <rect x="11" y="11" width="4" height="4" rx="0.75" />
+          </svg>
+        </button>
+        <button
+          type="button"
           :aria-pressed="view === 'list'"
           title="List view"
           aria-label="List view"
@@ -40,6 +58,7 @@
             <rect x="1.5" y="11.25" width="13" height="2.5" rx="1" />
           </svg>
         </button>
+
       </div>
     </div>
 
@@ -56,18 +75,34 @@
           placeholder="Filter skills..."
           @input="emit('update:query', ($event.target as HTMLInputElement).value)" />
       </label>
-      <div class="skill-filter-bar__source" role="group" aria-label="Filter by source">
+      <div class="skill-filter-bar__source" role="group" aria-label="Filter by source or status">
         <button
           type="button"
+          class="skill-filter-bar__source-btn"
           :aria-pressed="sourceFilter === 'local'"
           @click="emit('update:sourceFilter', sourceFilter === 'local' ? 'all' : 'local')">
+          <SourceIcon local decorative />
           Local
         </button>
         <button
           type="button"
+          class="skill-filter-bar__source-btn"
           :aria-pressed="sourceFilter === 'remote'"
           @click="emit('update:sourceFilter', sourceFilter === 'remote' ? 'all' : 'remote')">
+          <SourceIcon :local="false" decorative />
           Remote
+        </button>
+        <button
+          type="button"
+          :aria-pressed="needsAgentsOnly"
+          :disabled="needsAgentsCount === 0"
+          :title="
+            needsAgentsCount
+              ? `${needsAgentsCount} Skill${needsAgentsCount === 1 ? '' : 's'} still need at least one targeted agent`
+              : 'Every enabled Skill already covers every targeted agent'
+          "
+          @click="emit('update:needsAgentsOnly', !needsAgentsOnly)">
+          Needs agents{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
         </button>
       </div>
       <label class="skill-filter-bar__pack">
@@ -86,9 +121,10 @@
 
 <script setup lang="ts">
 import type { SkillTag } from "../../types";
+import SourceIcon from "../SourceIcon/SourceIcon.vue";
 
 type SortMode = "name" | "pack" | "local" | "remote";
-type ViewMode = "grid" | "list";
+type ViewMode = "grid" | "compact" | "list";
 type SourceFilter = "all" | "local" | "remote";
 
 withDefaults(
@@ -99,6 +135,8 @@ withDefaults(
     sourceFilter?: SourceFilter;
     packFilter?: string | null;
     tags?: SkillTag[];
+    needsAgentsOnly?: boolean;
+    needsAgentsCount?: number;
   }>(),
   {
     query: "",
@@ -107,6 +145,8 @@ withDefaults(
     sourceFilter: "all",
     packFilter: null,
     tags: () => [],
+    needsAgentsOnly: false,
+    needsAgentsCount: 0,
   },
 );
 
@@ -116,6 +156,7 @@ const emit = defineEmits<{
   "update:view": [value: ViewMode];
   "update:sourceFilter": [value: SourceFilter];
   "update:packFilter": [value: string | null];
+  "update:needsAgentsOnly": [value: boolean];
 }>();
 </script>
 

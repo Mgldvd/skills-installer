@@ -14,6 +14,27 @@ const CURATED_PALETTE: readonly string[] = [
   "#A855F7",
 ];
 
+/** The 15 curated swatches offered in the Pack and Accent color pickers —
+ * shared so both stay visually identical. Each picker adds its own 16th
+ * "custom color" slot in its UI; that slot isn't part of this list. */
+export const PICKER_PALETTE: readonly string[] = [
+  "#F43F75",
+  "#F05252",
+  "#F97316",
+  "#F59E0B",
+  "#EAB308",
+  "#84CC16",
+  "#22C55E",
+  "#14B8A6",
+  "#06B6D4",
+  "#0EA5E9",
+  "#3B82F6",
+  "#6366F1",
+  "#A855F7",
+  "#D946EF",
+  "#EC4899",
+];
+
 const FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
 const FNV_PRIME = 0x100000001b3n;
 const MASK_64 = (1n << 64n) - 1n;
