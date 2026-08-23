@@ -46,9 +46,12 @@ USER root
 # the base image's Rust install doesn't document including them, so this
 # adds them if missing (a fast no-op if they're already present). gosu:
 # lets `scripts/dist-container.sh` drop from root to a uid/gid-matched user
-# before touching the bind-mounted repo — see that script for why.
+# before touching the bind-mounted repo — see that script for why. xdg-utils:
+# provides /usr/bin/xdg-open, which linuxdeploy shells out to during the
+# AppImage bundling step (desktop-file/MIME setup) — not part of the base
+# image, and its absence fails bundling outright rather than skipping it.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends patchelf pkg-config gosu \
+    && apt-get install -y --no-install-recommends patchelf pkg-config gosu xdg-utils \
     && rm -rf /var/lib/apt/lists/* \
     && rustup component add clippy rustfmt
 
