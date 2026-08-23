@@ -80,9 +80,10 @@ fn should_relaunch(is_appimage: bool, already_detached: bool, stdout_is_terminal
 }
 
 /// Spawns a second, independent copy of this AppImage — detached from the
-/// terminal's stdio — and returns immediately so the shell prompt comes
-/// back right away, the way any other desktop launcher behaves, instead of
-/// blocking until the window closes.
+/// terminal's stdio *and* its controlling terminal — and returns
+/// immediately so the shell prompt comes back right away, the way any
+/// other desktop launcher behaves, instead of blocking until the window
+/// closes.
 ///
 /// Re-launches `$APPIMAGE` (the original file) rather than
 /// `current_exe()` (which resolves inside *this* process's own
@@ -94,16 +95,31 @@ fn should_relaunch(is_appimage: bool, already_detached: bool, stdout_is_terminal
 /// be torn down) mount, so without it the relaunch would inherit that
 /// wrong directory instead of the terminal's real one.
 fn relaunch_gui_detached() -> std::io::Result<()> {
+    use std::os::unix::process::CommandExt;
     use std::process::{Command, Stdio};
 
     let appimage = std::env::var_os("APPIMAGE").expect("checked by should_relaunch_detached");
-    Command::new(appimage)
-        .current_dir(original_cwd())
-        .env("SKILLS_INSTALLER_GUI_DETACHED", "1")
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()?;
+    // SAFETY: `setsid()` is async-signal-safe (POSIX-guaranteed safe to
+    // call between fork and exec) and touches only this not-yet-exec'd
+    // child, so it's sound inside `pre_exec`. Without it, redirecting
+    // stdio alone leaves the child attached to the terminal's controlling
+    // tty — the shell prompt returns, but the terminal emulator still
+    // considers a process "running in this terminal" and warns on close.
+    // `setsid()` makes the child a new session leader with no controlling
+    // terminal at all, the standard Unix way to fully detach.
+    unsafe {
+        Command::new(appimage)
+            .current_dir(original_cwd())
+            .env("SKILLS_INSTALLER_GUI_DETACHED", "1")
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .pre_exec(|| {
+                libc::setsid();
+                Ok(())
+            })
+            .spawn()?;
+    }
     Ok(())
 }
 

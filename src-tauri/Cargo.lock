@@ -3040,6 +3040,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "clap",
+ "libc",
  "serde",
  "serde_json",
  "serde_norway",
