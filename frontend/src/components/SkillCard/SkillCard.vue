@@ -36,6 +36,15 @@
       <div class="skill-card__meta">
         <span v-if="skill.local" class="skill-card__local">Local</span>
         <span v-else class="skill-card__remote">Remote</span>
+        <button
+          v-if="showUpdateButton"
+          type="button"
+          class="skill-card__update"
+          :aria-label="`Update ${skill.displayName} to the local version`"
+          title="Update to the local version"
+          @click="emit('update', skill.id)">
+          Update
+        </button>
         <div v-if="assignedTags.length" class="skill-card__packs" aria-label="Assigned packs">
           <PackBadge v-for="tag in assignedTags" :key="tag.id" :name="tag.name" :color="tag.color" compact />
         </div>
@@ -69,13 +78,15 @@ const props = withDefaults(
     compact?: boolean;
     list?: boolean;
     installing?: boolean;
+    hasUpdate?: boolean;
   }>(),
-  { tags: () => [], compact: false, list: false, installing: false },
+  { tags: () => [], compact: false, list: false, installing: false, hasUpdate: false },
 );
 
 const emit = defineEmits<{
   toggle: [skillId: string];
   edit: [skillId: string];
+  update: [skillId: string];
 }>();
 
 const ariaLabel = computed(() => {
@@ -84,6 +95,10 @@ const ariaLabel = computed(() => {
   return `${props.skill.displayName}${props.selected ? ", selected" : ", not selected"}`;
 });
 const assignedTags = computed(() => props.tags.filter((tag) => props.skill.tags.includes(tag.id)));
+// Defensive against a stale `skillsWithUpdates` (e.g. after switching the
+// selected project folder changes what's installed): only ever show the
+// Update button for a skill that's still both local and installed.
+const showUpdateButton = computed(() => props.hasUpdate && props.skill.local && props.skill.installed);
 </script>
 
 <style scoped lang="scss" src="./SkillCard.scss"></style>

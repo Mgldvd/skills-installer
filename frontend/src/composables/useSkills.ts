@@ -89,6 +89,16 @@ export function useSkills() {
     return updated;
   }
 
+  /** Local-only: explicit, on-demand check — populates `skillsWithUpdates`
+   * from the backend's `.signature` comparison. Never runs automatically
+   * (see `AppState.skillsWithUpdates`); the GUI's "Check for Updates"
+   * button is the only caller. */
+  async function checkForUpdates() {
+    const outdated = await backend.checkLocalSkillUpdates(state.projectRoot);
+    state.skillsWithUpdates = new Set(outdated);
+    return outdated;
+  }
+
   async function deleteSkill(skillId: string) {
     await backend.deleteSkill(skillId);
     state.skills = state.skills.filter((s) => s.id !== skillId);
@@ -111,5 +121,6 @@ export function useSkills() {
     addSkill,
     updateSkill,
     deleteSkill,
+    checkForUpdates,
   };
 }

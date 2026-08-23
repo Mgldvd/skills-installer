@@ -127,6 +127,21 @@ pub fn delete_skill(state: State<'_, AppState>, skill_id: String) -> Result<(), 
     state.services.skills.delete_skill(&skill_id)
 }
 
+/// Local-only, on-demand check (see `SkillsService::check_local_updates`):
+/// never runs as part of the normal load/refresh path, only when the GUI's
+/// "Check for Updates" is clicked. `project_path` follows the same
+/// resolution as `refresh`'s.
+#[tauri::command]
+pub fn check_local_skill_updates(
+    state: State<'_, AppState>,
+    project_path: Option<String>,
+) -> Result<Vec<String>, AppError> {
+    state
+        .services
+        .skills
+        .check_local_updates_for(project_path.as_deref())
+}
+
 fn default_true() -> bool {
     true
 }

@@ -36,6 +36,10 @@ interface AppState {
   groups: SkillGroup[];
   tags: SkillTag[];
   selectedSkillIds: Set<string>;
+  /** Local-only: ids of installed Local skills whose catalog `.signature` has
+   * changed since install, populated only by an explicit "Check for Updates" —
+   * never computed on load/refresh (see `useSkills.checkForUpdates`). */
+  skillsWithUpdates: Set<string>;
   searchQuery: string;
   skillBeingEditedId: string | null;
   groupBeingEditedId: string | null;
@@ -76,6 +80,7 @@ const state = reactive<AppState>({
   groups: [],
   tags: [],
   selectedSkillIds: new Set<string>(),
+  skillsWithUpdates: new Set<string>(),
   searchQuery: "",
   skillBeingEditedId: null,
   groupBeingEditedId: null,

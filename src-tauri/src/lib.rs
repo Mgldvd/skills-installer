@@ -156,6 +156,7 @@ fn run_gui(config_override: Option<PathBuf>) {
             commands::skills::add_skill,
             commands::skills::update_skill,
             commands::skills::delete_skill,
+            commands::skills::check_local_skill_updates,
             commands::tags::get_tags,
             commands::tags::create_tag,
             commands::tags::update_tag,

@@ -173,4 +173,37 @@ describe("SkillCard", () => {
     expect(badge.classes()).toContain("pack-badge--compact");
     expect(badge.attributes("style")).toContain("--pack-color: #14B8A6");
   });
+
+  it("shows the Update button only for an installed Local skill flagged with hasUpdate", () => {
+    const notFlagged = mount(SkillCard, {
+      props: { skill: makeSkill({ local: true, installed: true }), selected: false, hasUpdate: false },
+    });
+    expect(notFlagged.find(".skill-card__update").exists()).toBe(false);
+
+    const remoteFlagged = mount(SkillCard, {
+      props: { skill: makeSkill({ local: false, installed: true }), selected: false, hasUpdate: true },
+    });
+    expect(remoteFlagged.find(".skill-card__update").exists()).toBe(false);
+
+    const notInstalledFlagged = mount(SkillCard, {
+      props: { skill: makeSkill({ local: true, installed: false }), selected: false, hasUpdate: true },
+    });
+    expect(notInstalledFlagged.find(".skill-card__update").exists()).toBe(false);
+
+    const flagged = mount(SkillCard, {
+      props: { skill: makeSkill({ id: "triage", local: true, installed: true }), selected: false, hasUpdate: true },
+    });
+    expect(flagged.find(".skill-card__update").exists()).toBe(true);
+  });
+
+  it("emits update, not toggle, when the Update button is clicked", async () => {
+    const wrapper = mount(SkillCard, {
+      props: { skill: makeSkill({ id: "triage", local: true, installed: true }), selected: false, hasUpdate: true },
+    });
+
+    await wrapper.find(".skill-card__update").trigger("click");
+
+    expect(wrapper.emitted("update")).toEqual([["triage"]]);
+    expect(wrapper.emitted("toggle")).toBeUndefined();
+  });
 });

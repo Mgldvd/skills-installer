@@ -159,6 +159,11 @@ export async function refresh(projectPath?: string): Promise<ApplicationConfig> 
   return call("refresh", { projectPath });
 }
 
+/** Local-only, on-demand check — returns the ids of installed Local skills whose `.signature` no longer matches the Local Skill Source catalog. */
+export async function checkLocalSkillUpdates(projectPath?: string): Promise<string[]> {
+  return call("check_local_skill_updates", { projectPath });
+}
+
 export async function selectInstallationDirectory(defaultPath?: string): Promise<string | null> {
   const selected = await open({
     title: "Select installation folder",

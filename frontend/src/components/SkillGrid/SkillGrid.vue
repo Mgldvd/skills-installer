@@ -16,8 +16,10 @@
         :compact="compact"
         :list="view === 'list'"
         :installing="skill.id === installingSkillId"
+        :has-update="skillsWithUpdates.has(skill.id)"
         @toggle="(id) => emit('toggle', id)"
-        @edit="(id) => emit('edit', id)" />
+        @edit="(id) => emit('edit', id)"
+        @update="(id) => emit('update', id)" />
     </div>
   </TransitionGroup>
 </template>
@@ -33,14 +35,16 @@ withDefaults(
     selectedIds: Set<string>;
     compact?: boolean;
     installingSkillId?: string | null;
+    skillsWithUpdates?: Set<string>;
     view?: "grid" | "list";
   }>(),
-  { installingSkillId: null, view: "grid" },
+  { installingSkillId: null, skillsWithUpdates: () => new Set<string>(), view: "grid" },
 );
 
 const emit = defineEmits<{
   toggle: [skillId: string];
   edit: [skillId: string];
+  update: [skillId: string];
 }>();
 </script>
 

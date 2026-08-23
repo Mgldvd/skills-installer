@@ -14,6 +14,7 @@ export function resetState(state: AppState) {
   state.groups = [];
   state.tags = [];
   state.selectedSkillIds = new Set();
+  state.skillsWithUpdates = new Set();
   state.searchQuery = "";
   state.skillBeingEditedId = null;
   state.groupBeingEditedId = null;

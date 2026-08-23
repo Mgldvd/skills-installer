@@ -36,9 +36,11 @@
         :selected-ids="state.selectedSkillIds"
         :compact="state.preferences.compactCards"
         :installing-skill-id="installingSkillId"
+        :skills-with-updates="state.skillsWithUpdates"
         :view="skillView"
         @toggle="toggleSelected"
-        @edit="openEditDialog" />
+        @edit="openEditDialog"
+        @update="handleUpdateSkill" />
 
       <InstallProgressPanel
         v-if="state.installation.isInstalling || state.installation.result || state.installation.error"
@@ -56,6 +58,14 @@
         <button type="button" class="app-shell__footer-btn" @click="isTagsOpen = !isTagsOpen">Packs</button>
         <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
           Preferences
+        </button>
+        <button
+          type="button"
+          class="app-shell__footer-btn"
+          :disabled="isCheckingForUpdates"
+          title="Compare installed Local skills against your Local Skill Source catalog"
+          @click="handleCheckForUpdates">
+          {{ isCheckingForUpdates ? "Checking…" : "Check for Updates" }}
         </button>
       </div>
       <div class="app-shell__footer-actions">
@@ -165,13 +175,23 @@ import * as backend from "./services/backend";
 import type { InstallRequest, Skill } from "./types";
 
 const state = useAppState();
-const { selectedSkills, loadAll, refresh, clearSelection, toggleSelected, addSkill, updateSkill, deleteSkill } =
-  useSkills();
+const {
+  selectedSkills,
+  loadAll,
+  refresh,
+  clearSelection,
+  toggleSelected,
+  addSkill,
+  updateSkill,
+  deleteSkill,
+  checkForUpdates,
+} = useSkills();
 const tags = useTags();
 const { install, cancel, checkDependencies } = useInstallation();
 const { load: loadPreferences, update: updatePreferencesPartial } = usePreferences();
 const { push: pushToast } = useToasts();
 
+const isCheckingForUpdates = ref(false);
 const isPreferencesOpen = ref(false);
 const isAgentsOpen = ref(false);
 const isTagsOpen = ref(false);
@@ -479,6 +499,42 @@ async function runInstall() {
 
 function handleCancelInstall() {
   cancel().catch((error) => pushToast(describeError(error), "error"));
+}
+
+async function handleCheckForUpdates() {
+  isCheckingForUpdates.value = true;
+  try {
+    const outdated = await checkForUpdates();
+    if (outdated.length === 0) {
+      pushToast("All installed Local skills are up to date.", "success");
+    } else {
+      pushToast(`${outdated.length} Local skill${outdated.length === 1 ? "" : "s"} can be updated.`, "success");
+    }
+  } catch (error) {
+    pushToast(describeError(error), "error");
+  } finally {
+    isCheckingForUpdates.value = false;
+  }
+}
+
+async function handleUpdateSkill(skillId: string) {
+  if (state.installation.isInstalling) {
+    pushToast("Wait for the current installation to finish before updating.", "error");
+    return;
+  }
+  const request: InstallRequest = {
+    selection: { skillIds: [skillId] },
+    options: installOptionsFromPreferences.value,
+  };
+  try {
+    await install(request);
+    const next = new Set(state.skillsWithUpdates);
+    next.delete(skillId);
+    state.skillsWithUpdates = next;
+    await refresh();
+  } catch (error) {
+    pushToast(describeError(error), "error");
+  }
 }
 
 function dismissInstallPanel() {

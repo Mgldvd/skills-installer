@@ -14,6 +14,7 @@ vi.mock("../src/services/backend", () => ({
   createGroup: vi.fn(),
   updateGroup: vi.fn(),
   deleteGroup: vi.fn(),
+  checkLocalSkillUpdates: vi.fn(),
 }));
 
 import * as backend from "../src/services/backend";
@@ -156,5 +157,25 @@ describe("useSkills", () => {
 
     expect(state.skills[0].displayName).toBe("New Name");
     expect(state.skills[1].id).toBe("b");
+  });
+
+  it("checkForUpdates populates skillsWithUpdates from the backend and returns the ids", async () => {
+    vi.mocked(backend.checkLocalSkillUpdates).mockResolvedValue(["taskfile", "bash-scripting"]);
+
+    const { checkForUpdates } = useSkills();
+    const result = await checkForUpdates();
+
+    expect(result).toEqual(["taskfile", "bash-scripting"]);
+    expect(state.skillsWithUpdates).toEqual(new Set(["taskfile", "bash-scripting"]));
+  });
+
+  it("checkForUpdates replaces, rather than merges into, any previous result", async () => {
+    state.skillsWithUpdates = new Set(["stale-id"]);
+    vi.mocked(backend.checkLocalSkillUpdates).mockResolvedValue([]);
+
+    const { checkForUpdates } = useSkills();
+    await checkForUpdates();
+
+    expect(state.skillsWithUpdates.size).toBe(0);
   });
 });
