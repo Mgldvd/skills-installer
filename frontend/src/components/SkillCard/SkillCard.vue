@@ -9,14 +9,16 @@
       'is-installed': skill.installed,
       'is-partially-installed': isPartiallyInstalled,
       'is-installing': installing,
-    }">
+    }"
+  >
     <button
       type="button"
       class="skill-card__selection-surface"
       :aria-pressed="selected"
       :aria-label="ariaLabel"
       :disabled="!skill.enabled || isFullyInstalled"
-      @click="emit('toggle', skill.id)" />
+      @click="emit('toggle', skill.id)"
+    />
 
     <span class="skill-card__selection-ribbon" aria-hidden="true" />
 
@@ -48,7 +50,8 @@
           class="skill-card__update"
           :aria-label="`Update ${skill.displayName} to the local version`"
           title="Update to the local version"
-          @click="emit('update', skill.id)">
+          @click="emit('update', skill.id)"
+        >
           Update
         </button>
         <div v-if="assignedTags.length" class="skill-card__packs" aria-label="Assigned packs">
@@ -65,7 +68,8 @@
         class="skill-card__edit"
         :aria-label="`View and edit ${skill.displayName}`"
         title="View and edit Skill"
-        @click="emit('edit', skill.id)">
+        @click="emit('edit', skill.id)"
+      >
         <svg viewBox="0 0 16 16" aria-hidden="true">
           <path d="M1.5 8s2.2-4 6.5-4 6.5 4 6.5 4-2.2 4-6.5 4-6.5-4-6.5-4Z" />
           <circle cx="8" cy="8" r="1.8" />

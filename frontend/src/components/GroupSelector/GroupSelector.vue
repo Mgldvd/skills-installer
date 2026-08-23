@@ -5,7 +5,8 @@
       class="group-selector__trigger"
       :aria-expanded="isOpen"
       aria-haspopup="listbox"
-      @click="toggle">
+      @click="toggle"
+    >
       <GroupBadge v-if="selectedGroup" :name="selectedGroup.name" :color="selectedGroup.color" size="sm" />
       <span v-else class="group-selector__placeholder">Select a group</span>
       <svg class="group-selector__chevron" viewBox="0 0 16 16" aria-hidden="true">
@@ -15,7 +16,8 @@
           stroke="currentColor"
           stroke-width="1.5"
           stroke-linecap="round"
-          stroke-linejoin="round" />
+          stroke-linejoin="round"
+        />
       </svg>
     </button>
 

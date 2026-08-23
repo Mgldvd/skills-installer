@@ -22,7 +22,8 @@
                   class="add-skill-dialog__browse"
                   href="https://skills.sh"
                   target="_blank"
-                  rel="noopener noreferrer">
+                  rel="noopener noreferrer"
+                >
                   Browse Skills.sh
                 </a>
               </span>
@@ -32,7 +33,8 @@
                 required
                 class="add-skill-dialog__input"
                 placeholder="https://skills.sh/owner/repository/skill or https://skills.sh/p/..."
-                @input="handleUrlInput" />
+                @input="handleUrlInput"
+              />
             </label>
 
             <p v-if="urlError" class="add-skill-dialog__error" role="alert">
@@ -73,7 +75,8 @@
                 type="text"
                 class="add-skill-dialog__input"
                 :placeholder="packPreview?.suggestedName ?? preview?.skillName ?? 'Display name'"
-                @input="displayNameEdited = true" />
+                @input="displayNameEdited = true"
+              />
             </label>
 
             <p v-if="submitError" class="add-skill-dialog__error" role="alert">
@@ -102,7 +105,8 @@
             <textarea
               v-model="description"
               class="add-skill-dialog__input add-skill-dialog__textarea"
-              @input="descriptionEdited = true" />
+              @input="descriptionEdited = true"
+            />
           </label>
           <div v-else class="add-skill-dialog__field add-skill-dialog__form-secondary">
             <span>Pack Color</span>
@@ -122,7 +126,8 @@
                 type="checkbox"
                 :checked="allSelected"
                 aria-label="Select all Skills from Skills.sh"
-                @change="toggleSelectAll" />
+                @change="toggleSelectAll"
+              />
               <span role="columnheader">Name</span>
               <span role="columnheader">URL</span>
               <span role="columnheader" class="add-skill-dialog__row-actions-header">
@@ -133,10 +138,12 @@
                   :disabled="deleting"
                   :aria-label="`Delete ${selectedIds.length} selected Skills`"
                   :title="`Delete ${selectedIds.length} selected Skills`"
-                  @click="requestBulkDelete">
+                  @click="requestBulkDelete"
+                >
                   <svg viewBox="0 0 16 16" aria-hidden="true">
                     <path
-                      d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5v8.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4.5M6.5 7.5v4M9.5 7.5v4" />
+                      d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5v8.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4.5M6.5 7.5v4M9.5 7.5v4"
+                    />
                   </svg>
                 </button>
               </span>
@@ -147,13 +154,15 @@
                 :checked="selected.has(skill.id)"
                 :disabled="deleting"
                 :aria-label="`Select ${skill.displayName}`"
-                @change="toggleSelect(skill.id)" />
+                @change="toggleSelect(skill.id)"
+              />
               <span class="add-skill-dialog__skill-name">{{ skill.displayName }}</span>
               <a
                 class="add-skill-dialog__skill-link"
                 :href="skill.skillsUrl"
                 :title="skill.skillsUrl"
-                @click.prevent="handleOpenSkillUrl(skill.skillsUrl)">
+                @click.prevent="handleOpenSkillUrl(skill.skillsUrl)"
+              >
                 {{ skill.skillsUrl }}
               </a>
               <button
@@ -161,11 +170,13 @@
                 class="add-skill-dialog__row-edit"
                 :aria-label="`Edit ${skill.displayName}`"
                 :title="`Edit ${skill.displayName}`"
-                @click="emit('edit', skill.id)">
+                @click="emit('edit', skill.id)"
+              >
                 <svg viewBox="0 0 14 14" aria-hidden="true">
                   <path
                     d="M2.5 10.4V12h1.6l6.6-6.6-1.6-1.6-6.6 6.6Zm7.4-7.4 1-1 1.6 1.6-1 1L9.9 3Z"
-                    fill="currentColor" />
+                    fill="currentColor"
+                  />
                 </svg>
               </button>
               <button
@@ -174,10 +185,12 @@
                 :disabled="deleting"
                 :aria-label="`Delete ${skill.displayName}`"
                 :title="`Delete ${skill.displayName}`"
-                @click="requestDelete(skill)">
+                @click="requestDelete(skill)"
+              >
                 <svg viewBox="0 0 16 16" aria-hidden="true">
                   <path
-                    d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5v8.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4.5M6.5 7.5v4M9.5 7.5v4" />
+                    d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5v8.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4.5M6.5 7.5v4M9.5 7.5v4"
+                  />
                 </svg>
               </button>
             </div>

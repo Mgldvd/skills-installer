@@ -3,7 +3,8 @@
     ref="dialogElement"
     class="skill-description-dialog"
     @close="emit('update:open', false)"
-    @click="handleBackdropClick">
+    @click="handleBackdropClick"
+  >
     <article v-if="skill" class="skill-description-dialog__content">
       <header class="skill-description-dialog__header">
         <div>
@@ -21,7 +22,8 @@
           class="skill-description-dialog__link"
           :href="skill.skillsUrl"
           target="_blank"
-          rel="noopener noreferrer">
+          rel="noopener noreferrer"
+        >
           View on skills.sh
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path
@@ -30,7 +32,8 @@
               stroke="currentColor"
               stroke-width="1.5"
               stroke-linecap="round"
-              stroke-linejoin="round" />
+              stroke-linejoin="round"
+            />
           </svg>
         </a>
         <span v-else class="skill-description-dialog__local">Local Skill — no skills.sh page available</span>

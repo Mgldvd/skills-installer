@@ -6,7 +6,8 @@
         class="font-scale-control__step"
         aria-label="Decrease font size"
         :disabled="presetIndex <= 0"
-        @click="step(-1)">
+        @click="step(-1)"
+      >
         A−
       </button>
       <span class="font-scale-control__value">{{ Math.round(modelValue * 100) }}%</span>
@@ -15,7 +16,8 @@
         class="font-scale-control__step"
         aria-label="Increase font size"
         :disabled="presetIndex >= presets.length - 1"
-        @click="step(1)">
+        @click="step(1)"
+      >
         A+
       </button>
     </template>
@@ -29,7 +31,8 @@
           :class="{ 'is-active': preset.value === modelValue }"
           role="radio"
           :aria-checked="preset.value === modelValue"
-          @click="emit('update:modelValue', preset.value)">
+          @click="emit('update:modelValue', preset.value)"
+        >
           {{ preset.label }}
         </button>
       </div>

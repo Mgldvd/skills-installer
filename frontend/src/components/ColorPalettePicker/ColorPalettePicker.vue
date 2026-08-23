@@ -9,18 +9,21 @@
       :style="{ backgroundColor: color }"
       :aria-pressed="modelValue === color"
       :aria-label="`Use color ${color}`"
-      @click="emit('update:modelValue', color)" />
+      @click="emit('update:modelValue', color)"
+    />
     <label
       class="color-palette-picker__swatch color-palette-picker__custom"
       :class="{ 'is-selected': isCustom }"
       :aria-pressed="isCustom"
-      title="Custom color">
+      title="Custom color"
+    >
       <input
         type="color"
         class="color-palette-picker__custom-input"
         :value="isCustom ? modelValue : '#000000'"
         aria-label="Pick a custom color"
-        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value.toUpperCase())" />
+        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value.toUpperCase())"
+      />
     </label>
   </fieldset>
 </template>

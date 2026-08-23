@@ -15,7 +15,8 @@
     :disabled="interactive ? disabled : undefined"
     :title="title"
     :style="{ '--pack-color': color }"
-    @click="handleClick">
+    @click="handleClick"
+  >
     <span class="pack-badge__dot" aria-hidden="true" />
     <span class="pack-badge__label">{{ name }}</span>
     <slot name="trailing" />

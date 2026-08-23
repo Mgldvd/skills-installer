@@ -7,7 +7,8 @@
         <select
           :value="sortBy"
           aria-label="Sort Skills"
-          @change="emit('update:sortBy', ($event.target as HTMLSelectElement).value as SortMode)">
+          @change="emit('update:sortBy', ($event.target as HTMLSelectElement).value as SortMode)"
+        >
           <option value="name">Name</option>
           <option value="pack">Pack</option>
           <option value="local">Local</option>
@@ -20,7 +21,8 @@
           :aria-pressed="view === 'grid'"
           title="Grid view"
           aria-label="Grid view"
-          @click="emit('update:view', 'grid')">
+          @click="emit('update:view', 'grid')"
+        >
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" />
             <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" />
@@ -33,7 +35,8 @@
           :aria-pressed="view === 'compact'"
           title="Compact grid view"
           aria-label="Compact grid view"
-          @click="emit('update:view', 'compact')">
+          @click="emit('update:view', 'compact')"
+        >
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <rect x="1" y="1" width="4" height="4" rx="0.75" />
             <rect x="6" y="1" width="4" height="4" rx="0.75" />
@@ -51,14 +54,14 @@
           :aria-pressed="view === 'list'"
           title="List view"
           aria-label="List view"
-          @click="emit('update:view', 'list')">
+          @click="emit('update:view', 'list')"
+        >
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <rect x="1.5" y="2.25" width="13" height="2.5" rx="1" />
             <rect x="1.5" y="6.75" width="13" height="2.5" rx="1" />
             <rect x="1.5" y="11.25" width="13" height="2.5" rx="1" />
           </svg>
         </button>
-
       </div>
     </div>
 
@@ -73,14 +76,16 @@
           type="search"
           :value="query"
           placeholder="Filter skills..."
-          @input="emit('update:query', ($event.target as HTMLInputElement).value)" />
+          @input="emit('update:query', ($event.target as HTMLInputElement).value)"
+        />
       </label>
       <div class="skill-filter-bar__source" role="group" aria-label="Filter by source or status">
         <button
           type="button"
           class="skill-filter-bar__source-btn"
           :aria-pressed="sourceFilter === 'local'"
-          @click="emit('update:sourceFilter', sourceFilter === 'local' ? 'all' : 'local')">
+          @click="emit('update:sourceFilter', sourceFilter === 'local' ? 'all' : 'local')"
+        >
           <SourceIcon local decorative />
           Local
         </button>
@@ -88,7 +93,8 @@
           type="button"
           class="skill-filter-bar__source-btn"
           :aria-pressed="sourceFilter === 'remote'"
-          @click="emit('update:sourceFilter', sourceFilter === 'remote' ? 'all' : 'remote')">
+          @click="emit('update:sourceFilter', sourceFilter === 'remote' ? 'all' : 'remote')"
+        >
           <SourceIcon :local="false" decorative />
           Remote
         </button>
@@ -101,7 +107,8 @@
               ? `${needsAgentsCount} Skill${needsAgentsCount === 1 ? '' : 's'} still need at least one targeted agent`
               : 'Every enabled Skill already covers every targeted agent'
           "
-          @click="emit('update:needsAgentsOnly', !needsAgentsOnly)">
+          @click="emit('update:needsAgentsOnly', !needsAgentsOnly)"
+        >
           Needs agents{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
         </button>
       </div>
@@ -110,7 +117,8 @@
         <select
           :value="packFilter ?? ''"
           aria-label="Filter by Pack"
-          @change="emit('update:packFilter', ($event.target as HTMLSelectElement).value || null)">
+          @change="emit('update:packFilter', ($event.target as HTMLSelectElement).value || null)"
+        >
           <option value="">All Packs</option>
           <option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</option>
         </select>

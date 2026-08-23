@@ -4,7 +4,8 @@
       v-for="toast in toasts"
       :key="toast.id"
       class="toast-host__toast"
-      :class="`toast-host__toast--${toast.variant}`">
+      :class="`toast-host__toast--${toast.variant}`"
+    >
       {{ toast.message }}
     </div>
   </div>

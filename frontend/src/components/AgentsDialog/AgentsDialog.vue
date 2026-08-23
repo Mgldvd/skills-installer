@@ -22,7 +22,8 @@
             class="agents-dialog__toggle"
             :class="{ 'is-active': selected.includes(agent.id) }"
             :aria-pressed="selected.includes(agent.id)"
-            @click="toggle(agent.id)">
+            @click="toggle(agent.id)"
+          >
             <span class="agents-dialog__check" aria-hidden="true">
               {{ selected.includes(agent.id) ? "✓" : "" }}
             </span>

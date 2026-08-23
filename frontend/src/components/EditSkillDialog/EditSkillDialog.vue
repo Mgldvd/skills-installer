@@ -70,7 +70,8 @@
             <textarea
               v-model="description"
               class="edit-skill-dialog__input edit-skill-dialog__textarea"
-              maxlength="320" />
+              maxlength="320"
+            />
             <small>Short summary displayed on the Skill card.</small>
           </label>
         </div>
@@ -89,7 +90,8 @@
               :selected="selectedTagIds.includes(tag.id)"
               :muted="!selectedTagIds.includes(tag.id)"
               :aria-label="`${selectedTagIds.includes(tag.id) ? 'Unassign' : 'Assign'} ${tag.name}`"
-              @click="toggleTag(tag.id)" />
+              @click="toggleTag(tag.id)"
+            />
           </div>
           <p v-else class="edit-skill-dialog__packs-empty">No enabled packs are available.</p>
         </fieldset>
@@ -117,7 +119,8 @@
           <button
             type="button"
             class="edit-skill-dialog__btn edit-skill-dialog__btn--delete"
-            @click="deleteRequested = true">
+            @click="deleteRequested = true"
+          >
             Delete Skill
           </button>
           <span class="edit-skill-dialog__actions-spacer" />

@@ -4,7 +4,8 @@
     :class="local ? 'source-icon--local' : 'source-icon--remote'"
     :title="decorative ? undefined : local ? 'Local Skill' : 'Remote Skill'"
     :aria-label="decorative ? undefined : local ? 'Local Skill' : 'Remote Skill'"
-    :aria-hidden="decorative || undefined">
+    :aria-hidden="decorative || undefined"
+  >
     <svg v-if="local" viewBox="0 0 16 16" aria-hidden="true">
       <path d="M8 1.5 14.5 13.5H1.5Z" />
       <text x="8" y="12" text-anchor="middle">L</text>

@@ -4,7 +4,8 @@
       <AppHeader
         :project-path="state.projectRoot"
         :scope="state.preferences.defaultScope"
-        @update:project-path="handleProjectPathUpdate" />
+        @update:project-path="handleProjectPathUpdate"
+      />
 
       <SkillToolbar
         :tags="state.tags"
@@ -15,7 +16,8 @@
         @reorder-tags="handleReorderTags"
         @clear-selection="clearSelection"
         @select-missing="handleSelectMissingAgents"
-        @open-packs="isTagsOpen = !isTagsOpen" />
+        @open-packs="isTagsOpen = !isTagsOpen"
+      />
 
       <SkillFilterBar
         :query="skillQuery"
@@ -31,7 +33,8 @@
         @update:view="handleDisplayModeChange"
         @update:source-filter="skillSourceFilter = $event"
         @update:pack-filter="skillPackFilter = $event"
-        @update:needs-agents-only="skillNeedsAgentsFilter = $event" />
+        @update:needs-agents-only="skillNeedsAgentsFilter = $event"
+      />
 
       <SkillGrid
         :skills="displayedSkills"
@@ -44,14 +47,16 @@
         :view="skillView"
         @toggle="toggleSelected"
         @edit="openEditDialog"
-        @update="handleUpdateSkill" />
+        @update="handleUpdateSkill"
+      />
 
       <InstallProgressPanel
         v-if="state.installation.isInstalling || state.installation.result || state.installation.error"
         :installation="state.installation"
         :skills="state.skills"
         @cancel="handleCancelInstall"
-        @dismiss="dismissInstallPanel" />
+        @dismiss="dismissInstallPanel"
+      />
     </main>
 
     <footer class="app-shell__footer">
@@ -73,7 +78,8 @@
             :disabled="isCheckingForUpdates"
             :aria-label="isCheckingForUpdates ? 'Checking for Skills updates…' : 'Check for Skills updates'"
             title="Check for Skills updates"
-            @click="handleCheckForUpdates">
+            @click="handleCheckForUpdates"
+          >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <polyline points="23 4 23 10 17 10" />
               <polyline points="1 20 1 14 7 14" />
@@ -88,12 +94,14 @@
               state.preferences.confirmBeforeInstall
                 ? 'Install Selected will ask for confirmation first'
                 : 'Install Selected will run immediately, no confirmation'
-            ">
+            "
+          >
             <input
               type="checkbox"
               class="app-shell__toggle-input"
               :checked="!state.preferences.confirmBeforeInstall"
-              @change="toggleSkipConfirm" />
+              @change="toggleSkipConfirm"
+            />
             <span class="app-shell__toggle-track" aria-hidden="true">
               <span class="app-shell__toggle-thumb"></span>
             </span>
@@ -104,7 +112,8 @@
             type="button"
             class="app-shell__footer-btn app-shell__footer-btn--primary"
             :disabled="selectedSkills.length === 0 || state.installation.isInstalling"
-            @click="handleInstallClick">
+            @click="handleInstallClick"
+          >
             Install Selected
           </button>
         </div>
@@ -119,7 +128,8 @@
           class="app-shell__agents-summary"
           :aria-label="`Open Agents settings. Currently selected: ${agentLabels}`"
           :title="agentLabels"
-          @click="isAgentsOpen = true">
+          @click="isAgentsOpen = true"
+        >
           <span class="app-shell__manage-agents" aria-hidden="true">
             <svg viewBox="0 0 16 16" aria-hidden="true">
               <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
@@ -144,7 +154,8 @@
       @submit="handleAddSkillSubmit"
       @import-pack="handleImportPack"
       @delete-skills="handleDeleteCatalogSkills"
-      @edit="handleEditSkillFromCatalog" />
+      @edit="handleEditSkillFromCatalog"
+    />
 
     <EditSkillDialog
       :open="isEditDialogOpen"
@@ -153,14 +164,16 @@
       :submit-error="editSkillError"
       @update:open="handleEditDialogOpenChange"
       @submit="handleEditSkillSubmit"
-      @delete="handleDeleteSkill" />
+      @delete="handleDeleteSkill"
+    />
 
     <InstallConfirmDialog
       v-model:open="isInstallConfirmOpen"
       :skills="selectedSkills"
       :options="installOptionsFromPreferences"
       :project-path="state.projectRoot"
-      @confirm="runInstall" />
+      @confirm="runInstall"
+    />
 
     <PreferencesDialog
       v-model:open="isPreferencesOpen"
@@ -172,12 +185,14 @@
       @import-config="handleImportConfig"
       @install-cli="handleInstallCli"
       @open-packs="handleOpenPacksFromPreferences"
-      @open-agents="handleOpenAgentsFromPreferences" />
+      @open-agents="handleOpenAgentsFromPreferences"
+    />
     <AgentsDialog
       v-model:open="isAgentsOpen"
       :model-value="state.preferences.defaultAgents"
       :scope="state.preferences.defaultScope"
-      @update:model-value="handleAgentsUpdate" />
+      @update:model-value="handleAgentsUpdate"
+    />
     <TagsDialog
       v-model:open="isTagsOpen"
       :tags="state.tags"
@@ -188,7 +203,8 @@
       @unassign="handleUnassignTag"
       @create="handleCreateTag"
       @update="handleUpdateTag"
-      @delete="handleDeleteTag" />
+      @delete="handleDeleteTag"
+    />
     <ProjectsDialog
       v-model:open="isProjectsOpen"
       :projects="state.projects"
@@ -196,7 +212,8 @@
       :error="projectsError"
       @save="handleSaveProject"
       @load="handleLoadProject"
-      @delete="handleDeleteProject" />
+      @delete="handleDeleteProject"
+    />
 
     <ToastHost />
   </div>

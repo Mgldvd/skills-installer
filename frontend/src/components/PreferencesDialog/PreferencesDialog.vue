@@ -26,14 +26,16 @@
               <FontScaleControl
                 variant="full"
                 :model-value="preferences.fontScale"
-                @update:model-value="(v) => emit('update', { fontScale: v })" />
+                @update:model-value="(v) => emit('update', { fontScale: v })"
+              />
             </div>
             <div class="preferences-dialog__field preferences-dialog__tool">
               <span class="preferences-dialog__label">Accent color</span>
               <ColorPalettePicker
                 :model-value="preferences.accent"
                 aria-label="Application accent"
-                @update:model-value="(v) => emit('update', { accent: v })" />
+                @update:model-value="(v) => emit('update', { accent: v })"
+              />
             </div>
           </div>
         </section>
@@ -57,7 +59,8 @@
                     emit('update', {
                       defaultScope: 'project',
                     })
-                  ">
+                  "
+                >
                   Project
                 </button>
                 <button
@@ -70,7 +73,8 @@
                     emit('update', {
                       defaultScope: 'global',
                     })
-                  ">
+                  "
+                >
                   Global
                 </button>
               </div>
@@ -166,7 +170,8 @@
                   placeholder="~/.control/skill"
                   title="Press Enter, or click away, to save"
                   @keydown.enter.prevent="saveLocalSource"
-                  @blur="saveLocalSource" />
+                  @blur="saveLocalSource"
+                />
                 <div class="preferences-dialog__source-actions">
                   <button type="button" @click="handleBrowseLocalSource">Browse…</button>
                   <button type="button" @click="emit('refreshLocalSource')">Refresh Catalog</button>

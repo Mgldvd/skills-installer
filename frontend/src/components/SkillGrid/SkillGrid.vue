@@ -4,7 +4,8 @@
     tag="div"
     class="skill-grid"
     :class="{ 'skill-grid--compact': compact, 'skill-grid--list': view === 'list' }"
-    role="list">
+    role="list"
+  >
     <p v-if="skills.length === 0" key="empty" class="skill-grid__empty">
       No skills match the current search and filter.
     </p>
@@ -20,7 +21,8 @@
         :target-agents="targetAgents"
         @toggle="(id) => emit('toggle', id)"
         @edit="(id) => emit('edit', id)"
-        @update="(id) => emit('update', id)" />
+        @update="(id) => emit('update', id)"
+      />
     </div>
   </TransitionGroup>
 </template>

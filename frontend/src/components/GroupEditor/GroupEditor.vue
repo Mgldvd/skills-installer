@@ -25,19 +25,22 @@
             :aria-label="swatch.label"
             role="radio"
             :aria-checked="isSameColor(color, swatch.value)"
-            @click="color = swatch.value">
+            @click="color = swatch.value"
+          >
             <svg
               v-if="isSameColor(color, swatch.value)"
               viewBox="0 0 16 16"
               class="group-editor__swatch-check"
-              aria-hidden="true">
+              aria-hidden="true"
+            >
               <path
                 d="M3 8.5l3 3 7-7"
                 fill="none"
                 stroke="white"
                 stroke-width="2"
                 stroke-linecap="round"
-                stroke-linejoin="round" />
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -46,7 +49,8 @@
           type="text"
           class="group-editor__input group-editor__hex-input"
           placeholder="#RRGGBB"
-          pattern="^#[0-9A-Fa-f]{6}$" />
+          pattern="^#[0-9A-Fa-f]{6}$"
+        />
       </div>
 
       <label v-if="mode === 'edit'" class="group-editor__checkbox">
@@ -63,7 +67,8 @@
           v-if="mode === 'edit' && canDelete"
           type="button"
           class="group-editor__btn group-editor__btn--danger group-editor__btn--delete"
-          @click="handleDelete">
+          @click="handleDelete"
+        >
           Delete Group
         </button>
         <button type="button" class="group-editor__btn" @click="close">Cancel</button>

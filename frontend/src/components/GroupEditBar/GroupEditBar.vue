@@ -10,7 +10,8 @@
         type="button"
         class="group-edit-bar__edit-btn"
         :aria-label="`Edit ${group.name} group`"
-        @click="emit('editGroup', group.id)">
+        @click="emit('editGroup', group.id)"
+      >
         ✎
       </button>
     </span>

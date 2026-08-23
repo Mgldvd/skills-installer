@@ -11,7 +11,8 @@
           type="button"
           class="confirm-dialog__btn confirm-dialog__btn--primary"
           :class="{ 'confirm-dialog__btn--danger': destructive }"
-          @click="handleConfirm">
+          @click="handleConfirm"
+        >
           {{ confirmLabel }}
         </button>
       </div>

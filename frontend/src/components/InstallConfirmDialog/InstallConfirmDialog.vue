@@ -26,7 +26,8 @@
           :class="{ 'is-off': !activeAgents.includes(id) }"
           :aria-pressed="activeAgents.includes(id)"
           :title="activeAgents.includes(id) ? `Skip ${agentLabel(id)} for this install` : `Include ${agentLabel(id)} again`"
-          @click="toggleAgent(id)">
+          @click="toggleAgent(id)"
+        >
           <AgentIcon :agent-id="id" />
           {{ agentLabel(id) }}
         </button>
@@ -44,7 +45,8 @@
               :key="id"
               class="install-confirm-dialog__skill-icon"
               :class="{ 'is-new': !skill.installedAgents.includes(id) }"
-              :title="`${agentLabel(id)}${skill.installedAgents.includes(id) ? ' — already installed' : ' — new'}`">
+              :title="`${agentLabel(id)}${skill.installedAgents.includes(id) ? ' — already installed' : ' — new'}`"
+            >
               <AgentIcon :agent-id="id" />
             </span>
           </span>
@@ -60,7 +62,8 @@
           type="button"
           class="install-confirm-dialog__btn install-confirm-dialog__btn--primary"
           :disabled="activeAgents.length === 0"
-          @click="handleConfirm">
+          @click="handleConfirm"
+        >
           Install Selected
         </button>
       </div>

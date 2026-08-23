@@ -24,7 +24,8 @@
               v-if="editor.id"
               type="button"
               class="link-button link-button--danger"
-              @click="requestDelete(editor.id, editor.name)">
+              @click="requestDelete(editor.id, editor.name)"
+            >
               Delete
             </button>
             <button v-if="editor.id" type="button" class="link-button" @click="resetEditor">Cancel</button>
@@ -47,12 +48,14 @@
               :color="tag.color"
               interactive
               :aria-label="`Edit ${tag.name} Pack`"
-              @click="openEdit(tag)">
+              @click="openEdit(tag)"
+            >
               <template #trailing>
                 <svg class="catalog-tag__edit" viewBox="0 0 14 14" aria-hidden="true">
                   <path
                     d="M2.5 10.4V12h1.6l6.6-6.6-1.6-1.6-6.6 6.6Zm7.4-7.4 1-1 1.6 1.6-1 1L9.9 3Z"
-                    fill="currentColor" />
+                    fill="currentColor"
+                  />
                 </svg>
               </template>
             </PackBadge>
@@ -62,7 +65,8 @@
             class="tags-dialog__search"
             type="search"
             placeholder="Search skills..."
-            aria-label="Search skills" />
+            aria-label="Search skills"
+          />
         </div>
         <div class="tags-dialog__skills" role="list" aria-label="Skills">
           <div class="tags-dialog__columns" aria-hidden="true">
@@ -87,7 +91,8 @@
                 :muted="!hasTag(skill, tag)"
                 :aria-label="`${hasTag(skill, tag) ? 'Unassign' : 'Assign'} ${tag.name} ${hasTag(skill, tag) ? 'from' : 'to'} ${skill.displayName}`"
                 :disabled="isPending(skill.id, tag.id)"
-                @click="toggleTag(skill, tag)" />
+                @click="toggleTag(skill, tag)"
+              />
               <span v-if="enabledTags.length === 0" class="skill-row__empty">No enabled Packs</span>
             </div>
           </article>

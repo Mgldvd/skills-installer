@@ -12,7 +12,8 @@
         :disabled="scope === 'global' || selectingPath"
         :title="scope === 'global' ? 'Change to Project scope to select a folder' : 'Select installation folder'"
         aria-label="Select project installation folder"
-        @click="selectPath">
+        @click="selectPath"
+      >
         {{ scope === "global" ? "Global installation" : projectPath || "(select a project)" }}
         <svg v-if="scope === 'project'" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M1.8 4.5h4l1.3 1.6h7.1v6.7H1.8V4.5Zm0 1.6V3.2h4.7l1.3 1.3" />

@@ -28,7 +28,8 @@
           type="button"
           class="delete-group-dialog__btn delete-group-dialog__btn--danger"
           :disabled="!canConfirm"
-          @click="handleConfirm">
+          @click="handleConfirm"
+        >
           Delete Group
         </button>
       </div>

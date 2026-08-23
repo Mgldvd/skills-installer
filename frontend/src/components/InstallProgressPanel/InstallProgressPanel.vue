@@ -5,19 +5,22 @@
         type="button"
         class="install-progress-panel__toggle"
         :aria-expanded="expanded"
-        @click="expanded = !expanded">
+        @click="expanded = !expanded"
+      >
         <svg
           class="install-progress-panel__chevron"
           :class="{ 'is-expanded': expanded }"
           viewBox="0 0 16 16"
-          aria-hidden="true">
+          aria-hidden="true"
+        >
           <path
             d="M6 4l4 4-4 4"
             fill="none"
             stroke="currentColor"
             stroke-width="1.5"
             stroke-linecap="round"
-            stroke-linejoin="round" />
+            stroke-linejoin="round"
+          />
         </svg>
         <span>{{ headline }}</span>
       </button>
@@ -26,7 +29,8 @@
           v-if="installation.isInstalling"
           type="button"
           class="install-progress-panel__cancel"
-          @click="emit('cancel')">
+          @click="emit('cancel')"
+        >
           Cancel
         </button>
         <CloseButton v-else aria-label="Dismiss installation output" @click="emit('dismiss')" />
@@ -37,7 +41,8 @@
       v-if="expanded"
       ref="outputElement"
       class="install-progress-panel__body scroll-x"
-      aria-label="Installation command output">
+      aria-label="Installation command output"
+    >
       <template v-for="skillId in orderedSkillIds" :key="skillId">
         <p class="install-progress-panel__line install-progress-panel__line--heading">
           <span class="install-progress-panel__status-icon" :class="statusClass(skillId)">
@@ -49,7 +54,8 @@
           v-for="(line, i) in outputFor(skillId)"
           :key="i"
           class="install-progress-panel__line install-progress-panel__line--output"
-          :class="`is-${line.stream}`">
+          :class="`is-${line.stream}`"
+        >
           {{ line.line }}
         </p>
       </template>
@@ -64,7 +70,8 @@
         <span
           v-if="installedAgentsFor(skillId).length"
           class="install-progress-panel__result-agents"
-          :title="`Installed for: ${formatAgents(installedAgentsFor(skillId))}`">
+          :title="`Installed for: ${formatAgents(installedAgentsFor(skillId))}`"
+        >
           <AgentIcon v-for="id in installedAgentsFor(skillId)" :key="id" :agent-id="id" />
         </span>
       </li>
@@ -77,7 +84,8 @@
     <p
       v-if="installation.error"
       class="install-progress-panel__summary install-progress-panel__summary--error"
-      role="alert">
+      role="alert"
+    >
       {{ installation.error }}
     </p>
   </section>

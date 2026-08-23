@@ -6,7 +6,8 @@
       class="skill-toolbar__manage-packs"
       aria-label="Manage Packs"
       title="Manage Packs"
-      @click="emit('openPacks')">
+      @click="emit('openPacks')"
+    >
       <svg viewBox="0 0 16 16" aria-hidden="true">
         <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
       </svg>
@@ -26,7 +27,8 @@
         @dragstart="startDrag($event, tag.id)"
         @dragover.prevent="dragOverTagId = tag.id"
         @drop.prevent="dropTag(tag.id)"
-        @dragend="endDrag">
+        @dragend="endDrag"
+      >
         <PackBadge
           class="skill-toolbar__tag"
           :name="tag.name"
@@ -38,7 +40,8 @@
           :title="`${tagTitle(tag.id, tag.name)}. Drag to reorder; Alt+Left or Alt+Right also moves it.`"
           @click="emit('toggleTag', tag.id)"
           @keydown.alt.left.prevent="moveTag(tag.id, -1)"
-          @keydown.alt.right.prevent="moveTag(tag.id, 1)">
+          @keydown.alt.right.prevent="moveTag(tag.id, 1)"
+        >
           <template #trailing>
             <span class="skill-toolbar__count" aria-hidden="true">{{ tagSkillCount(tag.id) }}</span>
           </template>
@@ -55,7 +58,8 @@
           ? `Add the ${needsAgentsCount} Skill${needsAgentsCount === 1 ? '' : 's'} still missing an agent to the selection`
           : 'Every installed Skill already covers every targeted agent'
       "
-      @click="emit('selectMissing')">
+      @click="emit('selectMissing')"
+    >
       Select missing{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
     </button>
     <button
@@ -63,7 +67,8 @@
       class="skill-toolbar__clear"
       :disabled="selectedIds.length === 0"
       aria-label="Clear all selected Skills"
-      @click="emit('clearSelection')">
+      @click="emit('clearSelection')"
+    >
       Clear
     </button>
   </section>
