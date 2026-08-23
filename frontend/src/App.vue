@@ -344,7 +344,9 @@ async function handleLocalSourceUpdate(path: string) {
 async function handleInstallCli() {
   try {
     const result = await backend.installCliCommand();
-    const pathNote = result.pathConfigured ? "" : ` Add ${result.commandPath.replace(/\/skills$/, "")} to your PATH.`;
+    const pathNote = result.pathConfigured
+      ? ""
+      : ` Add ${result.commandPath.replace(/\/skills-installer$/, "")} to your PATH.`;
     pushToast(`Command installed at ${result.commandPath}.${pathNote}`, "success");
   } catch (error) {
     pushToast(describeError(error), "error");

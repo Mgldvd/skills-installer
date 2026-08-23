@@ -152,12 +152,12 @@
               <span class="preferences-dialog__label">Linux command line</span>
               <span class="preferences-dialog__help">
                 Create
-                <code>~/.local/bin/skills</code>
+                <code>~/.local/bin/skills-installer</code>
                 and open this app from the terminal's current folder.
               </span>
               <button type="button" class="preferences-dialog__cli-button" @click="emit('installCli')">
                 Install
-                <code>skills</code>
+                <code>skills-installer</code>
                 command
               </button>
             </div>
