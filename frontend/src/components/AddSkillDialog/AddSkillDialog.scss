@@ -27,24 +27,34 @@
     overflow-y: auto;
   }
 
-  // Two columns, no card border/background — just the fields themselves.
-  // The left column stacks everything that drives adding the Skill; the
-  // right column is a single, tall field (Description, or Pack Color for a
-  // Pack import) that fills the same height instead of being one more
-  // cramped row on the left.
+  // Two columns: the left stacks every field that drives adding the Skill
+  // (URL, Display Name, Description); the right stacks Packs and the
+  // preselected/enabled checkboxes. `align-items: start` so the shorter
+  // column never gets stretched into an oversized, mostly-empty box to
+  // match the taller one.
   .add-skill-dialog__form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: stretch;
+    align-items: start;
     flex: 0 0 auto;
     gap: var(--space-lg);
   }
 
-  // Spans both columns of the form grid instead of competing for space in
-  // either one.
+  // A Pack import has no Packs/checkboxes column to fill the right side, so
+  // it spans both instead of leaving one empty.
+  .add-skill-dialog__form-primary--full {
+    grid-column: 1 / -1;
+  }
+
+  .add-skill-dialog__form-secondary {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: var(--space-sm);
+  }
+
   .add-skill-dialog__packs {
     display: grid;
-    grid-column: 1 / -1;
     gap: var(--space-xs);
     margin: 0;
     padding: var(--space-sm);
@@ -82,10 +92,6 @@
     gap: var(--space-sm);
   }
 
-  .add-skill-dialog__form-secondary {
-    min-width: 0;
-  }
-
   .add-skill-dialog__field {
     @include dialog.field-label;
   }
@@ -105,7 +111,7 @@
     font-weight: 600;
 
     &::before {
-      margin-right: var(--space-xs);
+      margin-inline-end: var(--space-xs);
       content: "·";
       color: var(--border-strong);
     }
@@ -120,9 +126,8 @@
     @include dialog.text-input;
   }
 
-  .add-skill-dialog__form-secondary .add-skill-dialog__textarea {
-    flex: 1;
-    min-height: 10rem;
+  .add-skill-dialog__textarea {
+    min-height: 6rem;
     resize: vertical;
     font-family: inherit;
   }
@@ -183,22 +188,6 @@
     font-size: var(--font-size-sm);
   }
 
-  // Checkboxes share the submit button's row instead of sitting on their
-  // own, mostly-empty row above it.
-  .add-skill-dialog__form-actions {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-md);
-    margin-top: var(--space-xs);
-
-    .button {
-      // Stays pinned to the right even when the checkboxes aren't rendered
-      // (Pack import mode has none).
-      margin-left: auto;
-    }
-  }
-
   .button {
     @include dialog.button-base;
   }
@@ -215,23 +204,27 @@
     gap: var(--space-sm);
   }
 
-  .add-skill-dialog__catalog-heading {
+  // Line-button-line: a full-width rule on each side with the toggle
+  // centered between them, instead of a left-aligned heading row.
+  .add-skill-dialog__catalog-divider {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
+    gap: var(--space-md);
 
-    h3 {
-      margin: 0;
-      color: var(--text-muted);
-      font-size: var(--font-size-sm);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+    &::before,
+    &::after {
+      flex: 1;
+      height: 1px;
+      background: var(--border-soft);
+      content: "";
     }
   }
 
   .add-skill-dialog__catalog-toggle {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: var(--space-2xs);
     padding: var(--space-2xs) var(--space-sm);
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-sm);
@@ -244,6 +237,16 @@
     &:hover {
       border-color: var(--accent);
       color: var(--accent-hover);
+    }
+  }
+
+  .add-skill-dialog__catalog-chevron {
+    width: 0.8em;
+    height: 0.8em;
+    transition: transform var(--transition-fast);
+
+    &.is-expanded {
+      transform: rotate(90deg);
     }
   }
 
@@ -267,7 +270,7 @@
 
   .add-skill-dialog__row {
     display: grid;
-    grid-template-columns: auto minmax(0, 14rem) minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 14rem) minmax(0, 1fr) auto auto auto auto;
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-xs) var(--space-sm);
@@ -276,6 +279,13 @@
     &:last-child {
       border-bottom: 0;
     }
+  }
+
+  // Centers the Enabled/Preselected checkbox (and its header label) within
+  // its own column instead of hugging the leading edge like the rest.
+  .add-skill-dialog__col-toggle {
+    justify-self: center;
+    text-align: center;
   }
 
   .add-skill-dialog__row--header {
@@ -291,6 +301,12 @@
       grid-column: span 2;
       justify-content: flex-end;
     }
+  }
+
+  // Highlights the row currently loaded into the quick-edit form above, so
+  // it stays clear which Skill the top form's fields belong to.
+  .add-skill-dialog__row--editing {
+    background: var(--accent-soft);
   }
 
   // Icon-only, same shape as a row's own delete button, but red by
@@ -329,13 +345,36 @@
     }
   }
 
+  // A button, not plain text — clicking it quick-loads this Skill into the
+  // form above instead of opening the full Edit dialog.
   .add-skill-dialog__skill-name {
     min-width: 0;
+    width: 100%;
     overflow: hidden;
+    border: none;
+    background: none;
+    padding: 0;
     color: var(--text-primary);
+    font: inherit;
     font-size: var(--font-size-sm);
+    text-align: left;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    &[aria-pressed="true"] {
+      color: var(--accent-hover);
+      font-weight: 650;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
   }
 
   .add-skill-dialog__skill-link {
@@ -416,11 +455,8 @@
     .add-skill-dialog__form {
       grid-template-columns: 1fr;
     }
-    .add-skill-dialog__form-secondary .add-skill-dialog__textarea {
-      min-height: 6rem;
-    }
     .add-skill-dialog__row {
-      grid-template-columns: auto minmax(0, 6rem) minmax(0, 1fr) auto auto;
+      grid-template-columns: auto minmax(0, 6rem) minmax(0, 1fr) auto auto auto auto;
     }
   }
 }

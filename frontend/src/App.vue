@@ -186,6 +186,7 @@
       @import-pack="handleImportPack"
       @delete-skills="handleDeleteCatalogSkills"
       @edit="handleEditSkillFromCatalog"
+      @update-skill="handleUpdateCatalogSkill"
     />
 
     <EditSkillDialog
@@ -717,6 +718,15 @@ async function handleDeleteCatalogSkills(skillIds: string[]) {
     catalogDeleteError.value = describeError(error);
   } finally {
     isDeletingCatalogSkills.value = false;
+  }
+}
+
+async function handleUpdateCatalogSkill(payload: backend.UpdateSkillArgs) {
+  try {
+    await updateSkill(payload);
+    pushToast("Skill updated", "success");
+  } catch (error) {
+    pushToast(`Could not update Skill. ${describeError(error)}`, "error");
   }
 }
 

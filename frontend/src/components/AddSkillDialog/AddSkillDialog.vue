@@ -4,17 +4,25 @@
       <header class="add-skill-dialog__header">
         <div>
           <h2>Add Skill</h2>
-          <p>Add a Skill or import a Pack from Skills.sh into the catalog.</p>
+          <p>
+            {{
+              editingSkillId
+                ? "Editing an existing Skill from the catalog below."
+                : "Add a Skill or import a Pack from Skills.sh into the catalog."
+            }}
+          </p>
         </div>
         <div class="add-skill-dialog__header-actions">
-          <button type="button" class="button button--primary" @click="close">Done</button>
+          <button type="submit" form="add-skill-dialog-form" class="button button--primary" :disabled="!canSubmit">
+            {{ editingSkillId ? "Save" : isPackUrl ? "Import Pack" : "Add Skill" }}
+          </button>
           <CloseButton aria-label="Close Add Skill" @click="close" />
         </div>
       </header>
 
       <div class="add-skill-dialog__body">
-        <form class="add-skill-dialog__form" @submit.prevent="handleSubmit">
-          <div class="add-skill-dialog__form-primary">
+        <form id="add-skill-dialog-form" class="add-skill-dialog__form" @submit.prevent="handleSubmit">
+          <div class="add-skill-dialog__form-primary" :class="{ 'add-skill-dialog__form-primary--full': isPackUrl }">
             <label class="add-skill-dialog__field">
               <span class="add-skill-dialog__field-heading">
                 Skills.sh URL
@@ -83,67 +91,78 @@
               {{ submitError }}
             </p>
 
-            <div class="add-skill-dialog__form-actions">
-              <div v-if="!isPackUrl" class="add-skill-dialog__checkboxes">
-                <label class="add-skill-dialog__checkbox">
-                  <input v-model="preselected" type="checkbox" />
-                  <span>Preselected by default</span>
-                </label>
-                <label class="add-skill-dialog__checkbox">
-                  <input v-model="enabled" type="checkbox" />
-                  <span>Enabled</span>
-                </label>
-              </div>
-              <button type="submit" class="button button--primary" :disabled="!canSubmit">
-                {{ isPackUrl ? "Import Pack" : "Add Skill" }}
-              </button>
-            </div>
-          </div>
-
-          <label v-if="!isPackUrl" class="add-skill-dialog__field add-skill-dialog__form-secondary">
-            <span>Description</span>
-            <textarea
-              v-model="description"
-              class="add-skill-dialog__input add-skill-dialog__textarea"
-              @input="descriptionEdited = true"
-            />
-          </label>
-          <div v-else class="add-skill-dialog__field add-skill-dialog__form-secondary">
-            <span>Pack Color</span>
-            <ColorPalettePicker v-model="packColor" aria-label="Pack color" />
-          </div>
-
-          <fieldset v-if="!isPackUrl" class="add-skill-dialog__packs">
-            <legend>Packs</legend>
-            <p>Assign this Skill to one or more installation packs.</p>
-            <div v-if="enabledTags.length" class="add-skill-dialog__pack-list">
-              <PackBadge
-                v-for="tag in enabledTags"
-                :key="tag.id"
-                :name="tag.name"
-                :color="tag.color"
-                interactive
-                compact
-                :selected="selectedTagIds.includes(tag.id)"
-                :muted="!selectedTagIds.includes(tag.id)"
-                :aria-label="`${selectedTagIds.includes(tag.id) ? 'Unassign' : 'Assign'} ${tag.name}`"
-                @click="toggleTag(tag.id)"
+            <label v-if="!isPackUrl" class="add-skill-dialog__field">
+              <span>Description</span>
+              <textarea
+                v-model="description"
+                class="add-skill-dialog__input add-skill-dialog__textarea"
+                @input="descriptionEdited = true"
               />
+            </label>
+            <div v-else class="add-skill-dialog__field">
+              <span>Pack Color</span>
+              <ColorPalettePicker v-model="packColor" aria-label="Pack color" />
             </div>
-            <p v-else class="add-skill-dialog__packs-empty">No enabled packs are available.</p>
-          </fieldset>
+          </div>
+
+          <div v-if="!isPackUrl" class="add-skill-dialog__form-secondary">
+            <fieldset class="add-skill-dialog__packs">
+              <legend>Packs</legend>
+              <p>Assign this Skill to one or more installation packs.</p>
+              <div v-if="enabledTags.length" class="add-skill-dialog__pack-list">
+                <PackBadge
+                  v-for="tag in enabledTags"
+                  :key="tag.id"
+                  :name="tag.name"
+                  :color="tag.color"
+                  interactive
+                  compact
+                  :selected="selectedTagIds.includes(tag.id)"
+                  :muted="!selectedTagIds.includes(tag.id)"
+                  :aria-label="`${selectedTagIds.includes(tag.id) ? 'Unassign' : 'Assign'} ${tag.name}`"
+                  @click="toggleTag(tag.id)"
+                />
+              </div>
+              <p v-else class="add-skill-dialog__packs-empty">No enabled packs are available.</p>
+            </fieldset>
+
+            <div class="add-skill-dialog__checkboxes">
+              <label class="add-skill-dialog__checkbox">
+                <input v-model="preselected" type="checkbox" />
+                <span>Preselected by default</span>
+              </label>
+              <label class="add-skill-dialog__checkbox">
+                <input v-model="enabled" type="checkbox" />
+                <span>Enabled</span>
+              </label>
+            </div>
+          </div>
         </form>
 
         <section class="add-skill-dialog__catalog">
-          <div class="add-skill-dialog__catalog-heading">
-            <h3>Skills from Skills.sh</h3>
+          <div class="add-skill-dialog__catalog-divider">
             <button
               type="button"
               class="add-skill-dialog__catalog-toggle"
               :aria-expanded="showCatalog"
               @click="showCatalog = !showCatalog"
             >
-              {{ showCatalog ? "Hide" : "Show" }} ({{ remoteSkills.length }})
+              <svg
+                class="add-skill-dialog__catalog-chevron"
+                :class="{ 'is-expanded': showCatalog }"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+              >
+                <path
+                  d="M6 4l4 4-4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              {{ showCatalog ? "Hide" : "Manage" }} Skills.sh Catalog ({{ remoteSkills.length }})
             </button>
           </div>
 
@@ -163,6 +182,8 @@
                 />
                 <span role="columnheader">Name</span>
                 <span role="columnheader">URL</span>
+                <span role="columnheader" class="add-skill-dialog__col-toggle">Enabled</span>
+                <span role="columnheader" class="add-skill-dialog__col-toggle">Preselected</span>
                 <span role="columnheader" class="add-skill-dialog__row-actions-header">
                   <button
                     v-if="selectedIds.length"
@@ -181,7 +202,13 @@
                   </button>
                 </span>
               </div>
-              <div v-for="skill in remoteSkills" :key="skill.id" class="add-skill-dialog__row" role="row">
+              <div
+                v-for="skill in remoteSkills"
+                :key="skill.id"
+                class="add-skill-dialog__row"
+                :class="{ 'add-skill-dialog__row--editing': editingSkillId === skill.id }"
+                role="row"
+              >
                 <input
                   type="checkbox"
                   :checked="selected.has(skill.id)"
@@ -189,7 +216,16 @@
                   :aria-label="`Select ${skill.displayName}`"
                   @change="toggleSelect(skill.id)"
                 />
-                <span class="add-skill-dialog__skill-name">{{ skill.displayName }}</span>
+                <button
+                  type="button"
+                  class="add-skill-dialog__skill-name"
+                  :disabled="deleting"
+                  :aria-pressed="editingSkillId === skill.id"
+                  :title="`Quick edit ${skill.displayName}`"
+                  @click="startQuickEdit(skill)"
+                >
+                  {{ skill.displayName }}
+                </button>
                 <a
                   class="add-skill-dialog__skill-link"
                   :href="skill.skillsUrl"
@@ -198,6 +234,20 @@
                 >
                   {{ skill.skillsUrl }}
                 </a>
+                <input
+                  type="checkbox"
+                  class="add-skill-dialog__col-toggle"
+                  :checked="skill.enabled"
+                  :aria-label="`${skill.enabled ? 'Disable' : 'Enable'} ${skill.displayName}`"
+                  @change="toggleRemoteEnabled(skill)"
+                />
+                <input
+                  type="checkbox"
+                  class="add-skill-dialog__col-toggle"
+                  :checked="skill.preselected"
+                  :aria-label="`${skill.preselected ? 'Unset' : 'Set'} ${skill.displayName} as preselected`"
+                  @change="toggleRemotePreselected(skill)"
+                />
                 <button
                   type="button"
                   class="add-skill-dialog__row-edit"
@@ -285,6 +335,7 @@ const emit = defineEmits<{
   importPack: [payload: backend.ImportPackArgs];
   deleteSkills: [skillIds: string[]];
   edit: [skillId: string];
+  updateSkill: [payload: backend.UpdateSkillArgs];
 }>();
 
 const dialogEl = ref<HTMLDialogElement | null>(null);
@@ -301,6 +352,9 @@ const urlError = ref<string | null>(null);
 const displayNameEdited = ref(false);
 const descriptionEdited = ref(false);
 const selectedTagIds = ref<string[]>([]);
+// Set while quick-editing an existing catalog Skill from the list below —
+// null means the form is in its normal "add a new Skill" state.
+const editingSkillId = ref<string | null>(null);
 const selected = ref(new Set<string>());
 // Deleting here removes a catalog entry outright, so the list stays folded
 // away behind an explicit click every time the dialog opens, rather than
@@ -310,7 +364,10 @@ const showCatalog = ref(false);
 let debounceHandle: ReturnType<typeof setTimeout> | null = null;
 let previewRequest = 0;
 
-function resetForm() {
+// Resets just the top form — used on save/cancel of a quick edit, where the
+// catalog list below (and its own selection) should stay exactly as the
+// user left it rather than folding back away.
+function resetFormFields() {
   previewRequest += 1;
   if (debounceHandle) clearTimeout(debounceHandle);
   url.value = "";
@@ -326,11 +383,43 @@ function resetForm() {
   displayNameEdited.value = false;
   descriptionEdited.value = false;
   selectedTagIds.value = [];
+  editingSkillId.value = null;
+}
+
+function resetForm() {
+  resetFormFields();
   selected.value = new Set();
   showCatalog.value = false;
 }
 
 useNativeDialog(dialogEl, () => props.open, resetForm);
+
+// Prefills the top form with an existing catalog Skill's current values so
+// it doubles as a quick, in-place edit — the pencil-icon button still opens
+// the full EditSkillDialog for everything this form doesn't cover (agent
+// breakdown, delete). Clicking the same Skill's name again backs out of
+// edit mode without touching the catalog list's own open/selection state.
+function startQuickEdit(skill: Skill) {
+  if (editingSkillId.value === skill.id) {
+    resetFormFields();
+    return;
+  }
+  editingSkillId.value = skill.id;
+  url.value = skill.skillsUrl;
+  displayName.value = skill.displayName;
+  description.value = skill.description;
+  groupId.value = skill.groupId;
+  preselected.value = skill.preselected;
+  enabled.value = skill.enabled;
+  selectedTagIds.value = [...skill.tags];
+  preview.value = null;
+  packPreview.value = null;
+  urlError.value = null;
+  // Prevents a later URL edit's auto-detected name/description from
+  // silently clobbering the values just prefilled from the existing Skill.
+  displayNameEdited.value = true;
+  descriptionEdited.value = true;
+}
 
 function handleUrlInput() {
   const request = ++previewRequest;
@@ -373,7 +462,11 @@ function handleUrlInput() {
 
 const duplicateSkill = computed(() => {
   if (!preview.value) return null;
-  return props.skills?.find((skill) => skill.skillsUrl === preview.value?.canonicalUrl) ?? null;
+  return (
+    props.skills?.find(
+      (skill) => skill.skillsUrl === preview.value?.canonicalUrl && skill.id !== editingSkillId.value,
+    ) ?? null
+  );
 });
 const isPackUrl = computed(() => /^https:\/\/(?:www\.)?skills\.sh\/p\//i.test(url.value.trim()));
 const suggestedDisplayName = computed(() =>
@@ -386,15 +479,18 @@ function toggleTag(tagId: string) {
     ? selectedTagIds.value.filter((id) => id !== tagId)
     : [...selectedTagIds.value, tagId];
 }
-const canSubmit = computed(() =>
-  Boolean(
+const canSubmit = computed(() => {
+  if (editingSkillId.value) {
+    return Boolean(displayName.value.trim() && groupId.value && !urlError.value && !duplicateSkill.value);
+  }
+  return Boolean(
     (preview.value || packPreview.value) &&
     displayName.value.trim() &&
     groupId.value &&
     !urlError.value &&
     (!preview.value || !duplicateSkill.value),
-  ),
-);
+  );
+});
 
 // The catalog-management table below the form: every Skill added via a
 // Skills.sh URL (as opposed to one discovered locally on disk), so users can
@@ -414,6 +510,14 @@ function toggleSelect(skillId: string) {
 
 function toggleSelectAll() {
   selected.value = allSelected.value ? new Set() : new Set(remoteSkills.value.map((skill) => skill.id));
+}
+
+function toggleRemoteEnabled(skill: Skill) {
+  emit("updateSkill", { skillId: skill.id, enabled: !skill.enabled });
+}
+
+function toggleRemotePreselected(skill: Skill) {
+  emit("updateSkill", { skillId: skill.id, preselected: !skill.preselected });
 }
 
 // A native `window.confirm` doesn't reliably show anything in every Tauri
@@ -461,6 +565,20 @@ function close() {
 
 function handleSubmit() {
   if (!canSubmit.value || !groupId.value) return;
+  if (editingSkillId.value) {
+    emit("updateSkill", {
+      skillId: editingSkillId.value,
+      url: url.value.trim(),
+      displayName: displayName.value.trim(),
+      description: description.value.trim(),
+      groupId: groupId.value,
+      tags: selectedTagIds.value,
+      preselected: preselected.value,
+      enabled: enabled.value,
+    });
+    resetFormFields();
+    return;
+  }
   if (packPreview.value) {
     emit("importPack", {
       url: url.value.trim(),

@@ -19,14 +19,24 @@ describe("AddSkillDialog", () => {
     vi.clearAllMocks();
   });
 
-  it("only closes via Done or a successful submit, never a backdrop click", async () => {
+  it("only closes via the close button or a successful submit, never a backdrop click", async () => {
     const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()] } });
 
     await wrapper.get(".add-skill-dialog").trigger("click");
     expect(wrapper.emitted("update:open")).toBeUndefined();
 
-    await wrapper.get(".add-skill-dialog__header-actions .button--primary").trigger("click");
+    await wrapper.get('[aria-label="Close Add Skill"]').trigger("click");
     expect(wrapper.emitted("update:open")).toEqual([[false]]);
+  });
+
+  it("has a single Add Skill action in the header, wired to the form via the form attribute", () => {
+    const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()] } });
+    const headerButton = wrapper.get(".add-skill-dialog__header-actions .button--primary");
+    expect(headerButton.text()).toBe("Add Skill");
+    expect(headerButton.attributes("type")).toBe("submit");
+    expect(headerButton.attributes("form")).toBe("add-skill-dialog-form");
+    expect(wrapper.get("form").attributes("id")).toBe("add-skill-dialog-form");
+    expect(wrapper.findAll('button[type="submit"]')).toHaveLength(1);
   });
 
   it("places a clickable link to browse Skills.sh beside the URL field", () => {
@@ -231,17 +241,91 @@ describe("AddSkillDialog", () => {
     const local = makeSkill({ id: "local-a", displayName: "Local Skill", source: { kind: "local", path: "/tmp/x" } });
 
     // A danger zone: deleting here removes a catalog entry outright, so the
-    // dialog keeps it folded away behind a "Show" toggle until asked for.
+    // dialog keeps it folded away behind a "Manage" toggle until asked for.
     async function mountWithCatalogShown(...args: Parameters<typeof mount<typeof AddSkillDialog>>) {
       const wrapper = mount(...args);
       await wrapper.get(".add-skill-dialog__catalog-toggle").trigger("click");
       return wrapper;
     }
 
-    it("hides the catalog table behind a Show toggle by default", () => {
+    it("hides the catalog table behind a Manage toggle by default", () => {
       const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
       expect(wrapper.find(".add-skill-dialog__table").exists()).toBe(false);
-      expect(wrapper.get(".add-skill-dialog__catalog-toggle").text()).toBe("Show (1)");
+      expect(wrapper.get(".add-skill-dialog__catalog-toggle").text()).toBe("Manage Skills.sh Catalog (1)");
+    });
+
+    it("toggles Enabled and Preselected for a catalog Skill straight from the list", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote] },
+      });
+
+      const row = wrapper.get(".add-skill-dialog__row:not(.add-skill-dialog__row--header)");
+      const toggles = row.findAll(".add-skill-dialog__col-toggle");
+      expect(toggles).toHaveLength(2);
+      const [enabledToggle, preselectedToggle] = toggles;
+      expect((enabledToggle.element as HTMLInputElement).checked).toBe(true);
+      expect((preselectedToggle.element as HTMLInputElement).checked).toBe(false);
+
+      await enabledToggle.trigger("change");
+      await preselectedToggle.trigger("change");
+
+      expect(wrapper.emitted("updateSkill")).toEqual([
+        [{ skillId: "remote-a", enabled: false }],
+        [{ skillId: "remote-a", preselected: true }],
+      ]);
+    });
+
+    it("quick-edits a catalog Skill by clicking its name, then saves it as an update", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote] },
+      });
+
+      const headerButton = wrapper.get(".add-skill-dialog__header-actions .button--primary");
+      expect(headerButton.text()).toBe("Add Skill");
+
+      await wrapper.get(".add-skill-dialog__skill-name").trigger("click");
+
+      expect((wrapper.find('input[type="url"]').element as HTMLInputElement).value).toBe(remote.skillsUrl);
+      expect((wrapper.find('input[type="text"]').element as HTMLInputElement).value).toBe(remote.displayName);
+      expect((wrapper.find("textarea").element as HTMLTextAreaElement).value).toBe(remote.description);
+      expect(headerButton.text()).toBe("Save");
+      expect(wrapper.get(".add-skill-dialog__row--editing").text()).toContain(remote.displayName);
+
+      await wrapper.find('input[type="text"]').setValue("Renamed Skill");
+      await wrapper.find("form").trigger("submit");
+
+      expect(wrapper.emitted("updateSkill")?.at(-1)).toEqual([
+        {
+          skillId: "remote-a",
+          url: remote.skillsUrl,
+          displayName: "Renamed Skill",
+          description: remote.description,
+          groupId: remote.groupId,
+          tags: remote.tags,
+          preselected: remote.preselected,
+          enabled: remote.enabled,
+        },
+      ]);
+      expect(wrapper.emitted("submit")).toBeUndefined();
+      // Saving backs out of edit mode; the catalog list itself stays open.
+      expect(headerButton.text()).toBe("Add Skill");
+      expect((wrapper.find('input[type="text"]').element as HTMLInputElement).value).toBe("");
+      expect(wrapper.find(".add-skill-dialog__table").exists()).toBe(true);
+    });
+
+    it("backs out of quick-edit without saving when the same name is clicked again", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
+        props: { open: true, groups: [makeGroup()], skills: [remote] },
+      });
+
+      await wrapper.get(".add-skill-dialog__skill-name").trigger("click");
+      expect(wrapper.get(".add-skill-dialog__header-actions .button--primary").text()).toBe("Save");
+
+      await wrapper.get(".add-skill-dialog__skill-name").trigger("click");
+
+      expect(wrapper.get(".add-skill-dialog__header-actions .button--primary").text()).toBe("Add Skill");
+      expect((wrapper.find('input[type="url"]').element as HTMLInputElement).value).toBe("");
+      expect(wrapper.find(".add-skill-dialog__row--editing").exists()).toBe(false);
     });
 
     it("lists only Skills sourced from Skills.sh, not ones discovered locally", async () => {
