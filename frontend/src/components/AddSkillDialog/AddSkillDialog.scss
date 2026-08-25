@@ -261,7 +261,14 @@
     font-weight: 600;
   }
 
+  // `overflow: hidden` here (for the rounded-corner clipping) makes this flex
+  // item's automatic min-height resolve to 0 per the flexbox spec, instead of
+  // its content size — without `flex-shrink: 0` it collapses to near-nothing
+  // whenever the column is tight on space, which is exactly what blocked
+  // scrolling to the rows below the fold instead of letting the dialog body
+  // scroll past it naturally.
   .add-skill-dialog__table {
+    flex-shrink: 0;
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);
     background: var(--bg-panel);
