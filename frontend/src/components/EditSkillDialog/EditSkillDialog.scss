@@ -88,6 +88,44 @@
     font-size: var(--font-size-xs);
   }
 
+  // The full per-agent breakdown a Skill card deliberately collapses down
+  // to one Universal icon — see `SkillCard.vue`'s `collapsedAgentIcons`.
+  .edit-skill-dialog__agents {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .edit-skill-dialog__agents-label {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  .edit-skill-dialog__agent-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+
+    .agent-icon {
+      width: 0.9rem;
+      height: 0.9rem;
+    }
+
+    &.is-missing {
+      border-style: dashed;
+      color: var(--text-muted);
+      opacity: 0.7;
+    }
+  }
+
   .edit-skill-dialog__eyebrow {
     color: var(--accent-hover);
     font-size: var(--font-size-xs);

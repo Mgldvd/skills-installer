@@ -4,6 +4,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::domain::{
     DependencyStatus, InstallOptions, InstallProgressEvent, InstallResult, InstalledSkill, Skill,
+    UninstallResult,
 };
 use crate::error::AppError;
 
@@ -27,9 +28,13 @@ pub struct InstallBatch {
     pub options: InstallOptions,
 }
 
+/// Real `skills remove` supports multiple skill names in one invocation
+/// (`skills remove name1 name2 --yes`), so — unlike the pre-bulk-uninstall
+/// version of this struct — this always carries every Skill to remove in
+/// one request rather than one call per skill.
 #[derive(Debug, Clone)]
 pub struct RemoveRequest {
-    pub skill: Skill,
+    pub skills: Vec<Skill>,
     pub options: InstallOptions,
 }
 
@@ -55,7 +60,7 @@ pub trait Installer: Send + Sync {
         cancel: CancellationToken,
     ) -> Result<InstallResult, AppError>;
 
-    async fn remove(&self, request: RemoveRequest) -> Result<(), AppError>;
+    async fn remove(&self, request: RemoveRequest) -> Result<UninstallResult, AppError>;
 
     async fn update(&self, request: UpdateRequest) -> Result<(), AppError>;
 }

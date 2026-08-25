@@ -13,6 +13,8 @@ import type {
   Skill,
   SkillTag,
   UiPreferences,
+  UninstallRequest,
+  UninstallResult,
 } from "../types";
 
 export interface AddSkillArgs {
@@ -170,6 +172,12 @@ export async function installSkills(
 
 export async function cancelInstallation(): Promise<void> {
   return call("cancel_installation");
+}
+
+/** Uninstalls already-installed Skills from disk — distinct from
+ * `deleteSkill`, which only removes a Skill from the catalog. */
+export async function uninstallSkills(request: UninstallRequest): Promise<UninstallResult> {
+  return call("uninstall_skills", { request });
 }
 
 export async function refresh(projectPath?: string): Promise<ApplicationConfig> {

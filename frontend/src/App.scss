@@ -281,6 +281,27 @@
         animation: app-shell-spin 0.9s linear infinite;
       }
     }
+
+    // Bulk-uninstall's trash toggle and its "Confirm" action — hardcoded to
+    // `--danger`, deliberately never `--accent`, so a destructive action
+    // never borrows the user's own accent color (see SkillCard's identical
+    // `is-delete-selected` reasoning).
+    &--danger {
+      border-color: var(--danger);
+      color: var(--danger);
+
+      &:hover:not(:disabled) {
+        background: color-mix(in srgb, var(--danger) 14%, var(--bg-card));
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      &.is-active {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: #fff;
+      }
+    }
   }
 
   .app-shell__agent-icons {

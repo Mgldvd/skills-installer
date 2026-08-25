@@ -178,6 +178,7 @@ fn run_gui(config_override: Option<PathBuf>) {
             commands::installation::validate_installation,
             commands::installation::install_skills,
             commands::installation::cancel_installation,
+            commands::installation::uninstall_skills,
             commands::installation::refresh,
         ])
         .run(tauri::generate_context!())

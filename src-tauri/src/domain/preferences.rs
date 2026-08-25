@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
-use super::install::InstallScope;
+use super::install::AgentScopeSelection;
 
 /// The five explicit presets from the product spec. `f64` values are what get
 /// persisted/validated; the labels are a frontend concern.
@@ -20,7 +22,6 @@ pub struct UiPreferences {
     #[serde(default, skip_serializing)]
     pub default_agent: Option<String>,
     pub copy_by_default: bool,
-    pub default_scope: InstallScope,
     pub confirm_before_install: bool,
     pub continue_after_failure: bool,
     #[serde(default = "default_accent")]
@@ -29,6 +30,20 @@ pub struct UiPreferences {
     pub local_source_path: Option<String>,
     #[serde(default)]
     pub compact_cards: bool,
+    /// User-customized display order for the agent list (Agents dialog and
+    /// each Skill card's agent icons) — drag-and-drop reordering persists
+    /// here. Empty means "no customization yet"; callers fall back to the
+    /// built-in `SUPPORTED_AGENTS` order and append any agent id missing
+    /// from a saved (possibly stale) order.
+    #[serde(default)]
+    pub agent_order: Vec<String>,
+    /// Per-agent installation scope — Project and Global aren't exclusive,
+    /// so each agent gets its own independent pair of flags, set granularly
+    /// in the Agents dialog. Replaced the old single app-wide "default
+    /// scope" preference. An agent id missing from this map falls back to
+    /// Project-only; see `InstallOptions::scopes_for`, the identical rule.
+    #[serde(default)]
+    pub agent_scopes: HashMap<String, AgentScopeSelection>,
 }
 
 impl Default for UiPreferences {
@@ -38,12 +53,13 @@ impl Default for UiPreferences {
             default_agents: default_agents(),
             default_agent: None,
             copy_by_default: true,
-            default_scope: InstallScope::Project,
             confirm_before_install: true,
             continue_after_failure: true,
             accent: default_accent(),
             local_source_path: None,
             compact_cards: false,
+            agent_order: Vec::new(),
+            agent_scopes: HashMap::new(),
         }
     }
 }

@@ -25,6 +25,18 @@
           </span>
           <span>{{ selectedTagIds.length }} {{ selectedTagIds.length === 1 ? "Pack" : "Packs" }}</span>
         </div>
+        <div v-if="agentBreakdown.length" class="edit-skill-dialog__agents">
+          <span class="edit-skill-dialog__agents-label">Installed for</span>
+          <span
+            v-for="entry in agentBreakdown"
+            :key="entry.id"
+            class="edit-skill-dialog__agent-chip"
+            :class="{ 'is-missing': entry.missing }"
+          >
+            <AgentIcon :agent-id="entry.id" />
+            {{ agentLabel(entry.id) }}
+          </span>
+        </div>
       </section>
 
       <section class="edit-skill-dialog__details">
@@ -140,6 +152,9 @@ import { computed, ref } from "vue";
 import { useNativeDialog } from "../../composables/useNativeDialog";
 import * as backend from "../../services/backend";
 import type { ParsedSkillSource, Skill, SkillTag } from "../../types";
+import { agentLabel } from "../../utils/agents";
+import { agentsNeedingInstall } from "../../utils/skillInstall";
+import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import PackBadge from "../PackBadge/PackBadge.vue";
 
 const props = withDefaults(
@@ -148,9 +163,27 @@ const props = withDefaults(
     skill: Skill | null;
     tags?: SkillTag[];
     submitError?: string | null;
+    targetAgents?: string[];
   }>(),
-  { tags: () => [], submitError: null },
+  { tags: () => [], submitError: null, targetAgents: () => [] },
 );
+
+// The full, uncollapsed per-agent breakdown — the Skill card only ever
+// shows a collapsed summary (one Universal icon standing in for every agent
+// that shares its folder), so this detail view is where the whole truth,
+// including any remaining gap, actually lives. Same partial-install gating
+// as SkillCard: a skill that was never installed at all has no gap to call
+// out yet, so it keeps the installed-only list.
+const missingAgents = computed(() => (props.skill ? agentsNeedingInstall(props.skill, props.targetAgents) : []));
+const isPartiallyInstalled = computed(() => Boolean(props.skill?.installed) && missingAgents.value.length > 0);
+const agentBreakdown = computed(() => {
+  if (!props.skill) return [];
+  const installed = props.skill.installedAgents.map((id) => ({ id, missing: false }));
+  const missing = isPartiallyInstalled.value
+    ? missingAgents.value.filter((id) => !props.skill!.installedAgents.includes(id)).map((id) => ({ id, missing: true }))
+    : [];
+  return [...installed, ...missing];
+});
 
 const emit = defineEmits<{
   "update:open": [value: boolean];

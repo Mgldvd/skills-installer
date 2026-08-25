@@ -27,3 +27,7 @@ npm-debug.log*
 
 # Scratch folder for manual testing (not versioned)
 /test/
+
+# Fixture project root used by the skill install/discovery lifecycle tests
+# (each test claims its own subdirectory and wipes it before running)
+/test-skills/

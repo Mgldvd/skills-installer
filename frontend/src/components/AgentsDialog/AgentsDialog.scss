@@ -24,6 +24,72 @@
     gap: var(--space-sm);
   }
 
+  .agents-dialog__hint {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  // Explains the collapsing a Skill card does: every icon shown here is
+  // redundant with Universal on disk, so the card only ever shows one
+  // Universal icon for all of them combined — see `SkillCard.vue`.
+  .agents-dialog__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2xs);
+    margin: 0;
+    padding: var(--space-xs) var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--bg-muted);
+  }
+
+  .agents-dialog__legend-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.5rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+
+    .agent-icon {
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .agents-dialog__legend-equals {
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .agents-dialog__legend-text {
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  // The bulk shortcut up top just seeds every agent's individual scope in
+  // one click — each row's own toggle (below) remains freely overridable
+  // afterward, so this never "locks" the granular choice.
+  .agents-dialog__bulk-scope {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--bg-muted);
+  }
+
+  .agents-dialog__bulk-scope-label {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+  }
+
   .agents-dialog__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -41,6 +107,8 @@
     background: var(--bg-card);
     color: var(--text-primary);
     text-align: left;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
 
     &:hover {
       border-color: var(--border-strong);
@@ -49,16 +117,69 @@
       border-color: var(--accent);
       background: var(--accent-soft);
     }
+    &.is-dragging {
+      opacity: 0.5;
+    }
 
-    > span:last-child {
-      display: grid;
-      min-width: 0;
+    body.is-keyboard-navigation &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
-    small {
-      overflow-wrap: anywhere;
-      color: var(--text-muted);
-      font-size: var(--font-size-xs);
+  }
+
+  .agents-dialog__info {
+    display: grid;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  // Fixed at exactly two row-tracks regardless of how many scopes are
+  // actually enabled (0, 1, or 2) — an agent enabled for both Project and
+  // Global must not grow the row taller than one enabled for just one, so
+  // every card in the grid stays the same size. A single active scope
+  // simply leaves the second row blank instead of collapsing into it.
+  .agents-dialog__paths {
+    display: grid;
+    grid-template-rows: repeat(2, 1.2rem);
+    align-content: start;
+    min-width: 0;
+  }
+
+  .agents-dialog__grip {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.1rem;
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    line-height: 1;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
     }
+  }
+
+  // Which folder an agent installs into, shown under its name but at a
+  // size that actually reads at a glance — this is what lets you spot that,
+  // say, Codex and Universal share the exact same folder. Clipped to one
+  // line (full text on hover) rather than wrapping, so a long path can
+  // never push this row past its fixed `agents-dialog__paths` height.
+  .agents-dialog__path {
+    overflow: hidden;
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    line-height: 1.2rem;
+  }
+
+  // Called out in the accent color when this agent's folder is its own —
+  // nobody else (including Universal) reads it, so installing here only
+  // ever covers this one agent (Claude Code, Windsurf).
+  .agents-dialog__path--own {
+    color: var(--accent);
   }
 
   .agents-dialog__check {
@@ -70,6 +191,17 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-md);
     color: #fff;
+
+    // Universal isn't explicitly selected, but a sibling agent that shares
+    // its folder is — so it's getting installed anyway. A dash instead of a
+    // checkmark, on a muted rather than filled-accent background, reads as
+    // "partially/implicitly covered" rather than "explicitly chosen".
+    &.is-indeterminate {
+      border-color: var(--accent);
+      border-style: dashed;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
   }
 
   .agents-dialog__icon {
@@ -104,9 +236,48 @@
     @include dialog.button-primary;
   }
 
+  // Reused for both the per-row toggle and the bulk "set every agent"
+  // shortcut up top — same pill, same two options.
+  .agents-dialog__scope {
+    display: inline-flex;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    cursor: default;
+  }
+
+  .agents-dialog__scope-btn {
+    padding: var(--space-2xs) var(--space-xs);
+    border: none;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:not(:first-child) {
+      border-left: 1px solid var(--border-soft);
+    }
+    &:hover {
+      color: var(--text-primary);
+    }
+    &.is-active {
+      background: var(--accent);
+      color: var(--bg-panel);
+    }
+  }
+
   @media (max-width: 780px) {
     .agents-dialog__list {
       grid-template-columns: 1fr;
+    }
+    .agents-dialog__toggle {
+      flex-wrap: wrap;
+    }
+    .agents-dialog__scope {
+      flex: 1 1 100%;
+      margin-left: calc(1.1rem + 1.55rem + 2.2rem + var(--space-sm) * 3);
     }
   }
 }

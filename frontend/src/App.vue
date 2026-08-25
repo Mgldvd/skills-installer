@@ -1,11 +1,7 @@
 <template>
   <div class="app-shell">
     <main class="app-shell__main">
-      <AppHeader
-        :project-path="state.projectRoot"
-        :scope="state.preferences.defaultScope"
-        @update:project-path="handleProjectPathUpdate"
-      />
+      <AppHeader :project-path="state.projectRoot" @update:project-path="handleProjectPathUpdate" />
 
       <SkillToolbar
         :tags="state.tags"
@@ -44,10 +40,14 @@
         :installing-skill-id="installingSkillId"
         :skills-with-updates="state.skillsWithUpdates"
         :target-agents="state.preferences.defaultAgents"
+        :agent-order="agentOrder"
         :view="skillView"
+        :delete-mode="isDeleteMode"
+        :delete-selected-ids="deleteSelectedIds"
         @toggle="toggleSelected"
         @edit="openEditDialog"
         @update="handleUpdateSkill"
+        @toggle-delete="toggleDeleteSelected"
       />
 
       <InstallProgressPanel
@@ -88,33 +88,63 @@
           </button>
         </div>
         <div class="app-shell__footer-actions">
-          <label
-            class="app-shell__toggle"
-            :title="
-              state.preferences.confirmBeforeInstall
-                ? 'Install Selected will ask for confirmation first'
-                : 'Install Selected will run immediately, no confirmation'
-            "
-          >
-            <input
-              type="checkbox"
-              class="app-shell__toggle-input"
-              :checked="!state.preferences.confirmBeforeInstall"
-              @change="toggleSkipConfirm"
-            />
-            <span class="app-shell__toggle-track" aria-hidden="true">
-              <span class="app-shell__toggle-thumb"></span>
-            </span>
-            <span class="app-shell__toggle-label">Skip confirmation</span>
-          </label>
-          <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
+          <template v-if="isDeleteMode">
+            <span class="app-shell__selected-count">{{ deleteSelectedIds.size }} selected to uninstall</span>
+            <button type="button" class="app-shell__footer-btn" @click="deselectAllForDelete">Deselect All</button>
+            <button type="button" class="app-shell__footer-btn" @click="selectAllForDelete">Select All</button>
+            <button
+              type="button"
+              class="app-shell__footer-btn app-shell__footer-btn--danger"
+              :disabled="deleteSelectedIds.size === 0 || isUninstalling"
+              @click="confirmUninstall"
+            >
+              {{ isUninstalling ? "Uninstalling…" : "Confirm" }}
+            </button>
+          </template>
+          <template v-else>
+            <label
+              class="app-shell__toggle"
+              :title="
+                state.preferences.confirmBeforeInstall
+                  ? 'Install Selected will ask for confirmation first'
+                  : 'Install Selected will run immediately, no confirmation'
+              "
+            >
+              <input
+                type="checkbox"
+                class="app-shell__toggle-input"
+                :checked="!state.preferences.confirmBeforeInstall"
+                @change="toggleSkipConfirm"
+              />
+              <span class="app-shell__toggle-track" aria-hidden="true">
+                <span class="app-shell__toggle-thumb"></span>
+              </span>
+              <span class="app-shell__toggle-label">Skip confirmation</span>
+            </label>
+            <span class="app-shell__selected-count">{{ selectedSkills.length }} selected</span>
+            <button
+              type="button"
+              class="app-shell__footer-btn app-shell__footer-btn--primary"
+              :disabled="selectedSkills.length === 0 || state.installation.isInstalling"
+              @click="handleInstallClick"
+            >
+              Install Selected
+            </button>
+          </template>
           <button
             type="button"
-            class="app-shell__footer-btn app-shell__footer-btn--primary"
-            :disabled="selectedSkills.length === 0 || state.installation.isInstalling"
-            @click="handleInstallClick"
+            class="app-shell__footer-btn app-shell__footer-btn--icon app-shell__footer-btn--danger"
+            :class="{ 'is-active': isDeleteMode }"
+            :disabled="!isDeleteMode && !hasInstalledSkills"
+            :aria-label="isDeleteMode ? 'Cancel bulk uninstall' : 'Uninstall Skills in bulk'"
+            :title="isDeleteMode ? 'Cancel bulk uninstall' : 'Uninstall Skills in bulk'"
+            @click="isDeleteMode ? exitDeleteMode() : enterDeleteMode()"
           >
-            Install Selected
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 7h16M9 7V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V7m2 0-.9 13a2 2 0 0 1-2 1.9H9.9a2 2 0 0 1-2-1.9L7 7h10ZM10.5 11v6M13.5 11v6"
+              />
+            </svg>
           </button>
         </div>
       </div>
@@ -148,6 +178,7 @@
       v-model:open="isAddDialogOpen"
       :default-group-id="defaultGroupId"
       :skills="state.skills"
+      :tags="state.tags"
       :submit-error="addSkillError"
       :deleting="isDeletingCatalogSkills"
       :delete-error="catalogDeleteError"
@@ -162,6 +193,7 @@
       :skill="skillBeingEdited"
       :tags="state.tags"
       :submit-error="editSkillError"
+      :target-agents="state.preferences.defaultAgents"
       @update:open="handleEditDialogOpenChange"
       @submit="handleEditSkillSubmit"
       @delete="handleDeleteSkill"
@@ -190,8 +222,11 @@
     <AgentsDialog
       v-model:open="isAgentsOpen"
       :model-value="state.preferences.defaultAgents"
-      :scope="state.preferences.defaultScope"
+      :agent-order="state.preferences.agentOrder"
+      :agent-scopes="state.preferences.agentScopes"
       @update:model-value="handleAgentsUpdate"
+      @update:agent-order="handleAgentOrderUpdate"
+      @update:agent-scopes="handleAgentScopesUpdate"
     />
     <TagsDialog
       v-model:open="isTagsOpen"
@@ -244,8 +279,8 @@ import { usePreferences } from "./composables/usePreferences";
 import { useSkills } from "./composables/useSkills";
 import { useToasts } from "./composables/useToasts";
 import * as backend from "./services/backend";
-import type { InstallRequest, Skill } from "./types";
-import { formatAgents } from "./utils/agents";
+import type { AgentScopeSelection, InstallRequest, Skill } from "./types";
+import { formatAgents, resolveAgentOrder } from "./utils/agents";
 import { agentsNeedingInstall } from "./utils/skillInstall";
 
 const state = useAppState();
@@ -279,6 +314,16 @@ const addSkillError = ref<string | null>(null);
 const isDeletingCatalogSkills = ref(false);
 const catalogDeleteError = ref<string | null>(null);
 
+// Bulk-uninstall (the footer's trash-can toggle) — a separate selection
+// concept from `state.selectedSkillIds` (which is for *installing*): only
+// already-installed Skills are selectable here, and confirming actually
+// removes files from disk via the real `skills remove`, unlike the
+// catalog-only `handleDeleteCatalogSkills` above.
+const isDeleteMode = ref(false);
+const deleteSelectedIds = ref(new Set<string>());
+const isUninstalling = ref(false);
+const hasInstalledSkills = computed(() => state.skills.some((skill) => skill.installed));
+
 const isEditDialogOpen = ref(false);
 const editSkillError = ref<string | null>(null);
 const skillBeingEditedId = ref<string | null>(null);
@@ -293,6 +338,10 @@ const skillView = ref<"grid" | "list">("grid");
 const skillSourceFilter = ref<"all" | "local" | "remote">("all");
 const skillPackFilter = ref<string | null>(null);
 const skillNeedsAgentsFilter = ref(false);
+// The user's custom Agents-menu order, filled in with any agent missing
+// from it (a never-customized or stale preference) — always a full,
+// deterministic ordering so Skill card icons and the Agents menu agree.
+const agentOrder = computed(() => resolveAgentOrder(state.preferences.agentOrder));
 
 // The toolbar's view control reads as one 3-way choice (Grid / Compact /
 // List), but under the hood it's still the same two independent knobs
@@ -408,9 +457,12 @@ const installingSkillId = computed(() =>
 
 const installOptionsFromPreferences = computed(() => ({
   agents: state.preferences.defaultAgents,
-  projectPath: state.preferences.defaultScope === "project" ? state.projectRoot : null,
+  agentScopes: state.preferences.agentScopes,
+  // Always passed through now — some selected agent may still resolve to
+  // Project scope even when others resolve to Global; the backend ignores
+  // this for any agent whose own resolved scope is Global.
+  projectPath: state.projectRoot,
   copy: state.preferences.copyByDefault,
-  scope: state.preferences.defaultScope,
   dryRun: false,
   confirm: state.preferences.confirmBeforeInstall,
   continueOnError: state.preferences.continueAfterFailure,
@@ -512,6 +564,12 @@ async function handleImportConfig(content: string) {
 }
 function handleAgentsUpdate(agents: string[]) {
   updatePreferencesPartial({ defaultAgents: agents }).catch((error) => pushToast(describeError(error), "error"));
+}
+function handleAgentOrderUpdate(order: string[]) {
+  updatePreferencesPartial({ agentOrder: order }).catch((error) => pushToast(describeError(error), "error"));
+}
+function handleAgentScopesUpdate(scopes: Record<string, AgentScopeSelection>) {
+  updatePreferencesPartial({ agentScopes: scopes }).catch((error) => pushToast(describeError(error), "error"));
 }
 function handleLocalRefresh() {
   refresh().catch((error) => pushToast(describeError(error), "error"));
@@ -712,6 +770,51 @@ async function handleDeleteSkill(skillId: string) {
     pushToast("Skill deleted", "success");
   } catch (error) {
     editSkillError.value = describeError(error);
+  }
+}
+
+function enterDeleteMode() {
+  isDeleteMode.value = true;
+  deleteSelectedIds.value = new Set();
+}
+function exitDeleteMode() {
+  isDeleteMode.value = false;
+  deleteSelectedIds.value = new Set();
+}
+function toggleDeleteSelected(skillId: string) {
+  const next = new Set(deleteSelectedIds.value);
+  if (next.has(skillId)) next.delete(skillId);
+  else next.add(skillId);
+  deleteSelectedIds.value = next;
+}
+// "All" means every installed Skill currently visible under the active
+// search/filter — matches what the user can actually see, not the whole
+// catalog behind an active filter they may not even remember is on.
+function selectAllForDelete() {
+  deleteSelectedIds.value = new Set(displayedSkills.value.filter((skill) => skill.installed).map((skill) => skill.id));
+}
+function deselectAllForDelete() {
+  deleteSelectedIds.value = new Set();
+}
+async function confirmUninstall() {
+  if (deleteSelectedIds.value.size === 0 || isUninstalling.value) return;
+  isUninstalling.value = true;
+  try {
+    const result = await backend.uninstallSkills({
+      selection: { skillIds: [...deleteSelectedIds.value] },
+      projectPath: state.projectRoot,
+    });
+    exitDeleteMode();
+    await refresh();
+    if (result.failed > 0) {
+      pushToast(result.message ?? `Failed to uninstall ${result.failed} Skill${result.failed === 1 ? "" : "s"}`, "error");
+    } else {
+      pushToast(result.removed === 1 ? "Skill uninstalled" : `${result.removed} Skills uninstalled`, "success");
+    }
+  } catch (error) {
+    pushToast(describeError(error), "error");
+  } finally {
+    isUninstalling.value = false;
   }
 }
 

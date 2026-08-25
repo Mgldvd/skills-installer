@@ -1,5 +1,5 @@
 <template>
-  <dialog ref="dialogEl" class="add-skill-dialog" @close="emit('update:open', false)" @click="handleBackdropClick">
+  <dialog ref="dialogEl" class="add-skill-dialog" @close="emit('update:open', false)">
     <section class="add-skill-dialog__panel">
       <header class="add-skill-dialog__header">
         <div>
@@ -74,7 +74,7 @@
                 v-model="displayName"
                 type="text"
                 class="add-skill-dialog__input"
-                :placeholder="packPreview?.suggestedName ?? preview?.skillName ?? 'Display name'"
+                :placeholder="packPreview?.suggestedName ?? suggestedDisplayName ?? 'Display name'"
                 @input="displayNameEdited = true"
               />
             </label>
@@ -112,33 +112,113 @@
             <span>Pack Color</span>
             <ColorPalettePicker v-model="packColor" aria-label="Pack color" />
           </div>
+
+          <fieldset v-if="!isPackUrl" class="add-skill-dialog__packs">
+            <legend>Packs</legend>
+            <p>Assign this Skill to one or more installation packs.</p>
+            <div v-if="enabledTags.length" class="add-skill-dialog__pack-list">
+              <PackBadge
+                v-for="tag in enabledTags"
+                :key="tag.id"
+                :name="tag.name"
+                :color="tag.color"
+                interactive
+                compact
+                :selected="selectedTagIds.includes(tag.id)"
+                :muted="!selectedTagIds.includes(tag.id)"
+                :aria-label="`${selectedTagIds.includes(tag.id) ? 'Unassign' : 'Assign'} ${tag.name}`"
+                @click="toggleTag(tag.id)"
+              />
+            </div>
+            <p v-else class="add-skill-dialog__packs-empty">No enabled packs are available.</p>
+          </fieldset>
         </form>
 
         <section class="add-skill-dialog__catalog">
           <div class="add-skill-dialog__catalog-heading">
             <h3>Skills from Skills.sh</h3>
+            <button
+              type="button"
+              class="add-skill-dialog__catalog-toggle"
+              :aria-expanded="showCatalog"
+              @click="showCatalog = !showCatalog"
+            >
+              {{ showCatalog ? "Hide" : "Show" }} ({{ remoteSkills.length }})
+            </button>
           </div>
-          <p v-if="deleteError" class="add-skill-dialog__error" role="alert">{{ deleteError }}</p>
 
-          <div v-if="remoteSkills.length" class="add-skill-dialog__table" role="table" aria-label="Skills from Skills.sh">
-            <div class="add-skill-dialog__row add-skill-dialog__row--header" role="row">
-              <input
-                type="checkbox"
-                :checked="allSelected"
-                aria-label="Select all Skills from Skills.sh"
-                @change="toggleSelectAll"
-              />
-              <span role="columnheader">Name</span>
-              <span role="columnheader">URL</span>
-              <span role="columnheader" class="add-skill-dialog__row-actions-header">
-                <button
-                  v-if="selectedIds.length"
-                  type="button"
-                  class="add-skill-dialog__bulk-delete"
+          <template v-if="showCatalog">
+            <p class="add-skill-dialog__catalog-warning">
+              Danger zone: deleting a Skill here removes it from the catalog entirely.
+            </p>
+            <p v-if="deleteError" class="add-skill-dialog__error" role="alert">{{ deleteError }}</p>
+
+            <div v-if="remoteSkills.length" class="add-skill-dialog__table" role="table" aria-label="Skills from Skills.sh">
+              <div class="add-skill-dialog__row add-skill-dialog__row--header" role="row">
+                <input
+                  type="checkbox"
+                  :checked="allSelected"
+                  aria-label="Select all Skills from Skills.sh"
+                  @change="toggleSelectAll"
+                />
+                <span role="columnheader">Name</span>
+                <span role="columnheader">URL</span>
+                <span role="columnheader" class="add-skill-dialog__row-actions-header">
+                  <button
+                    v-if="selectedIds.length"
+                    type="button"
+                    class="add-skill-dialog__bulk-delete"
+                    :disabled="deleting"
+                    :aria-label="`Delete ${selectedIds.length} selected Skills`"
+                    :title="`Delete ${selectedIds.length} selected Skills`"
+                    @click="requestBulkDelete"
+                  >
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path
+                        d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5v8.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4.5M6.5 7.5v4M9.5 7.5v4"
+                      />
+                    </svg>
+                  </button>
+                </span>
+              </div>
+              <div v-for="skill in remoteSkills" :key="skill.id" class="add-skill-dialog__row" role="row">
+                <input
+                  type="checkbox"
+                  :checked="selected.has(skill.id)"
                   :disabled="deleting"
-                  :aria-label="`Delete ${selectedIds.length} selected Skills`"
-                  :title="`Delete ${selectedIds.length} selected Skills`"
-                  @click="requestBulkDelete"
+                  :aria-label="`Select ${skill.displayName}`"
+                  @change="toggleSelect(skill.id)"
+                />
+                <span class="add-skill-dialog__skill-name">{{ skill.displayName }}</span>
+                <a
+                  class="add-skill-dialog__skill-link"
+                  :href="skill.skillsUrl"
+                  :title="skill.skillsUrl"
+                  @click.prevent="handleOpenSkillUrl(skill.skillsUrl)"
+                >
+                  {{ skill.skillsUrl }}
+                </a>
+                <button
+                  type="button"
+                  class="add-skill-dialog__row-edit"
+                  :aria-label="`Edit ${skill.displayName}`"
+                  :title="`Edit ${skill.displayName}`"
+                  @click="emit('edit', skill.id)"
+                >
+                  <svg viewBox="0 0 14 14" aria-hidden="true">
+                    <path
+                      d="M2.5 10.4V12h1.6l6.6-6.6-1.6-1.6-6.6 6.6Zm7.4-7.4 1-1 1.6 1.6-1 1L9.9 3Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="add-skill-dialog__row-delete"
+                  :disabled="deleting"
+                  :aria-label="`Delete ${skill.displayName}`"
+                  :title="`Delete ${skill.displayName}`"
+                  @click="requestDelete(skill)"
                 >
                   <svg viewBox="0 0 16 16" aria-hidden="true">
                     <path
@@ -146,59 +226,22 @@
                     />
                   </svg>
                 </button>
-              </span>
+              </div>
             </div>
-            <div v-for="skill in remoteSkills" :key="skill.id" class="add-skill-dialog__row" role="row">
-              <input
-                type="checkbox"
-                :checked="selected.has(skill.id)"
-                :disabled="deleting"
-                :aria-label="`Select ${skill.displayName}`"
-                @change="toggleSelect(skill.id)"
-              />
-              <span class="add-skill-dialog__skill-name">{{ skill.displayName }}</span>
-              <a
-                class="add-skill-dialog__skill-link"
-                :href="skill.skillsUrl"
-                :title="skill.skillsUrl"
-                @click.prevent="handleOpenSkillUrl(skill.skillsUrl)"
-              >
-                {{ skill.skillsUrl }}
-              </a>
-              <button
-                type="button"
-                class="add-skill-dialog__row-edit"
-                :aria-label="`Edit ${skill.displayName}`"
-                :title="`Edit ${skill.displayName}`"
-                @click="emit('edit', skill.id)"
-              >
-                <svg viewBox="0 0 14 14" aria-hidden="true">
-                  <path
-                    d="M2.5 10.4V12h1.6l6.6-6.6-1.6-1.6-6.6 6.6Zm7.4-7.4 1-1 1.6 1.6-1 1L9.9 3Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                class="add-skill-dialog__row-delete"
-                :disabled="deleting"
-                :aria-label="`Delete ${skill.displayName}`"
-                :title="`Delete ${skill.displayName}`"
-                @click="requestDelete(skill)"
-              >
-                <svg viewBox="0 0 16 16" aria-hidden="true">
-                  <path
-                    d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5v8.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4.5M6.5 7.5v4M9.5 7.5v4"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <p v-else class="add-skill-dialog__catalog-empty">No Skills added from Skills.sh yet.</p>
+            <p v-else class="add-skill-dialog__catalog-empty">No Skills added from Skills.sh yet.</p>
+          </template>
         </section>
       </div>
     </section>
+
+    <ConfirmDialog
+      v-model:open="confirmDeleteOpen"
+      title="Delete Skill"
+      :message="confirmDeleteMessage"
+      confirm-label="Delete"
+      destructive
+      @confirm="handleConfirmDelete"
+    />
   </dialog>
 </template>
 
@@ -208,15 +251,18 @@ import { computed, ref } from "vue";
 
 import { useNativeDialog } from "../../composables/useNativeDialog";
 import * as backend from "../../services/backend";
-import type { ParsedSkillSource, Skill, SkillGroup } from "../../types";
+import type { ParsedSkillSource, Skill, SkillGroup, SkillTag } from "../../types";
 import ColorPalettePicker from "../ColorPalettePicker/ColorPalettePicker.vue";
 import CloseButton from "../CloseButton/CloseButton.vue";
+import ConfirmDialog from "../ConfirmDialog/ConfirmDialog.vue";
+import PackBadge from "../PackBadge/PackBadge.vue";
 
 const props = withDefaults(
   defineProps<{
     open: boolean;
     groups?: SkillGroup[];
     skills?: Skill[];
+    tags?: SkillTag[];
     defaultGroupId?: string | null;
     submitError?: string | null;
     deleting?: boolean;
@@ -225,6 +271,7 @@ const props = withDefaults(
   {
     groups: () => [],
     skills: () => [],
+    tags: () => [],
     defaultGroupId: null,
     submitError: null,
     deleting: false,
@@ -253,7 +300,12 @@ const packPreview = ref<backend.PackPreview | null>(null);
 const urlError = ref<string | null>(null);
 const displayNameEdited = ref(false);
 const descriptionEdited = ref(false);
+const selectedTagIds = ref<string[]>([]);
 const selected = ref(new Set<string>());
+// Deleting here removes a catalog entry outright, so the list stays folded
+// away behind an explicit click every time the dialog opens, rather than
+// sitting exposed next to the "Add Skill" form where a stray click can hit it.
+const showCatalog = ref(false);
 
 let debounceHandle: ReturnType<typeof setTimeout> | null = null;
 let previewRequest = 0;
@@ -273,7 +325,9 @@ function resetForm() {
   urlError.value = null;
   displayNameEdited.value = false;
   descriptionEdited.value = false;
+  selectedTagIds.value = [];
   selected.value = new Set();
+  showCatalog.value = false;
 }
 
 useNativeDialog(dialogEl, () => props.open, resetForm);
@@ -304,7 +358,7 @@ function handleUrlInput() {
         preview.value = detected as ParsedSkillSource;
         packPreview.value = null;
         const skill = detected as ParsedSkillSource;
-        if (!displayNameEdited.value) displayName.value = skill.skillName;
+        if (!displayNameEdited.value) displayName.value = `${skill.owner} - ${skill.skillName}`;
         if (!descriptionEdited.value) description.value = `${skill.owner}/${skill.repository}`;
       }
       urlError.value = null;
@@ -322,6 +376,16 @@ const duplicateSkill = computed(() => {
   return props.skills?.find((skill) => skill.skillsUrl === preview.value?.canonicalUrl) ?? null;
 });
 const isPackUrl = computed(() => /^https:\/\/(?:www\.)?skills\.sh\/p\//i.test(url.value.trim()));
+const suggestedDisplayName = computed(() =>
+  preview.value ? `${preview.value.owner} - ${preview.value.skillName}` : null,
+);
+const enabledTags = computed(() => props.tags.filter((tag) => tag.enabled).sort((a, b) => a.order - b.order));
+
+function toggleTag(tagId: string) {
+  selectedTagIds.value = selectedTagIds.value.includes(tagId)
+    ? selectedTagIds.value.filter((id) => id !== tagId)
+    : [...selectedTagIds.value, tagId];
+}
 const canSubmit = computed(() =>
   Boolean(
     (preview.value || packPreview.value) &&
@@ -352,19 +416,37 @@ function toggleSelectAll() {
   selected.value = allSelected.value ? new Set() : new Set(remoteSkills.value.map((skill) => skill.id));
 }
 
-function requestDelete(skill: Skill) {
-  if (window.confirm(`Delete “${skill.displayName}” from the catalog?`)) {
-    emit("deleteSkills", [skill.id]);
-    if (selected.value.has(skill.id)) toggleSelect(skill.id);
+// A native `window.confirm` doesn't reliably show anything in every Tauri
+// webview (WebKitGTK on Linux in particular can auto-resolve it without ever
+// rendering a dialog) — the app's own `ConfirmDialog` is a real DOM/`<dialog>`
+// element, so it always shows up regardless of platform.
+const confirmDeleteOpen = ref(false);
+const pendingDeleteIds = ref<string[]>([]);
+const confirmDeleteMessage = computed(() => {
+  if (pendingDeleteIds.value.length === 1) {
+    const skill = remoteSkills.value.find((candidate) => candidate.id === pendingDeleteIds.value[0]);
+    return `Delete “${skill?.displayName ?? "this Skill"}” from the catalog?`;
   }
+  return `Delete ${pendingDeleteIds.value.length} Skills from the catalog?`;
+});
+
+function requestDelete(skill: Skill) {
+  pendingDeleteIds.value = [skill.id];
+  confirmDeleteOpen.value = true;
 }
 
 function requestBulkDelete() {
-  const count = selectedIds.value.length;
-  if (window.confirm(`Delete ${count} Skill${count === 1 ? "" : "s"} from the catalog?`)) {
-    emit("deleteSkills", selectedIds.value);
-    selected.value = new Set();
-  }
+  pendingDeleteIds.value = [...selectedIds.value];
+  confirmDeleteOpen.value = true;
+}
+
+function handleConfirmDelete() {
+  const ids = pendingDeleteIds.value;
+  emit("deleteSkills", ids);
+  const next = new Set(selected.value);
+  for (const id of ids) next.delete(id);
+  selected.value = next;
+  pendingDeleteIds.value = [];
 }
 
 // Opens in the system's default browser, not the app's own webview — a
@@ -375,10 +457,6 @@ function handleOpenSkillUrl(skillsUrl: string) {
 
 function close() {
   emit("update:open", false);
-}
-
-function handleBackdropClick(event: MouseEvent) {
-  if (event.target === dialogEl.value) close();
 }
 
 function handleSubmit() {
@@ -397,7 +475,7 @@ function handleSubmit() {
     displayName: displayName.value.trim() || undefined,
     description: description.value.trim() || undefined,
     groupId: groupId.value,
-    tags: [],
+    tags: selectedTagIds.value,
     preselected: preselected.value,
     enabled: enabled.value,
   });

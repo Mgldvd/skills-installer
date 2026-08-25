@@ -22,7 +22,9 @@ impl PreferencesService {
         }
     }
 
-    #[cfg(test)]
+    /// Points the store at an explicit file instead of the real, per-user
+    /// config directory — for tests and any other caller that needs an
+    /// isolated preferences file rather than the user's actual settings.
     pub fn with_path(path: PathBuf) -> Self {
         Self {
             path_override: Some(path),
@@ -136,6 +138,22 @@ fn validate_preferences(preferences: &UiPreferences) -> Result<(), AppError> {
         if !crate::domain::is_supported_agent(agent) {
             return Err(AppError::Validation(format!(
                 "unsupported Skills CLI agent \"{agent}\""
+            )));
+        }
+    }
+    for agent in &preferences.agent_order {
+        validate_agent_id(agent)?;
+        if !crate::domain::is_supported_agent(agent) {
+            return Err(AppError::Validation(format!(
+                "unsupported Skills CLI agent \"{agent}\" in agent order"
+            )));
+        }
+    }
+    for agent in preferences.agent_scopes.keys() {
+        validate_agent_id(agent)?;
+        if !crate::domain::is_supported_agent(agent) {
+            return Err(AppError::Validation(format!(
+                "unsupported Skills CLI agent \"{agent}\" in agent scopes"
             )));
         }
     }
@@ -256,6 +274,35 @@ mod tests {
         let preferences = service.load().unwrap();
 
         assert_eq!(preferences.accent, "#A855F7");
+    }
+
+    #[test]
+    fn load_migrates_legacy_bare_string_agent_scopes_to_the_current_flag_pair_shape() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("preferences.json");
+        std::fs::write(
+            &path,
+            r##"{"fontScale":1.0,"defaultAgents":["universal"],"copyByDefault":true,"confirmBeforeInstall":true,"continueAfterFailure":true,"accent":"#F43F75","agentScopes":{"claude-code":"global","cursor":"project"}}"##,
+        )
+        .unwrap();
+        let service = PreferencesService::with_path(path);
+
+        let preferences = service.load().unwrap();
+
+        assert_eq!(
+            preferences.agent_scopes["claude-code"],
+            crate::domain::AgentScopeSelection {
+                project: false,
+                global: true
+            }
+        );
+        assert_eq!(
+            preferences.agent_scopes["cursor"],
+            crate::domain::AgentScopeSelection {
+                project: true,
+                global: false
+            }
+        );
     }
 
     #[test]

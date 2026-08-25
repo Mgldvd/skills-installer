@@ -19,6 +19,16 @@ describe("AddSkillDialog", () => {
     vi.clearAllMocks();
   });
 
+  it("only closes via Done or a successful submit, never a backdrop click", async () => {
+    const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()] } });
+
+    await wrapper.get(".add-skill-dialog").trigger("click");
+    expect(wrapper.emitted("update:open")).toBeUndefined();
+
+    await wrapper.get(".add-skill-dialog__header-actions .button--primary").trigger("click");
+    expect(wrapper.emitted("update:open")).toEqual([[false]]);
+  });
+
   it("places a clickable link to browse Skills.sh beside the URL field", () => {
     const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()] } });
     expect(wrapper.get("h2").text()).toBe("Add Skill");
@@ -51,7 +61,7 @@ describe("AddSkillDialog", () => {
 
     expect(wrapper.text()).toContain("triage");
     expect(wrapper.text()).toContain("mattpocock/skills");
-    expect((wrapper.find('input[type="text"]').element as HTMLInputElement).value).toBe("triage");
+    expect((wrapper.find('input[type="text"]').element as HTMLInputElement).value).toBe("mattpocock - triage");
     expect((wrapper.find("textarea").element as HTMLTextAreaElement).value).toBe("mattpocock/skills");
     expect(wrapper.find(".add-skill-dialog__error").exists()).toBe(false);
   });
@@ -174,10 +184,45 @@ describe("AddSkillDialog", () => {
     expect(emitted).toBeTruthy();
     expect(emitted![0][0]).toMatchObject({
       url: "https://www.skills.sh/mattpocock/skills/triage",
-      displayName: "triage",
+      displayName: "mattpocock - triage",
       description: "mattpocock/skills",
       groupId: "testing",
+      tags: [],
     });
+  });
+
+  it("lets a Pack be assigned while creating the Skill", async () => {
+    vi.mocked(backend.previewSkillUrl).mockResolvedValue({
+      canonicalUrl: "https://www.skills.sh/mattpocock/skills/triage",
+      owner: "mattpocock",
+      repository: "skills",
+      skillName: "triage",
+      repositoryUrl: "https://github.com/mattpocock/skills",
+    });
+
+    const wrapper = mount(AddSkillDialog, {
+      props: {
+        open: true,
+        groups: [makeGroup({ id: "testing" })],
+        tags: [
+          { id: "workflow", name: "Workflow", color: "#E75480", order: 1, enabled: true },
+          { id: "testing-pack", name: "Testing", color: "#5F82C9", order: 2, enabled: true },
+        ],
+      },
+    });
+
+    await wrapper.find('input[type="url"]').setValue("https://www.skills.sh/mattpocock/skills/triage");
+    await wrapper.find('input[type="url"]').trigger("input");
+    await vi.waitFor(() => expect(backend.previewSkillUrl).toHaveBeenCalled());
+    await flushPromises();
+
+    const packBadges = wrapper.findAll(".add-skill-dialog__pack-list .pack-badge");
+    expect(packBadges).toHaveLength(2);
+    await packBadges[0].trigger("click");
+    await wrapper.find("form").trigger("submit");
+
+    const payload = wrapper.emitted("submit")?.[0]?.[0] as { tags: string[] };
+    expect(payload.tags).toEqual(["workflow"]);
   });
 
   describe("Skills.sh catalog table", () => {
@@ -185,8 +230,22 @@ describe("AddSkillDialog", () => {
     const remoteB = makeSkill({ id: "remote-b", displayName: "Remote Skill B", source: { kind: "remote" } });
     const local = makeSkill({ id: "local-a", displayName: "Local Skill", source: { kind: "local", path: "/tmp/x" } });
 
-    it("lists only Skills sourced from Skills.sh, not ones discovered locally", () => {
-      const wrapper = mount(AddSkillDialog, {
+    // A danger zone: deleting here removes a catalog entry outright, so the
+    // dialog keeps it folded away behind a "Show" toggle until asked for.
+    async function mountWithCatalogShown(...args: Parameters<typeof mount<typeof AddSkillDialog>>) {
+      const wrapper = mount(...args);
+      await wrapper.get(".add-skill-dialog__catalog-toggle").trigger("click");
+      return wrapper;
+    }
+
+    it("hides the catalog table behind a Show toggle by default", () => {
+      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+      expect(wrapper.find(".add-skill-dialog__table").exists()).toBe(false);
+      expect(wrapper.get(".add-skill-dialog__catalog-toggle").text()).toBe("Show (1)");
+    });
+
+    it("lists only Skills sourced from Skills.sh, not ones discovered locally", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
         props: { open: true, groups: [makeGroup()], skills: [remote, remoteB, local] },
       });
 
@@ -195,8 +254,8 @@ describe("AddSkillDialog", () => {
       expect(wrapper.text()).not.toContain("Local Skill");
     });
 
-    it("shows the Skill's name as plain text and its full add URL as the clickable link", () => {
-      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+    it("shows the Skill's name as plain text and its full add URL as the clickable link", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
 
       const name = wrapper.get(".add-skill-dialog__skill-name");
       expect(name.text()).toBe("Remote Skill A");
@@ -207,29 +266,28 @@ describe("AddSkillDialog", () => {
       expect(link.text()).toBe(remote.skillsUrl);
     });
 
-    it("shows an empty state when no Skills have been added from Skills.sh", () => {
-      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [local] } });
+    it("shows an empty state when no Skills have been added from Skills.sh", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [local] } });
       expect(wrapper.get(".add-skill-dialog__catalog-empty").text()).toBe("No Skills added from Skills.sh yet.");
     });
 
-    it("asks for confirmation before deleting a single row, and does nothing if declined", async () => {
-      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
-      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+    it("asks for confirmation via the app's own dialog before deleting a single row, and does nothing if declined", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
 
       await wrapper.get(".add-skill-dialog__row-delete").trigger("click");
-      expect(confirmSpy).toHaveBeenCalled();
+      const confirmDialog = wrapper.get(".confirm-dialog");
+      expect(confirmDialog.text()).toContain("Remote Skill A");
+
+      await confirmDialog.get(".confirm-dialog__btn").trigger("click");
       expect(wrapper.emitted("deleteSkills")).toBeUndefined();
 
-      confirmSpy.mockReturnValue(true);
       await wrapper.get(".add-skill-dialog__row-delete").trigger("click");
+      await wrapper.get(".confirm-dialog__btn--primary").trigger("click");
       expect(wrapper.emitted("deleteSkills")).toEqual([[["remote-a"]]]);
-
-      confirmSpy.mockRestore();
     });
 
     it("selects all Skills, then bulk-deletes the selection after confirming", async () => {
-      vi.spyOn(window, "confirm").mockReturnValue(true);
-      const wrapper = mount(AddSkillDialog, {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
         props: { open: true, groups: [makeGroup()], skills: [remote, remoteB] },
       });
 
@@ -243,32 +301,32 @@ describe("AddSkillDialog", () => {
       expect(bulkDelete.text()).toBe("");
 
       await bulkDelete.trigger("click");
+      expect(wrapper.get(".confirm-dialog").text()).toContain("Delete 2 Skills");
+      await wrapper.get(".confirm-dialog__btn--primary").trigger("click");
       expect(wrapper.emitted("deleteSkills")).toEqual([[["remote-a", "remote-b"]]]);
-
-      vi.restoreAllMocks();
     });
 
     it("emits edit with the Skill's id from its row's edit button", async () => {
-      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
       await wrapper.get(".add-skill-dialog__row-edit").trigger("click");
       expect(wrapper.emitted("edit")).toEqual([["remote-a"]]);
     });
 
     it("opens a Skill's Skills.sh URL through the plugin instead of navigating the webview", async () => {
-      const wrapper = mount(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, { props: { open: true, groups: [makeGroup()], skills: [remote] } });
       await wrapper.get(".add-skill-dialog__skill-link").trigger("click");
       expect(vi.mocked(openUrl)).toHaveBeenCalledWith(remote.skillsUrl);
     });
 
-    it("disables row and bulk controls while a delete is in flight", () => {
-      const wrapper = mount(AddSkillDialog, {
+    it("disables row and bulk controls while a delete is in flight", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
         props: { open: true, groups: [makeGroup()], skills: [remote], deleting: true },
       });
       expect(wrapper.get(".add-skill-dialog__row-delete").attributes("disabled")).toBeDefined();
     });
 
-    it("shows a delete error when the backend rejects it", () => {
-      const wrapper = mount(AddSkillDialog, {
+    it("shows a delete error when the backend rejects it", async () => {
+      const wrapper = await mountWithCatalogShown(AddSkillDialog, {
         props: { open: true, groups: [makeGroup()], skills: [remote], deleteError: "Could not delete Skill" },
       });
       expect(wrapper.get(".add-skill-dialog__catalog .add-skill-dialog__error").text()).toBe("Could not delete Skill");

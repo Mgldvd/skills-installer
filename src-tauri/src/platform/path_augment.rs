@@ -165,12 +165,6 @@ mod tests {
     // --- login_shell_path_dirs -------------------------------------------
 
     #[cfg(unix)]
-    // On overlayfs (Docker's default storage driver), a file that was just
-    // written and chmod'd can transiently exec-fail with ETXTBSY
-    // ("Text file busy") under concurrent `cargo test` threads — a known
-    // overlayfs copy-up race, not anything about the write itself being
-    // incomplete. An explicit `sync_all` before returning consistently
-    // avoided it in practice (reproduced with a tight repeated-run loop).
     fn fake_shell(dir: &Path, name: &str, script: &str) -> PathBuf {
         use std::io::Write;
         use std::os::unix::fs::PermissionsExt;
@@ -194,7 +188,25 @@ mod tests {
             "#!/bin/sh\necho -n \"/opt/custom/bin:/another/bin\"\n",
         );
 
-        let result = login_shell_path_dirs(shell.to_str().unwrap(), Duration::from_secs(2));
+        // A freshly-written+chmod'd executable can transiently fail to exec
+        // with ETXTBSY ("Text file busy") on overlayfs (Docker's default
+        // storage driver) when many `cargo test` threads are writing,
+        // chmod'ing, and exec'ing files concurrently — a known copy-up race,
+        // confirmed by instrumenting `login_shell_path_dirs`'s spawn error in
+        // a repeated-run stress test. `login_shell_path_dirs` collapses that
+        // into the same empty `Vec` it returns for a genuinely empty/failed
+        // shell, so retry a few times before trusting an empty result here —
+        // a real parsing bug would still fail on every retry.
+        let mut result = Vec::new();
+        for attempt in 0..10 {
+            result = login_shell_path_dirs(shell.to_str().unwrap(), Duration::from_secs(2));
+            if !result.is_empty() {
+                break;
+            }
+            if attempt < 9 {
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        }
 
         assert_eq!(
             result,

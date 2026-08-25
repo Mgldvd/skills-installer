@@ -276,7 +276,6 @@ describe("App", () => {
   });
 
   it("bulk-deletes selected Skills.sh catalog Skills sequentially, one backend call per Skill", async () => {
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     mockLoadedApp();
     vi.mocked(backend.deleteSkill).mockResolvedValue(undefined);
     const wrapper = mount(App);
@@ -286,16 +285,16 @@ describe("App", () => {
     await addButton.trigger("click");
     await flushPromises();
 
+    await wrapper.get(".add-skill-dialog__catalog-toggle").trigger("click");
     await wrapper.get('[aria-label="Select all Skills from Skills.sh"]').setValue(true);
     await wrapper.get(".add-skill-dialog__bulk-delete").trigger("click");
+    await wrapper.get(".confirm-dialog__btn--primary").trigger("click");
     await flushPromises();
 
     expect(backend.deleteSkill).toHaveBeenCalledTimes(2);
     expect(backend.deleteSkill).toHaveBeenNthCalledWith(1, "a");
     expect(backend.deleteSkill).toHaveBeenNthCalledWith(2, "b");
     expect(wrapper.find(".skill-card").exists()).toBe(false);
-
-    confirmSpy.mockRestore();
   });
 
   it("edits a catalog Skill from the Add Skill table, closing Add Skill behind it", async () => {
@@ -307,6 +306,7 @@ describe("App", () => {
     await addButton.trigger("click");
     await flushPromises();
 
+    await wrapper.get(".add-skill-dialog__catalog-toggle").trigger("click");
     await wrapper.get(".add-skill-dialog__row-edit").trigger("click");
     await flushPromises();
 
@@ -321,6 +321,7 @@ describe("App", () => {
 
     const addButton = wrapper.findAll(".app-shell__footer-btn").find((button) => button.text() === "Add Skill")!;
     await addButton.trigger("click");
+    await wrapper.get(".add-skill-dialog__catalog-toggle").trigger("click");
     await wrapper.get(".add-skill-dialog__row-edit").trigger("click");
     await flushPromises();
 
@@ -342,6 +343,7 @@ describe("App", () => {
 
     const addButton = wrapper.findAll(".app-shell__footer-btn").find((button) => button.text() === "Add Skill")!;
     await addButton.trigger("click");
+    await wrapper.get(".add-skill-dialog__catalog-toggle").trigger("click");
     await wrapper.get(".add-skill-dialog__row-edit").trigger("click");
     await flushPromises();
 

@@ -14,6 +14,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::domain::{
     DependencyStatus, InstallProgressEvent, InstallResult, InstalledSkill, OutputStream,
+    UninstallResult,
 };
 use crate::error::AppError;
 use crate::process::{ProcessOutcome, ProcessOutputLine, ProcessRunner, ProcessSpec};
@@ -116,6 +117,8 @@ pub struct FakeInstaller {
     dependency_status: DependencyStatus,
     install_result: Mutex<Option<Result<InstallResult, AppError>>>,
     pub install_calls: Mutex<Vec<InstallBatch>>,
+    remove_result: Mutex<Option<Result<UninstallResult, AppError>>>,
+    pub remove_calls: Mutex<Vec<RemoveRequest>>,
 }
 
 impl FakeInstaller {
@@ -124,11 +127,18 @@ impl FakeInstaller {
             dependency_status,
             install_result: Mutex::new(None),
             install_calls: Mutex::new(Vec::new()),
+            remove_result: Mutex::new(None),
+            remove_calls: Mutex::new(Vec::new()),
         }
     }
 
     pub fn with_install_result(self, result: Result<InstallResult, AppError>) -> Self {
         *self.install_result.lock().unwrap() = Some(result);
+        self
+    }
+
+    pub fn with_remove_result(self, result: Result<UninstallResult, AppError>) -> Self {
+        *self.remove_result.lock().unwrap() = Some(result);
         self
     }
 }
@@ -164,8 +174,18 @@ impl Installer for FakeInstaller {
         }
     }
 
-    async fn remove(&self, _request: RemoveRequest) -> Result<(), AppError> {
-        Ok(())
+    async fn remove(&self, request: RemoveRequest) -> Result<UninstallResult, AppError> {
+        let requested = request.skills.len();
+        self.remove_calls.lock().unwrap().push(request);
+        match self.remove_result.lock().unwrap().take() {
+            Some(result) => result,
+            None => Ok(UninstallResult {
+                requested,
+                removed: requested,
+                failed: 0,
+                message: None,
+            }),
+        }
     }
 
     async fn update(&self, _request: UpdateRequest) -> Result<(), AppError> {

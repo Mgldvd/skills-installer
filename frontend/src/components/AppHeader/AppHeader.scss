@@ -39,10 +39,15 @@
   }
 
   // Everything else stays hugged to the left; "Install to" is the one item
-  // that belongs on the right edge of the header.
+  // that belongs on the right edge of the header. It also grows into
+  // whatever's left of the header's width (there's usually plenty, next to
+  // just the brand) instead of being capped at a fixed width — a long
+  // project path should show as much of itself as the header can spare
+  // before falling back to the ellipsis on `.app-header__value`.
   .app-header__destination {
+    flex: 1 1 auto;
+    justify-content: flex-end;
     margin-left: auto;
-    max-width: 22rem;
   }
 
   .app-header__label {
@@ -106,9 +111,6 @@
   @media (max-width: 680px) {
     .app-header__brand {
       display: none;
-    }
-    .app-header__destination {
-      max-width: none;
     }
   }
 }

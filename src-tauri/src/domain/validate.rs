@@ -61,7 +61,28 @@ pub fn is_supported_agent(agent: &str) -> bool {
             | "windsurf"
             | "opencode"
             | "github-copilot"
+            | "pi"
+            | "vscode"
+            | "openclaw"
+            | "zed"
+            | "openhands"
+            | "hermes-agent"
     )
+}
+
+/// Translates one of our own agent ids into the id the real `skills` CLI
+/// (vercel-labs/skills) actually recognizes for its `--agent` flag. Almost
+/// always the identity — `vscode` is the one exception: the CLI has no
+/// dedicated "vscode" agent of its own, since VS Code's Copilot Chat/agent
+/// mode *is* GitHub Copilot under the hood. We still show it as its own row
+/// (own icon, own dedicated `.github/skills` project path) because that's
+/// how users think about it, but the actual install call has to go out as
+/// `github-copilot` or the CLI would reject an id it's never heard of.
+pub fn cli_agent_id(agent: &str) -> &str {
+    match agent {
+        "vscode" => "github-copilot",
+        other => other,
+    }
 }
 
 /// Best-effort conversion of arbitrary text (a directory name, a legacy

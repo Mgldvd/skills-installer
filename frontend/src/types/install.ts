@@ -2,11 +2,23 @@ import type { SkillSelection } from "./skill";
 
 export type InstallScope = "project" | "global";
 
+/** An agent's scope isn't exclusive — it can install to the project *and*
+ * the user's global directory from one action, so this is two independent
+ * flags rather than a single `InstallScope`. Mirrors Rust's
+ * `AgentScopeSelection`. */
+export interface AgentScopeSelection {
+  project: boolean;
+  global: boolean;
+}
+
 export interface InstallOptions {
   agents: string[];
+  /** Per-agent scope override — see `UiPreferences.agentScopes` and
+   * `resolveAgentScopes`. An agent id missing here falls back to
+   * `{ project: true, global: false }`. */
+  agentScopes: Record<string, AgentScopeSelection>;
   projectPath: string | null;
   copy: boolean;
-  scope: InstallScope;
   dryRun: boolean;
   confirm: boolean;
   continueOnError: boolean;
@@ -47,12 +59,27 @@ export type InstallProgressEvent =
   | { event: "skill-error"; data: { skillId: string; displayName: string; message: string } }
   | { event: "complete"; data: { result: InstallResult } };
 
+// Uninstalls already-installed Skills from disk (the real `skills remove`)
+// — distinct from the catalog-only "Delete Skill" action, which just edits
+// the local skills.yaml and never touches installed files.
+export interface UninstallRequest {
+  selection: SkillSelection;
+  projectPath: string | null;
+}
+
+export interface UninstallResult {
+  requested: number;
+  removed: number;
+  failed: number;
+  message: string | null;
+}
+
 export function defaultInstallOptions(): InstallOptions {
   return {
     agents: ["universal"],
+    agentScopes: {},
     projectPath: null,
     copy: true,
-    scope: "project",
     dryRun: false,
     confirm: true,
     continueOnError: true,

@@ -17,6 +17,7 @@ const browserGlobals = {
   Event: "readonly",
   MouseEvent: "readonly",
   KeyboardEvent: "readonly",
+  DragEvent: "readonly",
   Node: "readonly",
 };
 

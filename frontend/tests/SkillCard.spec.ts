@@ -128,6 +128,32 @@ describe("SkillCard", () => {
     expect(wrapper.find(".skill-card__edit").attributes("disabled")).toBeUndefined();
   });
 
+  it("delete mode only allows selecting installed skills, and emits toggle-delete instead of toggle", async () => {
+    const installed = mount(SkillCard, {
+      props: { skill: makeSkill({ id: "triage", installed: true }), selected: false, deleteMode: true },
+    });
+    expect(installed.find(".skill-card__selection-surface").attributes("disabled")).toBeUndefined();
+    await installed.find(".skill-card__selection-surface").trigger("click");
+    expect(installed.emitted("toggle-delete")).toEqual([["triage"]]);
+    expect(installed.emitted("toggle")).toBeUndefined();
+
+    const notInstalled = mount(SkillCard, {
+      props: { skill: makeSkill({ installed: false }), selected: false, deleteMode: true },
+    });
+    expect(notInstalled.find(".skill-card__selection-surface").attributes("disabled")).toBeDefined();
+    expect(notInstalled.find(".skill-card__selection-surface").attributes("aria-label")).toContain(
+      "nothing to uninstall",
+    );
+  });
+
+  it("marks a delete-mode-selected card with is-delete-selected, never is-selected", () => {
+    const wrapper = mount(SkillCard, {
+      props: { skill: makeSkill({ installed: true }), selected: false, deleteMode: true, deleteSelected: true },
+    });
+    expect(wrapper.classes()).toContain("is-delete-selected");
+    expect(wrapper.classes()).not.toContain("is-selected");
+  });
+
   it("always exposes the per-skill edit action", async () => {
     const wrapper = mount(SkillCard, { props: { skill: makeSkill({ id: "triage" }), selected: false } });
     await wrapper.find(".skill-card__edit").trigger("click");
@@ -217,8 +243,12 @@ describe("SkillCard", () => {
     });
 
     const agents = wrapper.get(".skill-card__agents");
-    expect(agents.findAll(".skill-card__agent-icon")).toHaveLength(2);
-    expect(agents.attributes("title")).toBe("Installed for: Universal (.agents), Claude Code");
+    const icons = agents.findAll(".skill-card__agent-icon");
+    expect(icons).toHaveLength(2);
+    expect(icons.map((icon) => icon.attributes("title"))).toEqual([
+      "Installed for: Universal (.agents)",
+      "Installed for Claude Code",
+    ]);
   });
 
   it("shows every distinguishable installed agent without truncating", () => {

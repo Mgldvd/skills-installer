@@ -7,9 +7,7 @@ use std::path::PathBuf;
 use tokio::sync::mpsc;
 
 use crate::app::ApplicationServices;
-use crate::domain::{
-    InstallOptions, InstallProgressEvent, InstallRequest, InstallScope, Skill, SkillSelection,
-};
+use crate::domain::{InstallOptions, InstallProgressEvent, InstallRequest, Skill, SkillSelection};
 
 pub const EXIT_SUCCESS: i32 = 0;
 pub const EXIT_OPERATION_ERROR: i32 = 1;
@@ -147,15 +145,20 @@ async fn run_install(
         return EXIT_INVALID_ARGS;
     }
 
+    let agent_id = agent.unwrap_or_else(|| "universal".to_string());
+    let mut agent_scopes = std::collections::HashMap::new();
+    agent_scopes.insert(
+        agent_id.clone(),
+        crate::domain::AgentScopeSelection {
+            project: !global,
+            global,
+        },
+    );
     let options = InstallOptions {
-        agents: vec![agent.unwrap_or_else(|| "universal".to_string())],
+        agents: vec![agent_id],
+        agent_scopes,
         project_path: None,
         copy,
-        scope: if global {
-            InstallScope::Global
-        } else {
-            InstallScope::Project
-        },
         dry_run,
         confirm: !yes,
         continue_on_error: !stop_on_error,

@@ -216,9 +216,15 @@ mod tests {
     // On overlayfs (Docker's default storage driver), a file just written
     // and chmod'd can transiently exec-fail with ETXTBSY ("Text file busy")
     // under concurrent `cargo test` threads — a known overlayfs copy-up
-    // race, not an incomplete write. An explicit `sync_all` before
-    // returning avoids it (see the identical fix + rationale in
-    // `platform::path_augment`'s own `fake_shell` test helper).
+    // race, not an incomplete write (see the identical fix + rationale in
+    // `platform::path_augment`'s own `fake_shell` test helper). `sync_all`
+    // flushes *this* write, but under real parallel load the race is
+    // actually filesystem-wide — other threads writing+chmod'ing+exec'ing
+    // their own fresh files at the same moment can still transiently trip
+    // it here even though this file's own write is long since flushed. A
+    // throwaway warm-up spawn (`warm_up_executable`, retried briefly)
+    // settles that race before any real test logic depends on this
+    // specific file being immediately spawnable.
     fn write_executable(path: &std::path::Path, script: &str) {
         use std::io::Write;
         let mut file = fs::File::create(path).unwrap();
@@ -228,6 +234,21 @@ mod tests {
         let mut perms = fs::metadata(path).unwrap().permissions();
         perms.set_mode(0o755);
         fs::set_permissions(path, perms).unwrap();
+        warm_up_executable(path);
+    }
+
+    /// Spawns `path` once, discarding the outcome either way, retrying
+    /// briefly on failure — see `write_executable`'s comment for why this
+    /// is needed even after `sync_all`. Every fake executable in this
+    /// module's tests is a pure `echo`, so an extra throwaway invocation
+    /// before the real one has no effect on what the test actually asserts.
+    fn warm_up_executable(path: &std::path::Path) {
+        for _ in 0..20 {
+            if std::process::Command::new(path).output().is_ok() {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
     }
 
     fn make_executable(dir: &Path, name: &str) -> PathBuf {

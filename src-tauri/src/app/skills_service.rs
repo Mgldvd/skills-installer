@@ -11,7 +11,8 @@ use crate::error::AppError;
 use crate::preferences::PreferencesService;
 use crate::skills::pack_import::{PackPreview, PackSkillPreview};
 use crate::skills::{
-    discover_installed_agents, discover_skills_in_directory, SkillUrlParser, SkillsShUrlParser,
+    discover_installed_agents, discover_installed_agents_globally, discover_skills_in_directory,
+    SkillUrlParser, SkillsShUrlParser,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -80,6 +81,12 @@ pub struct SkillsService {
     config_service: ConfigurationService,
     project_root: PathBuf,
     preferences: PreferencesService,
+    /// Overrides the real `$HOME` for Global-scope discovery — `None` (the
+    /// real constructor's only option) resolves `$HOME` at call time; tests
+    /// use `with_home_override` to point it at an isolated tempdir instead,
+    /// so a test run never picks up whatever the developer's own machine
+    /// actually has installed globally.
+    home_override: Option<PathBuf>,
 }
 
 impl SkillsService {
@@ -311,7 +318,18 @@ impl SkillsService {
             config_service,
             project_root,
             preferences,
+            home_override: None,
         }
+    }
+
+    /// Points Global-scope discovery at an isolated directory instead of
+    /// the real `$HOME` — see `home_override`. Not `#[cfg(test)]`: the
+    /// separate `tests/skill_lifecycle.rs` integration binary links this
+    /// crate normally (not under `cfg(test)`), so a test-gated method here
+    /// would be invisible to it, same reasoning as `PreferencesService::with_path`.
+    pub fn with_home_override(mut self, home: PathBuf) -> Self {
+        self.home_override = Some(home);
+        self
     }
 
     /// Configured (remote) skills plus locally discovered skills, merged:
@@ -331,7 +349,26 @@ impl SkillsService {
     /// Skills as installed from wherever the app launched.
     pub fn load_state_for(&self, project_root: &Path) -> Result<ApplicationConfig, AppError> {
         let mut config = self.config_service.load()?;
-        let installed_agents = discover_installed_agents(project_root);
+        let mut installed_agents = discover_installed_agents(project_root);
+        // Global-scope installs (`~/.claude/skills`, etc.) live outside any
+        // project root, so they're folded in here rather than being part of
+        // `discover_installed_agents` itself — a skill installed in *both*
+        // scopes ends up with the union of every agent id from either. No
+        // resolvable home (override unset and `$HOME` missing) just means
+        // no Global results to fold in — best effort, same as everywhere
+        // else `discover_installed_agents_globally` gets called.
+        let home = self
+            .home_override
+            .clone()
+            .or_else(|| std::env::var_os("HOME").map(PathBuf::from));
+        if let Some(home) = home {
+            for (skill_name, agents) in discover_installed_agents_globally(&home) {
+                let entry = installed_agents.entry(skill_name).or_default();
+                entry.extend(agents);
+                entry.sort();
+                entry.dedup();
+            }
+        }
         let local_source = self.resolve_local_source()?;
         let local_skills = local_source
             .as_deref()
@@ -782,7 +819,11 @@ skills:
                 ..Default::default()
             })
             .unwrap();
+        // A distinct, always-empty subdirectory — never the same path as
+        // `tmp` itself, so Global-scope discovery never overlaps whatever
+        // project-scope fixtures a test writes directly under `tmp`.
         SkillsService::new(config_service, tmp.to_path_buf(), preferences)
+            .with_home_override(tmp.join("home"))
     }
 
     #[test]
@@ -1161,8 +1202,9 @@ skills:
         let tmp = tempfile::tempdir().unwrap();
         let service = service_with_curated_config(tmp.path());
 
-        // `.agents/skills` is shared by several agents by convention, so it
-        // can only ever be attributed to `universal` — see AGENT_PROJECT_DIRS.
+        // `.agents/skills` is shared by several agents by convention, so a
+        // skill placed there is reported installed for the whole group —
+        // see AGENT_PROJECT_DIRS.
         let shared_dir = tmp.path().join(".agents").join("skills").join("triage");
         std::fs::create_dir_all(&shared_dir).unwrap();
         std::fs::write(
@@ -1178,7 +1220,81 @@ skills:
             .find(|s| s.skill_name == "triage")
             .unwrap();
         assert!(triage.installed);
-        assert_eq!(triage.installed_agents, vec!["universal"]);
+        assert_eq!(
+            triage.installed_agents,
+            vec![
+                "codex",
+                "cursor",
+                "gemini-cli",
+                "github-copilot",
+                "openclaw",
+                "opencode",
+                "openhands",
+                "pi",
+                "universal",
+                "vscode",
+                "zed",
+            ]
+        );
+    }
+
+    #[test]
+    fn load_state_also_reports_agents_the_skill_is_installed_for_globally() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = service_with_curated_config(tmp.path());
+
+        // Only installed at project scope for Codex/Cursor/... via the
+        // shared `.agents/skills` convention (see the test above) — nothing
+        // here yet at Global scope.
+        let shared_dir = tmp.path().join(".agents").join("skills").join("triage");
+        std::fs::create_dir_all(&shared_dir).unwrap();
+        std::fs::write(
+            shared_dir.join("SKILL.md"),
+            "---\nname: triage\ndescription: project copy\n---\n",
+        )
+        .unwrap();
+
+        // Also installed at Global scope, exclusively for Claude Code — the
+        // Global scope's `.claude/skills` isn't shared the way the Project
+        // scope's is (see AGENT_GLOBAL_DIRS), so this should add exactly
+        // one agent id to the union, not the whole Claude Code compat group.
+        let global_dir = tmp
+            .path()
+            .join("home")
+            .join(".claude")
+            .join("skills")
+            .join("triage");
+        std::fs::create_dir_all(&global_dir).unwrap();
+        std::fs::write(
+            global_dir.join("SKILL.md"),
+            "---\nname: triage\ndescription: global copy\n---\n",
+        )
+        .unwrap();
+
+        let state = service.load_state().unwrap();
+        let triage = state
+            .skills
+            .iter()
+            .find(|s| s.skill_name == "triage")
+            .unwrap();
+        assert!(triage.installed);
+        assert_eq!(
+            triage.installed_agents,
+            vec![
+                "claude-code",
+                "codex",
+                "cursor",
+                "gemini-cli",
+                "github-copilot",
+                "openclaw",
+                "opencode",
+                "openhands",
+                "pi",
+                "universal",
+                "vscode",
+                "zed",
+            ]
+        );
     }
 
     #[test]
@@ -1192,10 +1308,13 @@ skills:
                 ..Default::default()
             })
             .unwrap();
-        let service = SkillsService::new(config_service, tmp.path().to_path_buf(), preferences);
+        let service = SkillsService::new(config_service, tmp.path().to_path_buf(), preferences)
+            .with_home_override(tmp.path().join("home"));
 
         // Present in the catalog (so it's discovered as a Skill at all) and
-        // only actually installed under claude-code's own destination.
+        // only actually installed under claude-code's own destination —
+        // which Cursor, OpenCode, and GitHub Copilot also read by
+        // convention, so it's reported installed for them too.
         let catalog_dir = tmp.path().join("catalog").join("only-claude");
         std::fs::create_dir_all(&catalog_dir).unwrap();
         std::fs::write(
@@ -1222,7 +1341,16 @@ skills:
             .find(|s| s.skill_name == "only-claude")
             .unwrap();
         assert!(only_claude.installed);
-        assert_eq!(only_claude.installed_agents, vec!["claude-code"]);
+        assert_eq!(
+            only_claude.installed_agents,
+            vec![
+                "claude-code",
+                "cursor",
+                "github-copilot",
+                "opencode",
+                "vscode"
+            ]
+        );
     }
 
     #[test]

@@ -40,6 +40,41 @@
     gap: var(--space-lg);
   }
 
+  // Spans both columns of the form grid instead of competing for space in
+  // either one.
+  .add-skill-dialog__packs {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+
+    legend {
+      padding: 0 var(--space-2xs);
+      font-size: var(--font-size-sm);
+      font-weight: 650;
+    }
+    > p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: var(--font-size-xs);
+    }
+  }
+
+  .add-skill-dialog__pack-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .add-skill-dialog__packs-empty {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+  }
+
   .add-skill-dialog__form-primary {
     display: flex;
     flex-direction: column;
@@ -181,6 +216,11 @@
   }
 
   .add-skill-dialog__catalog-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+
     h3 {
       margin: 0;
       color: var(--text-muted);
@@ -189,6 +229,33 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+  }
+
+  .add-skill-dialog__catalog-toggle {
+    padding: var(--space-2xs) var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--bg-panel);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--accent);
+      color: var(--accent-hover);
+    }
+  }
+
+  .add-skill-dialog__catalog-warning {
+    margin: 0;
+    padding: var(--space-2xs) var(--space-sm);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, var(--border-soft));
+    border-radius: var(--radius-sm);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
   }
 
   .add-skill-dialog__table {

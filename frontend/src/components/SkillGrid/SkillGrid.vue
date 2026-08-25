@@ -19,9 +19,13 @@
         :installing="skill.id === installingSkillId"
         :has-update="skillsWithUpdates.has(skill.id)"
         :target-agents="targetAgents"
+        :agent-order="agentOrder"
+        :delete-mode="deleteMode"
+        :delete-selected="deleteSelectedIds.has(skill.id)"
         @toggle="(id) => emit('toggle', id)"
         @edit="(id) => emit('edit', id)"
         @update="(id) => emit('update', id)"
+        @toggle-delete="(id) => emit('toggle-delete', id)"
       />
     </div>
   </TransitionGroup>
@@ -40,15 +44,26 @@ withDefaults(
     installingSkillId?: string | null;
     skillsWithUpdates?: Set<string>;
     targetAgents: string[];
+    agentOrder?: string[];
     view?: "grid" | "list";
+    deleteMode?: boolean;
+    deleteSelectedIds?: Set<string>;
   }>(),
-  { installingSkillId: null, skillsWithUpdates: () => new Set<string>(), view: "grid" },
+  {
+    installingSkillId: null,
+    skillsWithUpdates: () => new Set<string>(),
+    agentOrder: () => [],
+    view: "grid",
+    deleteMode: false,
+    deleteSelectedIds: () => new Set<string>(),
+  },
 );
 
 const emit = defineEmits<{
   toggle: [skillId: string];
   edit: [skillId: string];
   update: [skillId: string];
+  "toggle-delete": [skillId: string];
 }>();
 </script>
 

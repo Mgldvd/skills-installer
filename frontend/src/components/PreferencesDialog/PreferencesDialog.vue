@@ -46,39 +46,6 @@
             <p>Define how Skills are installed by default.</p>
           </div>
           <div class="preferences-dialog__section-content">
-            <div class="preferences-dialog__field">
-              <span class="preferences-dialog__label">Default scope</span>
-              <div class="preferences-dialog__segmented" role="radiogroup" aria-label="Installation scope">
-                <button
-                  type="button"
-                  class="preferences-dialog__segment"
-                  :class="{
-                    'is-active': preferences.defaultScope === 'project',
-                  }"
-                  @click="
-                    emit('update', {
-                      defaultScope: 'project',
-                    })
-                  "
-                >
-                  Project
-                </button>
-                <button
-                  type="button"
-                  class="preferences-dialog__segment"
-                  :class="{
-                    'is-active': preferences.defaultScope === 'global',
-                  }"
-                  @click="
-                    emit('update', {
-                      defaultScope: 'global',
-                    })
-                  "
-                >
-                  Global
-                </button>
-              </div>
-            </div>
             <div class="preferences-dialog__checks">
               <label class="preferences-dialog__checkbox">
                 <span>
@@ -120,7 +87,10 @@
             </div>
             <div class="preferences-dialog__field preferences-dialog__tool">
               <span class="preferences-dialog__label">Agents</span>
-              <span class="preferences-dialog__help">Choose which coding agents Skills install for by default.</span>
+              <span class="preferences-dialog__help">
+                Choose which coding agents Skills install for by default, and whether each installs to the Project
+                or Globally.
+              </span>
               <button type="button" class="preferences-dialog__tool-button" @click="emit('openAgents')">
                 Manage Agents
               </button>

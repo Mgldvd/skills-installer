@@ -6,3 +6,9 @@ tasks:
     deps: [frontend-deps]
     cmds:
       - "{{.TAURI_BIN}} dev"
+
+  dev-design:
+    desc: Start the frontend dev server and open the component style guide (design.html).
+    deps: [frontend-deps]
+    cmds:
+      - npm run dev --prefix {{.FRONTEND_DIR}} -- --open /design.html

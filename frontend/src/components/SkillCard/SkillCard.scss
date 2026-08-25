@@ -3,7 +3,7 @@
   display: grid;
   grid-template-rows:
     calc(2.7rem * var(--font-scale)) calc(3.45rem * var(--font-scale))
-    minmax(1.75rem, auto);
+    minmax(3.75rem, auto);
   gap: var(--space-xs);
   height: 100%;
   padding: var(--space-sm);
@@ -42,11 +42,27 @@
     border-color: var(--accent);
     background: var(--accent-soft);
   }
+  // A Skill not currently installed has nothing to uninstall, so it recedes
+  // rather than inviting a click that its own selection surface (disabled)
+  // would refuse anyway.
+  &.is-delete-mode:not(.is-installed) {
+    opacity: 0.5;
+  }
+  // Deliberately hardcoded to `--danger`, never `--accent` — bulk-uninstall
+  // selection must read as unmistakably destructive regardless of the
+  // user's chosen accent color, and never be confusable with the normal
+  // (accent-colored) install-selection state above. Comes after
+  // `.is-selected`/`.is-installed`/`.is-partially-installed` so it always
+  // wins when a card is selected for deletion.
+  &.is-delete-selected {
+    border-color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 12%, var(--bg-card));
+  }
   &.is-disabled {
     opacity: 0.68;
   }
   &.is-compact {
-    grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(1.75rem, auto);
+    grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(3.75rem, auto);
   }
   &.is-list {
     display: flex;
@@ -69,8 +85,14 @@
       max-height: none;
     }
 
+    // The grid layout stacks meta/tags above agents/edit to give both room
+    // to grow; a list row is already a single horizontal line, so the
+    // footer goes back to laying its two children side by side.
     .skill-card__footer {
       flex: 0 0 auto;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
       min-height: 0;
       width: auto;
     }
@@ -191,10 +213,15 @@
   &.is-partially-installed .skill-card__selection-ribbon {
     background: var(--warning);
   }
-  // Comes last so an active install visibly wins over selected, installed,
-  // and partially-installed ribbon colors.
+  // Comes last (of the non-delete states) so an active install visibly wins
+  // over selected, installed, and partially-installed ribbon colors.
   &.is-installing .skill-card__selection-ribbon {
     background: var(--info);
+  }
+  // Comes last of all — selected-for-deletion always wins, and is always
+  // `--danger` red, never the accent color used above.
+  &.is-delete-selected .skill-card__selection-ribbon {
+    background: var(--danger);
   }
 
   .skill-card__description {
@@ -221,20 +248,21 @@
     -webkit-line-clamp: 2;
   }
 
+  // Two stacked rows — meta/tags on top, agent icons + edit below — so
+  // neither has to squeeze the other for width as more tags or agent
+  // icons are added; a `.is-list` row overrides this back to one line.
   .skill-card__footer {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    min-height: 1.75rem;
-    overflow: hidden;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-2xs);
   }
 
   .skill-card__meta {
     display: flex;
     align-items: center;
+    flex: 1 1 auto;
     min-width: 0;
-    flex: 1;
     gap: var(--space-2xs);
   }
 
@@ -244,8 +272,13 @@
     min-width: 0;
     flex-wrap: wrap;
     gap: var(--space-2xs);
-    max-height: 1.75rem;
-    overflow: hidden;
+  }
+
+  .skill-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
   }
 
   .skill-card__update {
@@ -270,12 +303,14 @@
   .skill-card__agents {
     display: flex;
     align-items: center;
-    flex: 0 0 auto;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
     gap: var(--space-2xs);
-    padding-left: var(--space-2xs);
   }
 
   .skill-card__agent-icon {
+    position: relative;
     display: grid;
     place-items: center;
     width: 1.5rem;
@@ -287,6 +322,28 @@
     .agent-icon {
       width: 1rem;
       height: 1rem;
+    }
+
+    // Dims the icon itself and adds a small warning dot in the corner so a
+    // still-missing agent reads as "not yet installed" at a glance, distinct
+    // from the plain neutral tile an already-installed agent gets.
+    &.is-missing {
+      border-style: dashed;
+      border-color: color-mix(in srgb, var(--warning) 45%, var(--border-soft));
+      background: var(--warning-soft);
+      opacity: 0.7;
+
+      &::after {
+        content: "";
+        position: absolute;
+        top: -0.2rem;
+        right: -0.2rem;
+        width: 0.55rem;
+        height: 0.55rem;
+        border: 1px solid var(--bg-card);
+        border-radius: 50%;
+        background: var(--warning);
+      }
     }
   }
 
@@ -324,17 +381,13 @@
   .skill-card {
     grid-template-rows:
       calc(2.7rem * var(--font-scale)) calc(3.45rem * var(--font-scale))
-      minmax(2.75rem, auto);
+      minmax(4.75rem, auto);
 
-    .skill-card__footer,
-    .skill-card__packs {
-      max-height: 2.75rem;
-    }
     .skill-card__edit {
       min-height: 2.75rem;
     }
     &.is-compact {
-      grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(2.75rem, auto);
+      grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(4.75rem, auto);
     }
   }
 }

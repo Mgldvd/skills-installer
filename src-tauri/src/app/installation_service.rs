@@ -2,9 +2,11 @@ use std::sync::{Arc, Mutex};
 
 use tokio_util::sync::CancellationToken;
 
-use crate::domain::{DependencyStatus, InstallRequest, InstallResult, Skill};
+use crate::domain::{
+    DependencyStatus, InstallRequest, InstallResult, Skill, UninstallRequest, UninstallResult,
+};
 use crate::error::AppError;
-use crate::installer::{InstallBatch, Installer, ProgressSender};
+use crate::installer::{InstallBatch, Installer, ProgressSender, RemoveRequest};
 
 /// Resolves an IPC/CLI-facing `InstallRequest` (skill ids) against an
 /// already-loaded skill list, drives the shared `Installer`, and owns the
@@ -55,7 +57,14 @@ impl InstallationService {
                 )));
             }
         }
-        if request.options.scope == crate::domain::InstallScope::Project {
+        // Only matters when at least one selected agent actually resolves to
+        // Project scope — an all-Global selection never touches this path.
+        let has_project_scoped_agent = request
+            .options
+            .agents
+            .iter()
+            .any(|agent| request.options.scopes_for(agent).project);
+        if has_project_scoped_agent {
             if let Some(path) = request.options.project_path.as_deref() {
                 if !std::path::Path::new(path).is_dir() {
                     return Err(AppError::Validation(format!(
@@ -107,6 +116,42 @@ impl InstallationService {
         result
     }
 
+    /// Uninstalls already-installed Skills from disk (runs the real `skills
+    /// remove`) — distinct from the catalog-only `SkillsService::delete_skill`,
+    /// which just edits `skills.yaml` and never touches installed files. Not
+    /// cancellable/streamed like `install`: a bulk remove is one fast CLI
+    /// call, not a long-running per-skill loop.
+    pub async fn uninstall(
+        &self,
+        request: UninstallRequest,
+        available_skills: &[Skill],
+    ) -> Result<UninstallResult, AppError> {
+        if request.selection.is_empty() {
+            return Err(AppError::Validation(
+                "no Skills selected to uninstall".to_string(),
+            ));
+        }
+        let skills: Vec<Skill> = request
+            .selection
+            .skill_ids
+            .iter()
+            .filter_map(|id| available_skills.iter().find(|s| &s.id == id).cloned())
+            .collect();
+        if skills.is_empty() {
+            return Err(AppError::Validation(
+                "none of the selected skill ids are known".to_string(),
+            ));
+        }
+        let remove_request = RemoveRequest {
+            skills,
+            options: crate::domain::InstallOptions {
+                project_path: request.project_path,
+                ..Default::default()
+            },
+        };
+        self.installer.remove(remove_request).await
+    }
+
     /// Idempotent: cancelling with nothing in flight is a no-op, not an
     /// error, since the GUI may race a "Cancel" click against completion.
     pub fn cancel(&self) {
@@ -124,8 +169,8 @@ impl InstallationService {
 mod tests {
     use super::*;
     use crate::domain::{
-        DependencySource, InstallOptions, InstallScope, SkillInstallStatus, SkillSelection,
-        SkillSource, OTHER_GROUP_ID,
+        DependencySource, InstallOptions, SkillInstallStatus, SkillSelection, SkillSource,
+        OTHER_GROUP_ID,
     };
     use crate::installer::FakeInstaller;
 
@@ -204,10 +249,7 @@ mod tests {
         let skills = vec![sample_skill("triage", true), sample_skill("tdd", true)];
         let request = InstallRequest {
             selection: SkillSelection::new(vec!["triage".to_string()]),
-            options: InstallOptions {
-                scope: InstallScope::Project,
-                ..InstallOptions::default()
-            },
+            options: InstallOptions::default(),
         };
 
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
@@ -275,5 +317,36 @@ mod tests {
         drop(rx);
         assert_eq!(result.installed, 1);
         assert_eq!(result.per_skill[0].status, SkillInstallStatus::Installed);
+    }
+
+    #[tokio::test]
+    async fn uninstall_resolves_ids_and_delegates_to_installer() {
+        let fake = Arc::new(FakeInstaller::new(fake_dependency_status()));
+        let service = InstallationService::new(fake.clone());
+        let skills = vec![sample_skill("triage", true), sample_skill("tdd", true)];
+        let request = crate::domain::UninstallRequest {
+            selection: SkillSelection::new(vec!["triage".to_string()]),
+            project_path: None,
+        };
+
+        let result = service.uninstall(request, &skills).await.unwrap();
+
+        assert_eq!(result.requested, 1);
+        let calls = fake.remove_calls.lock().unwrap();
+        assert_eq!(calls.len(), 1);
+        assert_eq!(calls[0].skills.len(), 1);
+        assert_eq!(calls[0].skills[0].id, "triage");
+    }
+
+    #[tokio::test]
+    async fn uninstall_rejects_an_empty_selection() {
+        let fake = Arc::new(FakeInstaller::new(fake_dependency_status()));
+        let service = InstallationService::new(fake);
+        let request = crate::domain::UninstallRequest {
+            selection: SkillSelection::default(),
+            project_path: None,
+        };
+
+        assert!(service.uninstall(request, &[]).await.is_err());
     }
 }

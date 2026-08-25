@@ -9,9 +9,21 @@
       'is-installed': skill.installed,
       'is-partially-installed': isPartiallyInstalled,
       'is-installing': installing,
+      'is-delete-mode': deleteMode,
+      'is-delete-selected': deleteMode && deleteSelected,
     }"
   >
     <button
+      v-if="deleteMode"
+      type="button"
+      class="skill-card__selection-surface"
+      :aria-pressed="deleteSelected"
+      :aria-label="deleteAriaLabel"
+      :disabled="!skill.installed"
+      @click="emit('toggle-delete', skill.id)"
+    />
+    <button
+      v-else
       type="button"
       class="skill-card__selection-surface"
       :aria-pressed="selected"
@@ -55,26 +67,34 @@
           Update
         </button>
         <div v-if="assignedTags.length" class="skill-card__packs" aria-label="Assigned packs">
-          <PackBadge v-for="tag in assignedTags" :key="tag.id" :name="tag.name" :color="tag.color" compact />
+          <PackBadge v-for="tag in assignedTags" :key="tag.id" :name="tag.name" :color="tag.color" :title="tag.name" compact />
         </div>
       </div>
-      <div v-if="skill.installedAgents.length" class="skill-card__agents" :title="installedAgentsTitle" aria-label="Installed for">
-        <span v-for="id in skill.installedAgents" :key="id" class="skill-card__agent-icon">
-          <AgentIcon :agent-id="id" />
-        </span>
+      <div class="skill-card__actions">
+        <div v-if="collapsedAgentIcons.length" class="skill-card__agents" aria-label="Agent install status">
+          <span
+            v-for="entry in collapsedAgentIcons"
+            :key="entry.id"
+            class="skill-card__agent-icon"
+            :class="{ 'is-missing': entry.missing }"
+            :title="entry.title"
+          >
+            <AgentIcon :agent-id="entry.id" />
+          </span>
+        </div>
+        <button
+          type="button"
+          class="skill-card__edit"
+          :aria-label="`View and edit ${skill.displayName}`"
+          title="View and edit Skill"
+          @click="emit('edit', skill.id)"
+        >
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M1.5 8s2.2-4 6.5-4 6.5 4 6.5 4-2.2 4-6.5 4-6.5-4-6.5-4Z" />
+            <circle cx="8" cy="8" r="1.8" />
+          </svg>
+        </button>
       </div>
-      <button
-        type="button"
-        class="skill-card__edit"
-        :aria-label="`View and edit ${skill.displayName}`"
-        title="View and edit Skill"
-        @click="emit('edit', skill.id)"
-      >
-        <svg viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M1.5 8s2.2-4 6.5-4 6.5 4 6.5 4-2.2 4-6.5 4-6.5-4-6.5-4Z" />
-          <circle cx="8" cy="8" r="1.8" />
-        </svg>
-      </button>
     </footer>
   </article>
 </template>
@@ -83,7 +103,7 @@
 import { computed } from "vue";
 
 import type { Skill, SkillTag } from "../../types";
-import { agentLabel } from "../../utils/agents";
+import { agentLabel, isUniversalGroup } from "../../utils/agents";
 import { agentsNeedingInstall } from "../../utils/skillInstall";
 import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import PackBadge from "../PackBadge/PackBadge.vue";
@@ -99,14 +119,32 @@ const props = withDefaults(
     list?: boolean;
     installing?: boolean;
     hasUpdate?: boolean;
+    /** Bulk-uninstall mode (the footer's trash-can toggle) — while active,
+     * the card's whole selection surface switches from "select to install"
+     * to "select to uninstall": only installed Skills are selectable, and
+     * the highlight is always red (`is-delete-selected`), never the
+     * configurable accent color, so the two selection modes are never
+     * visually ambiguous. */
+    deleteMode?: boolean;
+    deleteSelected?: boolean;
   }>(),
-  { targetAgents: () => [], tags: () => [], compact: false, list: false, installing: false, hasUpdate: false },
+  {
+    targetAgents: () => [],
+    tags: () => [],
+    compact: false,
+    list: false,
+    installing: false,
+    hasUpdate: false,
+    deleteMode: false,
+    deleteSelected: false,
+  },
 );
 
 const emit = defineEmits<{
   toggle: [skillId: string];
   edit: [skillId: string];
   update: [skillId: string];
+  "toggle-delete": [skillId: string];
 }>();
 
 // Installed for *some* but not *every* currently targeted agent — still
@@ -125,9 +163,57 @@ const ariaLabel = computed(() => {
   }
   return `${props.skill.displayName}${props.selected ? ", selected" : ", not selected"}`;
 });
+const deleteAriaLabel = computed(() => {
+  if (!props.skill.installed) return `${props.skill.displayName}, not installed, nothing to uninstall`;
+  return `${props.skill.displayName}, ${props.deleteSelected ? "selected for uninstall" : "not selected for uninstall"}`;
+});
 const assignedTags = computed(() => props.tags.filter((tag) => props.skill.tags.includes(tag.id)));
-const installedAgentsTitle = computed(() => `Installed for: ${props.skill.installedAgents.map(agentLabel).join(", ")}`);
 const missingAgentsTitle = computed(() => `Not yet installed for: ${missingAgents.value.map(agentLabel).join(", ")}`);
+// Installed agents first, then — only on a card that's actually showing the
+// "Missing N agents" badge — the still-missing target agents appended so the
+// footer surfaces the whole gap. A skill with nothing installed yet has no
+// gap to call out here; it keeps the original installed-only row. This is
+// the full, uncollapsed breakdown — see EditSkillDialog for where it's
+// shown in full; the card itself only shows `collapsedAgentIcons`.
+const displayedAgents = computed(() => [
+  ...props.skill.installedAgents,
+  ...(isPartiallyInstalled.value ? missingAgents.value.filter((id) => !props.skill.installedAgents.includes(id)) : []),
+]);
+// `.agents/skills` (and similar shared conventions) mean installing once
+// can mark half a dozen agent ids installed simultaneously — see
+// discovery.rs's compat map — which is exactly what was cluttering the
+// card with icons. Collapse every agent that shares Universal's own folder
+// into one Universal icon; only agents with a genuinely distinct
+// destination (Claude Code, Windsurf, Pi, ...) still get their own icon.
+// The full per-agent truth stays available in `displayedAgents` for the
+// Skill's detail view.
+const collapsedAgentIcons = computed(() => {
+  const universalMembers = displayedAgents.value.filter((id) => isUniversalGroup(id));
+  const ownFolderAgents = displayedAgents.value.filter((id) => !isUniversalGroup(id));
+  const entries: { id: string; missing: boolean; title: string }[] = [];
+  if (universalMembers.length) {
+    const missingMembers = universalMembers.filter((id) => missingAgents.value.includes(id));
+    const installedMembers = universalMembers.filter((id) => !missingAgents.value.includes(id));
+    // Mixed state is possible (e.g. Cursor's own cross-compat reading of
+    // `.claude/skills` covers it while Gemini CLI, which doesn't read that
+    // directory, stays missing) — any real coverage reads as "installed".
+    const isMissing = installedMembers.length === 0;
+    const title = isMissing
+      ? `Not yet installed for: ${missingMembers.map(agentLabel).join(", ")}`
+      : `Installed for: ${installedMembers.map(agentLabel).join(", ")}` +
+        (missingMembers.length ? ` (not yet for: ${missingMembers.map(agentLabel).join(", ")})` : "");
+    entries.push({ id: "universal", missing: isMissing, title });
+  }
+  for (const id of ownFolderAgents) {
+    const missing = missingAgents.value.includes(id);
+    entries.push({
+      id,
+      missing,
+      title: missing ? `Not yet installed for ${agentLabel(id)}` : `Installed for ${agentLabel(id)}`,
+    });
+  }
+  return entries;
+});
 // Defensive against a stale `skillsWithUpdates` (e.g. after switching the
 // selected project folder changes what's installed): only ever show the
 // Update button for a skill that's still both local and installed.

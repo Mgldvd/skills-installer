@@ -3,6 +3,7 @@ use tauri::State;
 
 use crate::domain::{
     ApplicationConfig, DependencyStatus, InstallProgressEvent, InstallRequest, InstallResult,
+    UninstallRequest, UninstallResult,
 };
 use crate::error::AppError;
 
@@ -59,6 +60,22 @@ pub async fn install_skills(
 pub fn cancel_installation(state: State<'_, AppState>) -> Result<(), AppError> {
     state.services.installation.cancel();
     Ok(())
+}
+
+/// Bulk-uninstalls already-installed Skills — distinct from `delete_skill`
+/// (`commands::skills`), which only removes a Skill from the catalog and
+/// never touches installed files.
+#[tauri::command]
+pub async fn uninstall_skills(
+    state: State<'_, AppState>,
+    request: UninstallRequest,
+) -> Result<UninstallResult, AppError> {
+    let available = state.services.skills.load_state()?.skills;
+    state
+        .services
+        .installation
+        .uninstall(request, &available)
+        .await
 }
 
 /// `project_path` is the folder currently selected in the GUI header, so
