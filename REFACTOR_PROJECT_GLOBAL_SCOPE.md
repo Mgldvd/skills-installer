@@ -127,12 +127,27 @@ compilador de Rust exige que todo sitio que use `AgentScopeSelection`/`scopes_fo
 `any_global` se actualice a la vez para que el crate compile, y eso es exactamente el trabajo
 de Fase 3 (`add_args_for_skill`, `remove()`, `update()`). Quedaron en un solo commit.
 
-### Fase 2 — Backend: discovery (pendiente)
+### Fase 2 — Backend: discovery ✅
 
-- [ ] `SkillsService::load_state_for` recibe el `scope` activo y escanea **solo** los
-  directorios correspondientes (hoy sigue mezclando project+global siempre — no tocado aún).
-- [ ] `Skill.installed`/`installed_agents` pasan a ser relativos al scope activo.
-- [ ] Tests de discovery/skills_service actualizados.
+- [x] `SkillsService::load_state_for(project_root, scope)` — nuevo segundo parámetro
+  obligatorio. `Project` escanea solo `project_root`; `Global` escanea solo `$HOME`
+  (`home_override` en tests). Ya no mezcla ambos nunca.
+- [x] `SkillsService` gana un campo `scope: InstallScope` (default `Project`) + builder
+  `with_scope`, espejando el patrón ya existente de `project_root`/`home_override`.
+  `load_state()` (sin args) usa `self.scope`; nuevo `load_state_with_scope(scope)` para
+  cuando el caller tiene scope explícito pero no un `project_root` distinto.
+- [x] `Skill.installed`/`installed_agents` ahora son relativos al scope activo — antes era
+  la unión de ambos scopes, ahora es exactamente uno.
+- [x] Único call site de producción que necesitó tocarse: `commands::installation::refresh`
+  (el resto de los comandos usan `load_state()` sin args, sin cambios). Ganó un parámetro
+  IPC nuevo `scope: Option<InstallScope>`, default `Project` si el frontend viejo no lo manda
+  — mismo patrón "checkpoint seguro" que Fase 1+3.
+- [x] Tests: reescrito `load_state_also_reports_agents_the_skill_is_installed_for_globally`
+  (asumía el merge viejo) →
+  `load_state_for_never_mixes_project_and_global_scope_discovery`, que prueba explícitamente
+  que Project no ve lo instalado en Global y viceversa. 5 call sites en
+  `tests/skill_lifecycle.rs` actualizados con el nuevo parámetro (todos Project, sin cambio
+  de comportamiento).
 
 ### Fase 3 — Backend: install / uninstall / update ✅ (ver nota en Fase 1)
 

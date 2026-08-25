@@ -83,11 +83,16 @@ pub async fn uninstall_skills(
 /// actually pointed right now rather than the app's launch directory. An
 /// empty/whitespace-only value (or `None`, from the CLI which has no such
 /// concept) falls back to that launch directory — see `SkillsService`.
+/// `scope` is the app's single active Project/Global mode (see
+/// `InstallScope`); missing (an older frontend build not sending it yet)
+/// defaults to `Project`, same as everywhere else in the domain layer.
 #[tauri::command]
 pub fn refresh(
     state: State<'_, AppState>,
     project_path: Option<String>,
+    scope: Option<crate::domain::InstallScope>,
 ) -> Result<ApplicationConfig, AppError> {
+    let scope = scope.unwrap_or_default();
     match project_path
         .as_deref()
         .map(str::trim)
@@ -96,7 +101,7 @@ pub fn refresh(
         Some(path) => state
             .services
             .skills
-            .load_state_for(std::path::Path::new(path)),
-        None => state.services.skills.load_state(),
+            .load_state_for(std::path::Path::new(path), scope),
+        None => state.services.skills.load_state_with_scope(scope),
     }
 }

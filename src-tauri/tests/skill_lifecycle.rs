@@ -310,7 +310,7 @@ skills:
     );
 
     let before = service
-        .load_state_for(&root)
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
         .expect("load state before install");
     let triage_before = before
         .skills
@@ -326,7 +326,7 @@ skills:
     write_skill(&root, &[".agents", "skills"], "triage", "triage");
 
     let after = service
-        .load_state_for(&root)
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
         .expect("load state after install");
     let triage_after = after
         .skills
@@ -379,7 +379,7 @@ skills:
 
     write_skill(&root, &[".claude", "skills"], "triage", "triage");
     let installed = service
-        .load_state_for(&root)
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
         .expect("load state while installed");
     assert!(
         installed
@@ -393,7 +393,7 @@ skills:
     remove_skill(&root, &[".claude", "skills"], "triage");
 
     let deleted = service
-        .load_state_for(&root)
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
         .expect("load state after delete");
     let triage_after = deleted
         .skills
@@ -419,7 +419,7 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
     );
 
     let here = service
-        .load_state_for(&root)
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
         .expect("load state for the fixture root");
     assert!(here
         .skills
@@ -433,7 +433,10 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
     // scoped to the queried folder) — only `installed` must flip.
     let elsewhere = fixture_root("service-folder-scoping-elsewhere");
     let there = service
-        .load_state_for(&elsewhere)
+        .load_state_for(
+            &elsewhere,
+            skills_installer_lib::domain::InstallScope::Project,
+        )
         .expect("load state for an empty folder");
     let triage_there = there
         .skills

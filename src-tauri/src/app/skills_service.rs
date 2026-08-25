@@ -87,6 +87,13 @@ pub struct SkillsService {
     /// so a test run never picks up whatever the developer's own machine
     /// actually has installed globally.
     home_override: Option<PathBuf>,
+    /// Scope `load_state()` (the zero-arg convenience wrapper) discovers
+    /// against — see `load_state_for`. Defaults to `Project`; the GUI always
+    /// calls `load_state_for` with an explicit scope instead once it knows
+    /// the user's current selection (see `commands::installation::refresh`),
+    /// so this default only matters for the app's very first load and for
+    /// the bare CLI, neither of which has a scope switch of its own yet.
+    scope: crate::domain::InstallScope,
 }
 
 impl SkillsService {
@@ -319,6 +326,7 @@ impl SkillsService {
             project_root,
             preferences,
             home_override: None,
+            scope: crate::domain::InstallScope::Project,
         }
     }
 
@@ -332,43 +340,65 @@ impl SkillsService {
         self
     }
 
+    /// Sets the scope `load_state()` discovers against — see `scope`.
+    pub fn with_scope(mut self, scope: crate::domain::InstallScope) -> Self {
+        self.scope = scope;
+        self
+    }
+
     /// Configured (remote) skills plus locally discovered skills, merged:
     /// a configured skill whose `skill_name` matches something found on
     /// disk is marked `installed`; a locally discovered skill is only
     /// listed separately when there is no matching configured entry
     /// (otherwise it would show up as two cards for the same thing).
     pub fn load_state(&self) -> Result<ApplicationConfig, AppError> {
-        self.load_state_for(&self.project_root)
+        self.load_state_for(&self.project_root, self.scope)
+    }
+
+    /// Same as `load_state`, but with an explicit scope override instead of
+    /// this service's stored default — used when the caller (the GUI, via
+    /// `commands::installation::refresh`) knows the user's current scope
+    /// but has no explicit project-folder override to go with it (an empty
+    /// selection falls back to this service's own launch-time `project_root`
+    /// either way).
+    pub fn load_state_with_scope(
+        &self,
+        scope: crate::domain::InstallScope,
+    ) -> Result<ApplicationConfig, AppError> {
+        self.load_state_for(&self.project_root, scope)
     }
 
     /// Same as `load_state`, but scans `project_root` for installed Skills
-    /// instead of the app's launch-time directory. The GUI calls this with
-    /// whatever folder the user currently has selected in the header — the
+    /// instead of the app's launch-time directory, and discovers against
+    /// exactly one scope — `Project` scans only `project_root`'s agent
+    /// directories, `Global` scans only the user's home directory, never
+    /// both (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`: the app has a single
+    /// active scope, not a per-agent mix). The GUI calls this with whatever
+    /// folder/scope the user currently has selected in the header — the
     /// "Installed" badge must track that selection, not the folder the app
     /// happened to start in, or picking an empty folder would still show
     /// Skills as installed from wherever the app launched.
-    pub fn load_state_for(&self, project_root: &Path) -> Result<ApplicationConfig, AppError> {
+    pub fn load_state_for(
+        &self,
+        project_root: &Path,
+        scope: crate::domain::InstallScope,
+    ) -> Result<ApplicationConfig, AppError> {
         let mut config = self.config_service.load()?;
-        let mut installed_agents = discover_installed_agents(project_root);
-        // Global-scope installs (`~/.claude/skills`, etc.) live outside any
-        // project root, so they're folded in here rather than being part of
-        // `discover_installed_agents` itself — a skill installed in *both*
-        // scopes ends up with the union of every agent id from either. No
-        // resolvable home (override unset and `$HOME` missing) just means
-        // no Global results to fold in — best effort, same as everywhere
-        // else `discover_installed_agents_globally` gets called.
-        let home = self
-            .home_override
-            .clone()
-            .or_else(|| std::env::var_os("HOME").map(PathBuf::from));
-        if let Some(home) = home {
-            for (skill_name, agents) in discover_installed_agents_globally(&home) {
-                let entry = installed_agents.entry(skill_name).or_default();
-                entry.extend(agents);
-                entry.sort();
-                entry.dedup();
+        let installed_agents = match scope {
+            crate::domain::InstallScope::Project => discover_installed_agents(project_root),
+            crate::domain::InstallScope::Global => {
+                // No resolvable home (override unset and `$HOME` missing)
+                // just means no Global results — best effort, same as
+                // everywhere else `discover_installed_agents_globally` gets
+                // called.
+                let home = self
+                    .home_override
+                    .clone()
+                    .or_else(|| std::env::var_os("HOME").map(PathBuf::from));
+                home.map(|home| discover_installed_agents_globally(&home))
+                    .unwrap_or_default()
             }
-        }
+        };
         let local_source = self.resolve_local_source()?;
         let local_skills = local_source
             .as_deref()
@@ -1184,7 +1214,9 @@ skills:
         // not inherit that status — this is the exact bug report: picking
         // an empty destination folder still showed Skills as installed.
         let empty_folder = tempfile::tempdir().unwrap();
-        let elsewhere = service.load_state_for(empty_folder.path()).unwrap();
+        let elsewhere = service
+            .load_state_for(empty_folder.path(), crate::domain::InstallScope::Project)
+            .unwrap();
         let triage_elsewhere = elsewhere
             .skills
             .iter()
@@ -1239,13 +1271,16 @@ skills:
     }
 
     #[test]
-    fn load_state_also_reports_agents_the_skill_is_installed_for_globally() {
+    fn load_state_for_never_mixes_project_and_global_scope_discovery() {
+        // The app has a single active scope (see REFACTOR_PROJECT_GLOBAL_SCOPE.md):
+        // Project-scope discovery must never pick up a Global-only install,
+        // and vice versa — replaces the old always-merge-both behavior this
+        // test used to assert.
         let tmp = tempfile::tempdir().unwrap();
         let service = service_with_curated_config(tmp.path());
 
-        // Only installed at project scope for Codex/Cursor/... via the
-        // shared `.agents/skills` convention (see the test above) — nothing
-        // here yet at Global scope.
+        // Installed at project scope for Codex/Cursor/... via the shared
+        // `.agents/skills` convention.
         let shared_dir = tmp.path().join(".agents").join("skills").join("triage");
         std::fs::create_dir_all(&shared_dir).unwrap();
         std::fs::write(
@@ -1256,8 +1291,7 @@ skills:
 
         // Also installed at Global scope, exclusively for Claude Code — the
         // Global scope's `.claude/skills` isn't shared the way the Project
-        // scope's is (see AGENT_GLOBAL_DIRS), so this should add exactly
-        // one agent id to the union, not the whole Claude Code compat group.
+        // scope's is (see AGENT_GLOBAL_DIRS).
         let global_dir = tmp
             .path()
             .join("home")
@@ -1271,17 +1305,18 @@ skills:
         )
         .unwrap();
 
-        let state = service.load_state().unwrap();
-        let triage = state
+        let project_state = service
+            .load_state_for(tmp.path(), crate::domain::InstallScope::Project)
+            .unwrap();
+        let triage_project = project_state
             .skills
             .iter()
             .find(|s| s.skill_name == "triage")
             .unwrap();
-        assert!(triage.installed);
+        assert!(triage_project.installed);
         assert_eq!(
-            triage.installed_agents,
+            triage_project.installed_agents,
             vec![
-                "claude-code",
                 "codex",
                 "cursor",
                 "gemini-cli",
@@ -1293,7 +1328,23 @@ skills:
                 "universal",
                 "vscode",
                 "zed",
-            ]
+            ],
+            "Project scope must not include claude-code, which is only installed globally here"
+        );
+
+        let global_state = service
+            .load_state_for(tmp.path(), crate::domain::InstallScope::Global)
+            .unwrap();
+        let triage_global = global_state
+            .skills
+            .iter()
+            .find(|s| s.skill_name == "triage")
+            .unwrap();
+        assert!(triage_global.installed);
+        assert_eq!(
+            triage_global.installed_agents,
+            vec!["claude-code"],
+            "Global scope must report only claude-code, not the project-scoped agents"
         );
     }
 
