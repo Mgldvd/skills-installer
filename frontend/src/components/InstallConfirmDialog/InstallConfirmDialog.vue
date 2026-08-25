@@ -6,9 +6,13 @@
       </h2>
 
       <dl class="install-confirm-dialog__summary">
-        <div>
+        <div v-if="options.scope === 'project'">
           <dt>Project folder</dt>
           <dd>{{ projectPath }}</dd>
+        </div>
+        <div v-else>
+          <dt>Scope</dt>
+          <dd>Global (your home directory, not this project folder)</dd>
         </div>
         <div>
           <dt>Method</dt>
@@ -30,7 +34,6 @@
         >
           <AgentIcon :agent-id="id" />
           {{ agentLabel(id) }}
-          <span class="install-confirm-dialog__agent-scope">{{ scopeLabelFor(id) }}</span>
         </button>
       </div>
       <p v-if="activeAgents.length === 0" class="install-confirm-dialog__error" role="alert">
@@ -78,7 +81,7 @@ import { computed, ref, watch } from "vue";
 import { useNativeDialog } from "../../composables/useNativeDialog";
 
 import type { InstallOptions, Skill } from "../../types";
-import { agentLabel, resolveAgentScopes } from "../../utils/agents";
+import { agentLabel } from "../../utils/agents";
 import AgentIcon from "../AgentIcon/AgentIcon.vue";
 
 const props = defineProps<{
@@ -113,13 +116,6 @@ watch(
     if (open) activeAgents.value = [...props.options.agents];
   },
 );
-
-function scopeLabelFor(agentId: string): string {
-  const selection = resolveAgentScopes(agentId, props.options.agentScopes);
-  if (selection.project && selection.global) return "Project + Global";
-  if (selection.global) return "Global";
-  return "Project";
-}
 
 function toggleAgent(id: string) {
   activeAgents.value = activeAgents.value.includes(id)

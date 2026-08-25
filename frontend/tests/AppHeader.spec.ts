@@ -40,3 +40,31 @@ describe("AppHeader installation destination", () => {
     expect(wrapper.emitted("update:projectPath")).toBeUndefined();
   });
 });
+
+describe("AppHeader scope switch", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("shows the folder picker in Project mode and emits update:scope when Global is clicked", async () => {
+    const wrapper = mount(AppHeader, { props: baseProps });
+
+    expect(wrapper.find(".app-header__path").exists()).toBe(true);
+    expect(wrapper.find(".app-header__global-badge").exists()).toBe(false);
+    expect(wrapper.get('button[title="Install into the selected project folder"]').attributes("aria-pressed")).toBe(
+      "true",
+    );
+
+    await wrapper.get('button[title="Install into your home directory, for every project"]').trigger("click");
+    expect(wrapper.emitted("update:scope")).toEqual([["global"]]);
+  });
+
+  it("swaps the folder picker for a static Global destination and shows the badge in Global mode", () => {
+    const wrapper = mount(AppHeader, { props: { ...baseProps, scope: "global" } });
+
+    expect(wrapper.find(".app-header__path").exists()).toBe(false);
+    expect(wrapper.get(".app-header__global-badge").text()).toBe("Global");
+    expect(wrapper.get('button[title="Install into your home directory, for every project"]').attributes(
+      "aria-pressed",
+    )).toBe("true");
+    expect(wrapper.get(".app-header").classes()).toContain("app-header--global");
+  });
+});

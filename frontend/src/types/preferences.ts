@@ -1,4 +1,4 @@
-import type { AgentScopeSelection } from "./install";
+import type { InstallScope } from "./install";
 
 export interface UiPreferences {
   fontScale: number;
@@ -12,12 +12,13 @@ export interface UiPreferences {
   /** User-customized agent display order (Agents dialog + Skill card icons).
    * Empty means "no customization yet" — see `resolveAgentOrder`. */
   agentOrder: string[];
-  /** Per-agent installation scope — Project and Global aren't exclusive,
-   * so each agent gets its own independent pair of flags, set granularly in
-   * the Agents dialog. Replaced the old single app-wide "default scope"
-   * preference. An agent id missing from this map falls back to
-   * Project-only — see `resolveAgentScopes`. */
-  agentScopes: Record<string, AgentScopeSelection>;
+  /** The app's single active scope, remembered across launches — replaced
+   * the old per-agent `agentScopes` map (see
+   * REFACTOR_PROJECT_GLOBAL_SCOPE.md). */
+  lastScope: InstallScope;
+  /** The last project folder selected in the header, remembered across
+   * launches. */
+  lastProjectPath: string | null;
 }
 
 export interface SupportedAgent {
@@ -91,6 +92,7 @@ export function defaultPreferences(): UiPreferences {
     localSourcePath: null,
     compactCards: false,
     agentOrder: [],
-    agentScopes: {},
+    lastScope: "project",
+    lastProjectPath: null,
   };
 }

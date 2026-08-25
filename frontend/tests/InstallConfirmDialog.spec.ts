@@ -26,6 +26,32 @@ describe("InstallConfirmDialog", () => {
     expect(wrapper.find(".install-confirm-dialog__meta").exists()).toBe(false);
   });
 
+  it("shows the project folder in Project scope, and a Global note instead in Global scope", () => {
+    const projectWrapper = mount(InstallConfirmDialog, {
+      props: {
+        open: true,
+        skills: [makeSkill({ id: "a" })],
+        options: { ...defaultInstallOptions(), scope: "project" },
+        projectPath: "/tmp/project",
+      },
+    });
+    expect(projectWrapper.text()).toContain("Project folder");
+    expect(projectWrapper.text()).toContain("/tmp/project");
+    expect(projectWrapper.text()).not.toContain("Scope");
+
+    const globalWrapper = mount(InstallConfirmDialog, {
+      props: {
+        open: true,
+        skills: [makeSkill({ id: "a" })],
+        options: { ...defaultInstallOptions(), scope: "global" },
+        projectPath: "/tmp/project",
+      },
+    });
+    expect(globalWrapper.text()).toContain("Scope");
+    expect(globalWrapper.text()).toContain("Global");
+    expect(globalWrapper.text()).not.toContain("Project folder");
+  });
+
   it("only highlights the agent icons a partially-installed skill is actually gaining", () => {
     const wrapper = mount(InstallConfirmDialog, {
       props: {

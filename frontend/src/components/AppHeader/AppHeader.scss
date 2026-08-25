@@ -6,6 +6,15 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+
+  // A distinct treatment independent of the user's own configurable accent
+  // color — Global mode changes install/uninstall for every project on the
+  // machine, not just the one currently selected, so this needs to read as
+  // unmistakable regardless of which accent the user has picked.
+  &.app-header--global {
+    border-color: var(--warning);
+  }
 
   .app-header__brand {
     display: flex;
@@ -13,6 +22,52 @@
     align-items: center;
     gap: var(--space-xs);
     min-width: 0;
+  }
+
+  .app-header__global-badge {
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius-sm);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .app-header__scope-switch {
+    display: inline-flex;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+  }
+
+  .app-header__scope-btn {
+    padding: var(--space-2xs) var(--space-sm);
+    border: none;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:not(:first-child) {
+      border-left: 1px solid var(--border-soft);
+    }
+    &:hover {
+      color: var(--text-primary);
+    }
+    &.is-active {
+      background: var(--accent);
+      color: var(--bg-panel);
+    }
+  }
+
+  .app-header__destination--global .app-header__value {
+    color: var(--warning);
+    font-weight: 600;
   }
 
   .app-header__logo {

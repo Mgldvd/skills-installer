@@ -70,26 +70,6 @@
     font-size: var(--font-size-xs);
   }
 
-  // The bulk shortcut up top just seeds every agent's individual scope in
-  // one click — each row's own toggle (below) remains freely overridable
-  // afterward, so this never "locks" the granular choice.
-  .agents-dialog__bulk-scope {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--bg-muted);
-  }
-
-  .agents-dialog__bulk-scope-label {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-  }
-
   .agents-dialog__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -236,48 +216,12 @@
     @include dialog.button-primary;
   }
 
-  // Reused for both the per-row toggle and the bulk "set every agent"
-  // shortcut up top — same pill, same two options.
-  .agents-dialog__scope {
-    display: inline-flex;
-    flex: 0 0 auto;
-    overflow: hidden;
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    cursor: default;
-  }
-
-  .agents-dialog__scope-btn {
-    padding: var(--space-2xs) var(--space-xs);
-    border: none;
-    background: var(--bg-card);
-    color: var(--text-muted);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    cursor: pointer;
-
-    &:not(:first-child) {
-      border-left: 1px solid var(--border-soft);
-    }
-    &:hover {
-      color: var(--text-primary);
-    }
-    &.is-active {
-      background: var(--accent);
-      color: var(--bg-panel);
-    }
-  }
-
   @media (max-width: 780px) {
     .agents-dialog__list {
       grid-template-columns: 1fr;
     }
     .agents-dialog__toggle {
       flex-wrap: wrap;
-    }
-    .agents-dialog__scope {
-      flex: 1 1 100%;
-      margin-left: calc(1.1rem + 1.55rem + 2.2rem + var(--space-sm) * 3);
     }
   }
 }

@@ -170,26 +170,67 @@ Project scope hasta que el frontend empiece a mandar `scope`/`UninstallRequest.s
 ambos default a `Project` vía `#[serde(default)]`. Checkpoint seguro: nada se rompe estando a
 medio camino.
 
-### Fase 4 — Frontend: estado
+### Fase 4 — Frontend: estado ✅ (completada junto con Fase 5+6 — misma razón que Fase 1+3:
 
-- [ ] `state.projectRoot: string` + scope implícito por-agente → `state.scope: "project" |
-  "global"` + `state.projectPath: string` como única fuente de verdad.
-- [ ] Revisar cada lectura actual de `state.projectRoot` contra el nuevo modelo.
+no se puede compilar/tipar a medias)
 
-### Fase 5 — Frontend: AppHeader como selector de modo
+- [x] **Desviación del plan**: no se renombró `state.projectRoot` → `projectPath`. El backend
+  ya devuelve `ApplicationConfig.projectRoot` con ese nombre (`config.project_root` en Rust,
+  sin relación con `InstallOptions.project_path`), así que renombrar solo el lado del frontend
+  agregaba diff/riesgo sin beneficio real — se mantuvo `state.projectRoot` tal cual.
+- [x] **Desviación del plan**: no se agregó un `state.scope` separado. El scope vive
+  directamente en `state.preferences.lastScope` — mismo patrón que `accent`/`compactCards`/etc.,
+  que ya son a la vez el valor persistido y el valor en vivo que la UI lee. Un `state.scope`
+  aparte hubiera sido una copia sincronizada redundante, no una simplificación real.
+- [x] `types/install.ts`: `AgentScopeSelection` eliminado, `InstallOptions.agentScopes` →
+  `InstallOptions.scope: InstallScope`, `UninstallRequest` gana `scope: InstallScope`.
+- [x] `types/preferences.ts`: `UiPreferences.agentScopes` → `lastScope`/`lastProjectPath`
+  (espejo exacto de la Fase 1 en Rust).
+- [x] `utils/agents.ts`: `resolveAgentScopes` eliminado (ya no aplica — scope no es por-agente).
+- [x] `App.vue`: `installOptionsFromPreferences`, `confirmUninstall` (bulk-uninstall — esto es
+  literalmente el fix del gap que motivó todo el refactor, gratis), `refresh()`
+  (`useSkills.ts`) y `backend.refresh()` pasan `scope` ahora. `onMounted` restaura
+  `lastProjectPath`/`lastScope` al arrancar y sólo dispara un refresh extra si eso realmente
+  cambia algo (ojo: la primera versión de esto refrescaba siempre que `projectRoot` fuera
+  no-vacío, que es prácticamente siempre — el bug se detectó vía tests, ver más abajo).
 
-- [ ] Control tipo toggle/segmented "Project" / "Global" en el header.
-- [ ] Modo Project: look actual (botón de carpeta).
-- [ ] Modo Global: tratamiento visual distinto decidido en Fase 0.
-- [ ] Cambiar de modo dispara refresh de skills/discovery.
-- [ ] Tests de `AppHeader.spec.ts` (crear si no existe, o actualizar).
+### Fase 5 — Frontend: AppHeader como selector de modo ✅
 
-### Fase 6 — Frontend: simplificar AgentsDialog
+- [x] Control segmentado "Project"/"Global" en el header (`AppHeader.vue`), props
+  `scope`/`v-model:scope` nuevas.
+- [x] Modo Project: look actual (botón de carpeta).
+- [x] Modo Global: borde del header en `var(--warning)` (ámbar, no rojo — no debe leerse como
+  error) + badge de texto "Global" junto al `<h1>`, independiente del accent configurable del
+  usuario. El bloque "Project folder" se reemplaza por "Destination: Your home directory —
+  every project" en vez de mostrar una carpeta irrelevante.
+- [x] Cambiar de modo (`handleScopeUpdate` en `App.vue`) persiste `lastScope` y dispara
+  `refresh()`.
+- [x] `AppHeader.spec.ts` ya tenía `scope` en sus props base (de una versión anterior no
+  commiteada de este trabajo, aparentemente) — se agregaron 2 tests nuevos para el switch
+  (click emite `update:scope`, look de Global con badge/borde).
 
-- [ ] Quitar los botones Project/Global por agente y el toggle masivo.
-- [ ] AgentsDialog queda solo para habilitar agentes + reordenar.
-- [ ] Quitar plumbing muerto de `agentScopes` en `App.vue`/`AgentsDialog.vue`.
-- [ ] `AgentsDialog.spec.ts` actualizado (se van los tests de toggle de scope).
+### Fase 6 — Frontend: simplificar AgentsDialog ✅
+
+- [x] Quitados los botones Project/Global por agente y el toggle masivo (`agents-dialog__scope`,
+  `agents-dialog__bulk-scope` y su SCSS).
+- [x] AgentsDialog queda solo para habilitar agentes + reordenar. Cada fila ahora muestra
+  **ambas** rutas (Project y Global) siempre, como info de referencia estática — ya no hay un
+  estado "No scope enabled" (no tiene sentido cuando el scope no es por-agente).
+- [x] Quitado el plumbing de `agentScopes`/`handleAgentScopesUpdate` en `App.vue`/`AgentsDialog.vue`.
+- [x] `AgentsDialog.spec.ts`: quitado el prop `agentScopes: {}` ya inexistente (Vue lo ignoraba
+  silenciosamente — no rompía nada pero era basura); agregado un test nuevo verificando que
+  ambas rutas se muestran siempre y que no queda ningún control de scope.
+
+Bug propio detectado y arreglado en el camino: la primera versión de la restauración de
+`onMounted` disparaba un `refresh()` extra en **cada** arranque (la condición usaba
+`state.projectRoot` truthy, que es casi siempre cierto) en vez de solo cuando la carpeta/scope
+restaurados realmente difieren del estado recién cargado — 4 tests de `App.spec.ts` lo
+detectaron por cascada (llamadas a mocks con argumentos/orden inesperados). Corregido comparando
+contra el `projectRoot` de antes de restaurar.
+
+`task typecheck`/`task lint`/`task test` verdes desde la raíz: 184 tests Rust + 9 de integración
+
++ 229 frontend (225 + 4 nuevos: AppHeader×2, AgentsDialog×1, InstallConfirmDialog×1).
 
 ### Fase 7 — Bulk uninstall (verificación, no trabajo nuevo si Fases 2+3 están bien)
 

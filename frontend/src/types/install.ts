@@ -1,22 +1,13 @@
 import type { SkillSelection } from "./skill";
 
+/** The app's single active scope — see REFACTOR_PROJECT_GLOBAL_SCOPE.md.
+ * Replaced the old per-agent, non-exclusive `AgentScopeSelection`: one value
+ * applies to every agent in a request, mirroring Rust's `InstallScope`. */
 export type InstallScope = "project" | "global";
-
-/** An agent's scope isn't exclusive — it can install to the project *and*
- * the user's global directory from one action, so this is two independent
- * flags rather than a single `InstallScope`. Mirrors Rust's
- * `AgentScopeSelection`. */
-export interface AgentScopeSelection {
-  project: boolean;
-  global: boolean;
-}
 
 export interface InstallOptions {
   agents: string[];
-  /** Per-agent scope override — see `UiPreferences.agentScopes` and
-   * `resolveAgentScopes`. An agent id missing here falls back to
-   * `{ project: true, global: false }`. */
-  agentScopes: Record<string, AgentScopeSelection>;
+  scope: InstallScope;
   projectPath: string | null;
   copy: boolean;
   dryRun: boolean;
@@ -64,6 +55,7 @@ export type InstallProgressEvent =
 // the local skills.yaml and never touches installed files.
 export interface UninstallRequest {
   selection: SkillSelection;
+  scope: InstallScope;
   projectPath: string | null;
 }
 
@@ -77,7 +69,7 @@ export interface UninstallResult {
 export function defaultInstallOptions(): InstallOptions {
   return {
     agents: ["universal"],
-    agentScopes: {},
+    scope: "project",
     projectPath: null,
     copy: true,
     dryRun: false,

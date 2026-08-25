@@ -32,31 +32,6 @@
             share Universal's folder — a Skill card collapses all of these into one Universal icon.
           </span>
         </p>
-        <div class="agents-dialog__bulk-scope">
-          <span class="agents-dialog__bulk-scope-label">Toggle for every agent</span>
-          <span class="agents-dialog__scope" role="group" aria-label="Select or deselect an installation scope for every agent">
-            <button
-              type="button"
-              class="agents-dialog__scope-btn"
-              :class="{ 'is-active': allHaveScope('project') }"
-              :aria-pressed="allHaveScope('project')"
-              :title="allHaveScope('project') ? 'Deselect Project for every agent' : 'Select Project for every agent'"
-              @click="toggleScopeForAll('project')"
-            >
-              Project
-            </button>
-            <button
-              type="button"
-              class="agents-dialog__scope-btn"
-              :class="{ 'is-active': allHaveScope('global') }"
-              :aria-pressed="allHaveScope('global')"
-              :title="allHaveScope('global') ? 'Deselect Global for every agent' : 'Select Global for every agent'"
-              @click="toggleScopeForAll('global')"
-            >
-              Global
-            </button>
-          </span>
-        </div>
         <div class="agents-dialog__list">
           <div
             v-for="agent in orderedAgents"
@@ -97,43 +72,21 @@
             <span class="agents-dialog__info">
               <strong>{{ agent.label }}</strong>
               <span class="agents-dialog__paths">
-                <span v-if="!pathsFor(agent.id).length" class="agents-dialog__path">No scope enabled</span>
                 <span
-                  v-for="entry in pathsFor(agent.id)"
-                  :key="entry.scope"
                   class="agents-dialog__path"
                   :class="{ 'agents-dialog__path--own': !isUniversalGroup(agent.id) }"
-                  :title="`${entry.scope === 'global' ? 'Global' : 'Project'}: ${entry.path}`"
+                  :title="`Project: ${agent.projectPath}`"
                 >
-                  {{ entry.scope === "global" ? "Global" : "Project" }}: {{ entry.path }}
+                  Project: {{ agent.projectPath }}
+                </span>
+                <span
+                  class="agents-dialog__path"
+                  :class="{ 'agents-dialog__path--own': !isUniversalGroup(agent.id) }"
+                  :title="`Global: ${agent.globalPath}`"
+                >
+                  Global: {{ agent.globalPath }}
                 </span>
               </span>
-            </span>
-            <span
-              class="agents-dialog__scope"
-              role="group"
-              :aria-label="`Installation scope for ${agent.label}`"
-              @click.stop
-              @keydown.stop
-            >
-              <button
-                type="button"
-                class="agents-dialog__scope-btn"
-                :class="{ 'is-active': scopesFor(agent.id).project }"
-                :aria-pressed="scopesFor(agent.id).project"
-                @click="toggleScope(agent.id, 'project')"
-              >
-                Project
-              </button>
-              <button
-                type="button"
-                class="agents-dialog__scope-btn"
-                :class="{ 'is-active': scopesFor(agent.id).global }"
-                :aria-pressed="scopesFor(agent.id).global"
-                @click="toggleScope(agent.id, 'global')"
-              >
-                Global
-              </button>
             </span>
           </div>
         </div>
@@ -145,33 +98,29 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { useNativeDialog } from "../../composables/useNativeDialog";
-import { isUniversalGroup, resolveAgentOrder, resolveAgentScopes } from "../../utils/agents";
+import { isUniversalGroup, resolveAgentOrder } from "../../utils/agents";
 import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import CloseButton from "../CloseButton/CloseButton.vue";
-import { SUPPORTED_AGENTS, type AgentScopeSelection, type InstallScope } from "../../types";
+import { SUPPORTED_AGENTS } from "../../types";
 const props = defineProps<{
   open: boolean;
   modelValue: string[];
   agentOrder: string[];
-  agentScopes: Record<string, AgentScopeSelection>;
 }>();
 const emit = defineEmits<{
   "update:open": [boolean];
   "update:modelValue": [string[]];
   "update:agentOrder": [string[]];
-  "update:agentScopes": [Record<string, AgentScopeSelection>];
 }>();
 const dialogEl = ref<HTMLDialogElement | null>(null),
   selected = ref<string[]>([...props.modelValue]),
-  order = ref<string[]>(resolveAgentOrder(props.agentOrder)),
-  scopes = ref<Record<string, AgentScopeSelection>>({ ...props.agentScopes });
+  order = ref<string[]>(resolveAgentOrder(props.agentOrder));
 watch(
   () => props.open,
   (open) => {
     if (open) {
       selected.value = [...props.modelValue];
       order.value = resolveAgentOrder(props.agentOrder);
-      scopes.value = { ...props.agentScopes };
     }
   },
 );
@@ -204,45 +153,6 @@ function handleDragOver(overId: string) {
 function handleDragEnd() {
   if (draggedId.value) emit("update:agentOrder", order.value);
   draggedId.value = null;
-}
-function scopesFor(agentId: string): AgentScopeSelection {
-  return resolveAgentScopes(agentId, scopes.value);
-}
-// Applied immediately (not gated behind "Done") — same as `agentOrder`'s
-// drag-and-drop reordering, since this reads as a settings toggle rather
-// than a selection the user is still building up. Project and Global are
-// independent: toggling one never clears the other, so an agent can be
-// active for both at once.
-function toggleScope(agentId: string, scope: InstallScope) {
-  const current = scopesFor(agentId);
-  const next = { ...current, [scope]: !current[scope] };
-  scopes.value = { ...scopes.value, [agentId]: next };
-  emit("update:agentScopes", scopes.value);
-}
-function allHaveScope(scope: InstallScope): boolean {
-  return SUPPORTED_AGENTS.every((agent) => scopesFor(agent.id)[scope]);
-}
-// A "select all / deselect all" toggle, not a one-way "turn on" action:
-// already-all-enabled flips every agent off, otherwise it flips every agent
-// on — mirrors the familiar header-checkbox pattern.
-function toggleScopeForAll(scope: InstallScope) {
-  const enable = !allHaveScope(scope);
-  const next: Record<string, AgentScopeSelection> = {};
-  for (const agent of SUPPORTED_AGENTS) next[agent.id] = { ...scopesFor(agent.id), [scope]: enable };
-  scopes.value = next;
-  emit("update:agentScopes", next);
-}
-// Only the scopes actually enabled for this agent — an agent with neither
-// flag on (a deliberate "off" state, distinct from "never customized") has
-// no path to show at all.
-function pathsFor(agentId: string): { scope: InstallScope; path: string }[] {
-  const agent = SUPPORTED_AGENTS.find((candidate) => candidate.id === agentId);
-  if (!agent) return [];
-  const selection = scopesFor(agentId);
-  const entries: { scope: InstallScope; path: string }[] = [];
-  if (selection.project) entries.push({ scope: "project", path: agent.projectPath });
-  if (selection.global) entries.push({ scope: "global", path: agent.globalPath });
-  return entries;
 }
 // Agents (other than Universal itself) that share Universal's folder — a
 // static fact about each agent's own documented convention, independent of

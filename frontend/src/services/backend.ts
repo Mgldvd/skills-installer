@@ -8,6 +8,7 @@ import type {
   InstallProgressEvent,
   InstallRequest,
   InstallResult,
+  InstallScope,
   ParsedSkillSource,
   Project,
   Skill,
@@ -180,8 +181,8 @@ export async function uninstallSkills(request: UninstallRequest): Promise<Uninst
   return call("uninstall_skills", { request });
 }
 
-export async function refresh(projectPath?: string): Promise<ApplicationConfig> {
-  return call("refresh", { projectPath });
+export async function refresh(projectPath?: string, scope?: InstallScope): Promise<ApplicationConfig> {
+  return call("refresh", { projectPath, scope });
 }
 
 /** Local-only, on-demand check — returns the ids of installed Local skills whose `.signature` no longer matches the Local Skill Source catalog. */

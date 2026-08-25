@@ -1,7 +1,12 @@
 <template>
   <div class="app-shell">
     <main class="app-shell__main">
-      <AppHeader :project-path="state.projectRoot" @update:project-path="handleProjectPathUpdate" />
+      <AppHeader
+        :project-path="state.projectRoot"
+        :scope="state.preferences.lastScope"
+        @update:project-path="handleProjectPathUpdate"
+        @update:scope="handleScopeUpdate"
+      />
 
       <SkillToolbar
         :tags="state.tags"
@@ -224,10 +229,8 @@
       v-model:open="isAgentsOpen"
       :model-value="state.preferences.defaultAgents"
       :agent-order="state.preferences.agentOrder"
-      :agent-scopes="state.preferences.agentScopes"
       @update:model-value="handleAgentsUpdate"
       @update:agent-order="handleAgentOrderUpdate"
-      @update:agent-scopes="handleAgentScopesUpdate"
     />
     <TagsDialog
       v-model:open="isTagsOpen"
@@ -280,7 +283,7 @@ import { usePreferences } from "./composables/usePreferences";
 import { useSkills } from "./composables/useSkills";
 import { useToasts } from "./composables/useToasts";
 import * as backend from "./services/backend";
-import type { AgentScopeSelection, InstallRequest, Skill } from "./types";
+import type { InstallRequest, InstallScope, Skill } from "./types";
 import { formatAgents, resolveAgentOrder } from "./utils/agents";
 import { agentsNeedingInstall } from "./utils/skillInstall";
 
@@ -458,10 +461,9 @@ const installingSkillId = computed(() =>
 
 const installOptionsFromPreferences = computed(() => ({
   agents: state.preferences.defaultAgents,
-  agentScopes: state.preferences.agentScopes,
-  // Always passed through now — some selected agent may still resolve to
-  // Project scope even when others resolve to Global; the backend ignores
-  // this for any agent whose own resolved scope is Global.
+  scope: state.preferences.lastScope,
+  // Ignored by the backend entirely when scope is Global — see
+  // `SkillsCliInstaller::resolve_cwd`.
   projectPath: state.projectRoot,
   copy: state.preferences.copyByDefault,
   dryRun: false,
@@ -472,6 +474,14 @@ const installOptionsFromPreferences = computed(() => ({
 function handleProjectPathUpdate(path: string) {
   state.projectRoot = path;
   refresh().catch((error) => pushToast(describeError(error), "error"));
+  updatePreferencesPartial({ lastProjectPath: path }).catch((error) => pushToast(describeError(error), "error"));
+}
+
+function handleScopeUpdate(scope: InstallScope) {
+  if (scope === state.preferences.lastScope) return;
+  updatePreferencesPartial({ lastScope: scope })
+    .then(() => refresh())
+    .catch((error) => pushToast(describeError(error), "error"));
 }
 
 // Shared by every Pack badge toggle: all-selected flips to none, anything
@@ -518,6 +528,17 @@ function describeError(error: unknown): string {
 onMounted(async () => {
   try {
     await Promise.all([loadAll(), loadPreferences(), projects.loadAll()]);
+    // loadAll()'s initial load always comes back Project-scoped against the
+    // app's own launch directory (the backend has no preferences to consult
+    // yet at that point) — once the persisted scope/folder are in, restore
+    // them and reload, but only if doing so actually changes anything; most
+    // launches have nothing to restore, and re-scanning identical state on
+    // every single startup would be pure waste.
+    const launchProjectRoot = state.projectRoot;
+    if (state.preferences.lastProjectPath) state.projectRoot = state.preferences.lastProjectPath;
+    if (state.preferences.lastScope === "global" || state.projectRoot !== launchProjectRoot) {
+      await refresh();
+    }
   } catch (error) {
     pushToast(describeError(error), "error");
   }
@@ -568,9 +589,6 @@ function handleAgentsUpdate(agents: string[]) {
 }
 function handleAgentOrderUpdate(order: string[]) {
   updatePreferencesPartial({ agentOrder: order }).catch((error) => pushToast(describeError(error), "error"));
-}
-function handleAgentScopesUpdate(scopes: Record<string, AgentScopeSelection>) {
-  updatePreferencesPartial({ agentScopes: scopes }).catch((error) => pushToast(describeError(error), "error"));
 }
 function handleLocalRefresh() {
   refresh().catch((error) => pushToast(describeError(error), "error"));
@@ -812,6 +830,7 @@ async function confirmUninstall() {
   try {
     const result = await backend.uninstallSkills({
       selection: { skillIds: [...deleteSelectedIds.value] },
+      scope: state.preferences.lastScope,
       projectPath: state.projectRoot,
     });
     exitDeleteMode();

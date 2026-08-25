@@ -37,7 +37,7 @@ export function useSkills() {
   }
 
   async function refresh() {
-    const config = await backend.refresh(state.projectRoot);
+    const config = await backend.refresh(state.projectRoot, state.preferences.lastScope);
     state.skills = config.skills;
     state.groups = config.groups;
     state.tags = config.tags ?? [];

@@ -393,7 +393,7 @@ describe("App", () => {
     wrapper.findComponent(AppHeader).vm.$emit("update:projectPath", "/home/user/empty-folder");
     await flushPromises();
 
-    expect(backend.refresh).toHaveBeenCalledWith("/home/user/empty-folder");
+    expect(backend.refresh).toHaveBeenCalledWith("/home/user/empty-folder", "project");
     expect(state.projectRoot).toBe("/home/user/empty-folder");
     expect(state.skills.find((s) => s.id === "a")?.installed).toBe(false);
   });
@@ -530,7 +530,7 @@ describe("App", () => {
     expect(wrapper.find(".app-shell__footer-row").text()).not.toContain("Universal");
   });
 
-  it("keeps the header down to just the brand and Install to, on the right", async () => {
+  it("keeps the header down to just the brand, scope switch, and destination on the right", async () => {
     mockLoadedApp();
     const wrapper = mount(App);
     await flushPromises();
@@ -539,7 +539,7 @@ describe("App", () => {
     const classNames = items.map(
       (item) => item.classes().find((c) => c !== "app-header__item" && c.startsWith("app-header__")),
     );
-    expect(classNames).toEqual(["app-header__brand", "app-header__destination"]);
+    expect(classNames).toEqual(["app-header__brand", "app-header__scope-switch", "app-header__destination"]);
   });
 
   it("opens the Agents dialog by clicking anywhere on the footer's icon summary", async () => {

@@ -1,4 +1,4 @@
-import { SUPPORTED_AGENTS, type AgentScopeSelection } from "../types";
+import { SUPPORTED_AGENTS } from "../types";
 
 export function agentLabel(id: string): string {
   return SUPPORTED_AGENTS.find((agent) => agent.id === id)?.label ?? id;
@@ -33,14 +33,6 @@ export function resolveAgentOrder(order: string[]): string[] {
 export function sortByAgentOrder(ids: string[], order: string[]): string[] {
   const rank = new Map(order.map((id, index) => [id, index]));
   return [...ids].sort((a, b) => (rank.get(a) ?? order.length) - (rank.get(b) ?? order.length));
-}
-
-/** An agent id missing from `scopes` (a newly added agent, or simply never
- * customized) falls back to Project-only — mirrors the identical rule on
- * the Rust side (`InstallOptions::scopes_for`). Project and Global aren't
- * exclusive: both flags can be true at once. */
-export function resolveAgentScopes(agentId: string, scopes: Record<string, AgentScopeSelection>): AgentScopeSelection {
-  return scopes[agentId] ?? { project: true, global: false };
 }
 
 /** Whether `agentId` installs into the *exact* directory Universal itself

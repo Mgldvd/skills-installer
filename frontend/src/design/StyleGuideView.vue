@@ -465,8 +465,8 @@
       <div class="sg-block">
         <h3>AppHeader</h3>
         <div class="sg-stack">
-          <AppHeader v-model:project-path="demoProjectPath" />
-          <AppHeader project-path="" />
+          <AppHeader v-model:project-path="demoProjectPath" v-model:scope="demoScope" />
+          <AppHeader project-path="" scope="global" />
         </div>
       </div>
 
@@ -659,7 +659,7 @@
         SkillGrid, sharing the same live filter/selection state.
       </p>
       <div class="sg-composite-frame">
-        <AppHeader v-model:project-path="demoProjectPath" />
+        <AppHeader v-model:project-path="demoProjectPath" v-model:scope="demoScope" />
         <SkillToolbar
           :tags="mockTags"
           :skills="mockSkills"
@@ -736,7 +736,7 @@ import SourceIcon from "../components/SourceIcon/SourceIcon.vue";
 import TagsDialog from "../components/TagsDialog/TagsDialog.vue";
 import ToastHost from "../components/ToastHost/ToastHost.vue";
 import { useToasts } from "../composables/useToasts";
-import { SUPPORTED_AGENTS, type Skill, type SkillGroup, type UiPreferences } from "../types";
+import { SUPPORTED_AGENTS, type InstallScope, type Skill, type SkillGroup, type UiPreferences } from "../types";
 import { agentLabel } from "../utils/agents";
 import {
   mockGroups,
@@ -941,6 +941,7 @@ const skillCardDemos: { title: string; skill: Skill; selected: boolean; installi
 
 // --- Navigation --------------------------------------------------------------
 const demoProjectPath = ref("/home/dev/acme/marketing-site");
+const demoScope = ref<InstallScope>("project");
 
 // --- Lists & tables ------------------------------------------------------------
 const groupChips = mockGroups.map((group) => ({
