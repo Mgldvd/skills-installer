@@ -7,8 +7,8 @@ pub mod error;
 pub mod installer;
 pub mod platform;
 pub mod preferences;
+pub mod presets;
 pub mod process;
-pub mod projects;
 pub mod skills;
 
 use std::path::PathBuf;
@@ -171,9 +171,9 @@ fn run_gui(config_override: Option<PathBuf>) {
             commands::preferences::get_preferences,
             commands::preferences::update_preferences,
             commands::preferences::install_cli_command,
-            commands::projects::get_projects,
-            commands::projects::save_project,
-            commands::projects::delete_project,
+            commands::presets::get_presets,
+            commands::presets::save_preset,
+            commands::presets::delete_preset,
             commands::installation::get_dependency_status,
             commands::installation::validate_installation,
             commands::installation::install_skills,
