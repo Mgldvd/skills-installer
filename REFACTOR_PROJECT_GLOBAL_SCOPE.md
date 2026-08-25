@@ -81,40 +81,50 @@ REFACTOR_PROJECT_GLOBAL_SCOPE.md en la raíz del repo. Antes de escribir código
 - ✅ Renombrar el concepto actual de "Project" (preset sin ruta) → **`Preset`**, liberando
   "Project" para que signifique solo la carpeta/modo activo. Ver Fase 8.
 
-## Decisiones pendientes (resolver en Fase 0 antes de tocar código)
+## Decisiones ya tomadas (Fase 0, 2026-08-25)
 
-- [ ] cwd de fallback para el subproceso CLI en modo Global puro (sin carpeta project seteada).
-      Opciones: `$HOME`, última carpeta usada, o exigir que siempre haya una carpeta aunque
-      el modo sea Global.
-- [ ] ¿Persistir el último modo/carpeta usados entre lanzamientos, o seguir reseteando a vacío
-      como hoy (`state.projectRoot` actualmente no persiste)?
+- ✅ cwd de fallback en modo Global puro: **`$HOME`**. Semánticamente correcto (los dirs
+  globales viven bajo `$HOME`) y siempre existe, a diferencia de "última carpeta usada" que
+  puede no existir más.
+- ✅ Persistencia: **sí**, se agrega `last_scope: InstallScope` y `last_project_path:
+  Option<String>` a `UiPreferences`, restaurados al abrir la app (reemplaza el reseteo a
+  vacío actual de `state.projectRoot`).
+- ✅ Look de modo Global en el header: acento ámbar/naranja (`--danger`-adjacent pero no rojo,
+  para no leerse como error) en el borde inferior del header + badge de texto "GLOBAL" junto
+  al `<h1>`, independiente del accent color configurable del usuario — así se distingue
+  siempre, sea cual sea la paleta elegida.
 
 ---
 
 ## Checklist
 
 ### Fase 0 — Decisiones de diseño
-- [ ] Resolver cwd de fallback en modo Global puro (ver arriba).
-- [ ] Resolver persistencia de último modo/carpeta (ver arriba).
-- [ ] Mockup/decisión concreta del look distinto del header en modo Global (color/acento/badge).
+
+- [x] Resolver cwd de fallback en modo Global puro (ver arriba: `$HOME`).
+- [x] Resolver persistencia de último modo/carpeta (ver arriba: sí, en `UiPreferences`).
+- [x] Mockup/decisión concreta del look distinto del header en modo Global (ver arriba:
+  acento ámbar + badge "GLOBAL").
 
 ### Fase 1 — Backend: modelo de dominio
+
 - [ ] `InstallOptions.agent_scopes: HashMap<...>` → `InstallOptions.scope: InstallScope`.
 - [ ] Eliminar `AgentScopeSelection` de uso activo (mantener solo para migración de
-      preferencias viejas).
+  preferencias viejas).
 - [ ] `UiPreferences`: quitar `agent_scopes`; agregar `last_scope: InstallScope` y, si Fase 0
-      lo decidió, `last_project_path: Option<String>`.
+  lo decidió, `last_project_path: Option<String>`.
 - [ ] Migración: un `preferences.json` viejo con `agent_scopes` debe seguir cargando sin
-      error, derivando un `last_scope` inicial razonable (Project por defecto).
+  error, derivando un `last_scope` inicial razonable (Project por defecto).
 - [ ] Tests Rust de dominio actualizados/reescritos.
 
 ### Fase 2 — Backend: discovery
+
 - [ ] `SkillsService::load_state_for` recibe el `scope` activo y escanea **solo** los
-      directorios correspondientes (ya no mezcla project+global siempre).
+  directorios correspondientes (ya no mezcla project+global siempre).
 - [ ] `Skill.installed`/`installed_agents` pasan a ser relativos al scope activo.
 - [ ] Tests de discovery/skills_service actualizados.
 
 ### Fase 3 — Backend: install / uninstall / update
+
 - [ ] `add_args_for_skill`: de "hasta 2 grupos" → siempre 1 grupo con el scope activo.
 - [ ] `remove()`: pasar `--global` cuando el scope activo es Global.
 - [ ] `update`: usar el scope directo en vez de `any_global()`.
@@ -122,11 +132,13 @@ REFACTOR_PROJECT_GLOBAL_SCOPE.md en la raíz del repo. Antes de escribir código
 - [ ] Tests de `skills_cli.rs` actualizados (los de `agent_scopes`/grupos duales se reescriben).
 
 ### Fase 4 — Frontend: estado
+
 - [ ] `state.projectRoot: string` + scope implícito por-agente → `state.scope: "project" |
-      "global"` + `state.projectPath: string` como única fuente de verdad.
+  "global"` + `state.projectPath: string` como única fuente de verdad.
 - [ ] Revisar cada lectura actual de `state.projectRoot` contra el nuevo modelo.
 
 ### Fase 5 — Frontend: AppHeader como selector de modo
+
 - [ ] Control tipo toggle/segmented "Project" / "Global" en el header.
 - [ ] Modo Project: look actual (botón de carpeta).
 - [ ] Modo Global: tratamiento visual distinto decidido en Fase 0.
@@ -134,31 +146,35 @@ REFACTOR_PROJECT_GLOBAL_SCOPE.md en la raíz del repo. Antes de escribir código
 - [ ] Tests de `AppHeader.spec.ts` (crear si no existe, o actualizar).
 
 ### Fase 6 — Frontend: simplificar AgentsDialog
+
 - [ ] Quitar los botones Project/Global por agente y el toggle masivo.
 - [ ] AgentsDialog queda solo para habilitar agentes + reordenar.
 - [ ] Quitar plumbing muerto de `agentScopes` en `App.vue`/`AgentsDialog.vue`.
 - [ ] `AgentsDialog.spec.ts` actualizado (se van los tests de toggle de scope).
 
 ### Fase 7 — Bulk uninstall (verificación, no trabajo nuevo si Fases 2+3 están bien)
+
 - [ ] Confirmar que bulk-uninstall ya respeta el scope activo automáticamente.
 - [ ] Cerrar el gap conocido de "bulk uninstall no cubre Global" documentado antes de este
-      refactor.
+  refactor.
 
 ### Fase 8 — Rename Project → Preset
+
 - [ ] `domain::Project` → `domain::Preset`.
 - [ ] `ProjectsService` → `PresetsService`; `projects.json` → `presets.json` (con migración
-      de nombre de archivo si ya existe uno viejo).
+  de nombre de archivo si ya existe uno viejo).
 - [ ] `ProjectsDialog.vue` → `PresetsDialog.vue`; `useProjects.ts` → `usePresets.ts`.
 - [ ] Textos de UI en español/inglés actualizados donde digan "Project" refiriéndose al preset.
 - [ ] `PROMT.md` línea 13 ("alcance Project o Global") revisada/actualizada si el lenguaje
-      cambió con este refactor.
+  cambió con este refactor.
 
 ### Fase 9 — Tests y validación final
+
 - [ ] Test de migración explícito: cargar un `preferences.json` viejo con `agent_scopes` y
-      confirmar que no rompe y cae en un `last_scope` sano.
+  confirmar que no rompe y cae en un `last_scope` sano.
 - [ ] `task typecheck`, `task lint`, `task test` en verde desde la raíz.
 - [ ] Verificación manual en la app real (no solo tests) de: cambiar de modo en el header,
-      instalar en cada modo, desinstalar en cada modo, bulk-uninstall en modo Global.
+  instalar en cada modo, desinstalar en cada modo, bulk-uninstall en modo Global.
 
 ---
 
