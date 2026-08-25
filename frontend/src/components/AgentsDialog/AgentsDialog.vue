@@ -1,9 +1,12 @@
 <template>
   <dialog ref="dialogEl" class="agents-dialog" @close="emit('update:open', false)" @click="handleBackdropClick">
     <section class="agents-dialog__panel">
-      <header class="agents-dialog__header">
+      <header class="agents-dialog__header" :class="{ 'agents-dialog__header--global': scope === 'global' }">
         <div>
-          <h2>Agents</h2>
+          <h2>
+            Agents
+            <span v-if="scope === 'global'" class="agents-dialog__global-badge">Global</span>
+          </h2>
           <p>Choose the agents that receive every installation.</p>
         </div>
         <div class="agents-dialog__header-actions">
@@ -101,11 +104,12 @@ import { useNativeDialog } from "../../composables/useNativeDialog";
 import { isUniversalGroup, resolveAgentOrder } from "../../utils/agents";
 import AgentIcon from "../AgentIcon/AgentIcon.vue";
 import CloseButton from "../CloseButton/CloseButton.vue";
-import { SUPPORTED_AGENTS } from "../../types";
+import { SUPPORTED_AGENTS, type InstallScope } from "../../types";
 const props = defineProps<{
   open: boolean;
   modelValue: string[];
   agentOrder: string[];
+  scope: InstallScope;
 }>();
 const emit = defineEmits<{
   "update:open": [boolean];

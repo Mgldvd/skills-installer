@@ -325,7 +325,7 @@
         v-model:open="agentsEmptyOpen"
         v-model="agentsEmptySelection"
         :agent-order="[]"
-        :agent-scopes="{}"
+        :scope="demoScope"
       />
       <GroupEditor
         v-model:open="groupEditorErrorOpen"
@@ -642,7 +642,7 @@
         v-model:open="agentsDialogOpen"
         v-model="agentsSelection"
         :agent-order="[]"
-        :agent-scopes="{}"
+        :scope="demoScope"
       />
       <PreferencesDialog v-model:open="preferencesOpen" :preferences="preferencesDemo" @update="handlePreferencesUpdate" />
 

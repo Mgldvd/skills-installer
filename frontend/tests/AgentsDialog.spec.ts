@@ -4,7 +4,7 @@ import AgentsDialog from "../src/components/AgentsDialog/AgentsDialog.vue";
 describe("AgentsDialog", () => {
   it("supports visible one-click multi-agent toggles", async () => {
     const wrapper = mount(AgentsDialog, {
-      props: { open: true, modelValue: ["universal"], agentOrder: [] },
+      props: { open: true, modelValue: ["universal"], agentOrder: [], scope: "project" },
     });
     const buttons = wrapper.findAll(".agents-dialog__toggle");
     expect(buttons[0].attributes("aria-pressed")).toBe("true");
@@ -15,7 +15,7 @@ describe("AgentsDialog", () => {
   });
 
   it("shows Universal as indeterminate once a sibling agent sharing its folder is selected", async () => {
-    const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [] } });
+    const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [], scope: "project" } });
     const buttons = wrapper.findAll(".agents-dialog__toggle");
     const universalButton = buttons.find((b) => b.text().includes("Universal"))!;
     const codexButton = buttons.find((b) => b.text().includes("Codex"))!;
@@ -34,7 +34,7 @@ describe("AgentsDialog", () => {
   });
 
   it("highlights an agent's folder path only when it's exclusively its own, not shared with Universal", () => {
-    const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [] } });
+    const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [], scope: "project" } });
     const buttons = wrapper.findAll(".agents-dialog__toggle");
 
     const claudePath = buttons.find((b) => b.text().includes("Claude Code"))!.get(".agents-dialog__path");
@@ -54,11 +54,28 @@ describe("AgentsDialog", () => {
   // not a per-agent toggle — this dialog just shows both destinations as
   // reference info, always, for every agent.
   it("always shows both the Project and Global path for every agent", () => {
-    const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [] } });
+    const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [], scope: "project" } });
     const claudeRow = wrapper.findAll(".agents-dialog__toggle").find((b) => b.text().includes("Claude Code"))!;
     const paths = claudeRow.findAll(".agents-dialog__path").map((p) => p.text());
     expect(paths).toEqual(["Project: .claude/skills", "Global: ~/.claude/skills"]);
     expect(wrapper.find(".agents-dialog__scope").exists()).toBe(false);
     expect(wrapper.find(".agents-dialog__bulk-scope").exists()).toBe(false);
+  });
+
+  // Same treatment as AppHeader's Global mode, so opening Agents while
+  // Global is active reads as "these agents install into your home
+  // directory" instead of looking identical to Project mode.
+  it("tints the header and shows a Global badge when the active scope is global", () => {
+    const projectWrapper = mount(AgentsDialog, {
+      props: { open: true, modelValue: [], agentOrder: [], scope: "project" },
+    });
+    expect(projectWrapper.find(".agents-dialog__header--global").exists()).toBe(false);
+    expect(projectWrapper.find(".agents-dialog__global-badge").exists()).toBe(false);
+
+    const globalWrapper = mount(AgentsDialog, {
+      props: { open: true, modelValue: [], agentOrder: [], scope: "global" },
+    });
+    expect(globalWrapper.get(".agents-dialog__header").classes()).toContain("agents-dialog__header--global");
+    expect(globalWrapper.get(".agents-dialog__global-badge").text()).toBe("Global");
   });
 });

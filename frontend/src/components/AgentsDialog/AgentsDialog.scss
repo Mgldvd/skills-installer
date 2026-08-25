@@ -9,6 +9,33 @@
 
   .agents-dialog__header {
     @include dialog.menu-header;
+    transition:
+      border-color var(--transition-fast),
+      background-color var(--transition-fast);
+
+    // Same treatment as AppHeader's Global mode (same tokens, same
+    // color-mix ratio) — opening Agents while Global is active should read
+    // as "these agents install into your home directory", not look
+    // identical to Project mode.
+    &.agents-dialog__header--global {
+      background: color-mix(in srgb, var(--warning) 8%, var(--bg-panel));
+      border-bottom-color: var(--warning);
+    }
+  }
+
+  .agents-dialog__global-badge {
+    display: inline-block;
+    margin-inline-start: var(--space-xs);
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid var(--warning);
+    border-radius: var(--radius-sm);
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
   }
 
   .agents-dialog__body {

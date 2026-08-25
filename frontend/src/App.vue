@@ -229,6 +229,7 @@
       v-model:open="isAgentsOpen"
       :model-value="state.preferences.defaultAgents"
       :agent-order="state.preferences.agentOrder"
+      :scope="state.preferences.lastScope"
       @update:model-value="handleAgentsUpdate"
       @update:agent-order="handleAgentOrderUpdate"
     />
