@@ -13,9 +13,8 @@ pub use config::{ApplicationConfig, ConfigDefaults};
 pub use dependency::{DependencySource, DependencyStatus};
 pub use group::{SkillGroup, OTHER_GROUP_ID};
 pub use install::{
-    AgentScopeSelection, InstallOptions, InstallProgressEvent, InstallRequest, InstallResult,
-    InstallScope, OutputStream, SkillInstallOutcome, SkillInstallStatus, UninstallRequest,
-    UninstallResult,
+    InstallOptions, InstallProgressEvent, InstallRequest, InstallResult, InstallScope,
+    OutputStream, SkillInstallOutcome, SkillInstallStatus, UninstallRequest, UninstallResult,
 };
 pub use parsed_source::ParsedSkillSource;
 pub use preferences::UiPreferences;

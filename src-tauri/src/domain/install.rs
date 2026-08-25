@@ -1,65 +1,26 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 
 use super::skill::SkillSelection;
 
-/// Project vs. global mirrors the real Skills CLI's `-g/--global` flag
-/// (absence of the flag means project-scoped) — see `installer::skills_cli`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// The single active scope for the whole app — mirrors the real Skills
+/// CLI's `-g/--global` flag (absence of the flag means project-scoped). One
+/// value applies to every agent in a request; see `installer::skills_cli`.
+///
+/// Earlier versions of this app had a per-agent, non-exclusive
+/// `AgentScopeSelection { project, global }` instead — deliberately
+/// replaced by this single value (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`)
+/// because letting Project and Global mix per agent, per request, made both
+/// the UI and the install/uninstall code paths hard to reason about (most
+/// concretely: uninstall could never honestly represent which scope a
+/// removal targeted). An old `preferences.json`/`InstallOptions` payload
+/// with the removed `agentScopes` map simply has that field ignored by
+/// serde (no `deny_unknown_fields` here) and falls back to `Project` below.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum InstallScope {
+    #[default]
     Project,
     Global,
-}
-
-/// An agent's installation scope isn't exclusive — the same agent can
-/// receive the skill in the project *and* in the user's global directory
-/// from one install action, so this is two independent flags rather than a
-/// single `InstallScope`. Missing from `InstallOptions::agent_scopes`
-/// entirely defaults to `{ project: true, global: false }` — see
-/// `InstallOptions::scopes_for`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AgentScopeSelection {
-    #[serde(default)]
-    pub project: bool,
-    #[serde(default)]
-    pub global: bool,
-}
-
-// Hand-written so a preferences.json saved by an earlier version of this
-// app — back when scope was a single exclusive `InstallScope` per agent,
-// serialized as a bare `"project"`/`"global"` string — still loads instead
-// of hard-failing the whole file. Same spirit as `legacy_named_accent_to_hex`.
-impl<'de> Deserialize<'de> for AgentScopeSelection {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum Repr {
-            Legacy(String),
-            Current {
-                #[serde(default)]
-                project: bool,
-                #[serde(default)]
-                global: bool,
-            },
-        }
-        Ok(match Repr::deserialize(deserializer)? {
-            Repr::Legacy(scope) if scope == "global" => AgentScopeSelection {
-                project: false,
-                global: true,
-            },
-            Repr::Legacy(_) => AgentScopeSelection {
-                project: true,
-                global: false,
-            },
-            Repr::Current { project, global } => AgentScopeSelection { project, global },
-        })
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,18 +28,12 @@ impl<'de> Deserialize<'de> for AgentScopeSelection {
 pub struct InstallOptions {
     #[serde(default)]
     pub agents: Vec<String>,
-    /// Per-agent scope override, set granularly in the Agents dialog. An
-    /// agent id missing from this map (a newly added agent, or simply never
-    /// customized) falls back to Project-only — see `scopes_for`. The real
-    /// `skills` CLI's `--global` flag applies to its whole invocation, not
-    /// per `--agent`, so a batch spanning both scopes — including one agent
-    /// selected for *both* — has to be split into separate CLI calls, one
-    /// per scope group; see `installer::skills_cli::SkillsCliInstaller`.
+    /// The one scope this whole request targets — see `InstallScope`.
     #[serde(default)]
-    pub agent_scopes: HashMap<String, AgentScopeSelection>,
-    /// Explicit project working directory selected in the GUI. Ignored by
-    /// any agent whose resolved scope selection has `global: true` and
-    /// `project: false`.
+    pub scope: InstallScope,
+    /// Explicit project working directory selected in the GUI. Ignored when
+    /// `scope` is `Global` (see `SkillsCliInstaller::resolve_cwd`, which
+    /// falls back to the user's home directory in that case).
     #[serde(default)]
     pub project_path: Option<String>,
     pub copy: bool,
@@ -87,31 +42,11 @@ pub struct InstallOptions {
     pub continue_on_error: bool,
 }
 
-impl InstallOptions {
-    pub fn scopes_for(&self, agent_id: &str) -> AgentScopeSelection {
-        self.agent_scopes
-            .get(agent_id)
-            .copied()
-            .unwrap_or(AgentScopeSelection {
-                project: true,
-                global: false,
-            })
-    }
-
-    /// Used by the (currently unwired) `Installer::remove`/`update` calls,
-    /// which — unlike `install` — only take a single overall scope: any
-    /// agent with `global: true` is enough to treat the whole request as
-    /// Global.
-    pub fn any_global(&self) -> bool {
-        self.agent_scopes.values().any(|s| s.global)
-    }
-}
-
 impl Default for InstallOptions {
     fn default() -> Self {
         Self {
             agents: vec!["universal".to_string()],
-            agent_scopes: HashMap::new(),
+            scope: InstallScope::Project,
             project_path: None,
             copy: true,
             dry_run: false,
@@ -137,6 +72,10 @@ pub struct InstallRequest {
 #[serde(rename_all = "camelCase")]
 pub struct UninstallRequest {
     pub selection: SkillSelection,
+    /// The active scope this uninstall targets — see `InstallScope`. Missing
+    /// (an older frontend build) defaults to `Project`, same as `InstallOptions`.
+    #[serde(default)]
+    pub scope: InstallScope,
     /// Same fallback rule as `InstallOptions::project_path`: empty/whitespace
     /// or absent falls back to the app's own launch directory.
     #[serde(default)]

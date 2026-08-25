@@ -149,14 +149,6 @@ fn validate_preferences(preferences: &UiPreferences) -> Result<(), AppError> {
             )));
         }
     }
-    for agent in preferences.agent_scopes.keys() {
-        validate_agent_id(agent)?;
-        if !crate::domain::is_supported_agent(agent) {
-            return Err(AppError::Validation(format!(
-                "unsupported Skills CLI agent \"{agent}\" in agent scopes"
-            )));
-        }
-    }
     // Same curated-plus-custom scheme as Pack colors (see `commands::tags`):
     // any valid 6-digit hex is accepted, not just a fixed preset name.
     if crate::config::validate_and_normalize_color(&preferences.accent).is_err() {
@@ -276,8 +268,14 @@ mod tests {
         assert_eq!(preferences.accent, "#A855F7");
     }
 
+    // `agentScopes` was the old per-agent scope map, replaced by the single
+    // `lastScope` field (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`). A
+    // preferences.json saved by that earlier version still has this key —
+    // it must load without error, simply ignoring the removed field and
+    // defaulting `last_scope` to `Project`, rather than hard-failing the
+    // whole file.
     #[test]
-    fn load_migrates_legacy_bare_string_agent_scopes_to_the_current_flag_pair_shape() {
+    fn load_ignores_a_legacy_agent_scopes_map_and_defaults_last_scope_to_project() {
         let tmp = tempfile::tempdir().unwrap();
         let path = tmp.path().join("preferences.json");
         std::fs::write(
@@ -289,20 +287,8 @@ mod tests {
 
         let preferences = service.load().unwrap();
 
-        assert_eq!(
-            preferences.agent_scopes["claude-code"],
-            crate::domain::AgentScopeSelection {
-                project: false,
-                global: true
-            }
-        );
-        assert_eq!(
-            preferences.agent_scopes["cursor"],
-            crate::domain::AgentScopeSelection {
-                project: true,
-                global: false
-            }
-        );
+        assert_eq!(preferences.last_scope, crate::domain::InstallScope::Project);
+        assert_eq!(preferences.last_project_path, None);
     }
 
     #[test]

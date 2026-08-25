@@ -105,31 +105,55 @@ REFACTOR_PROJECT_GLOBAL_SCOPE.md en la raíz del repo. Antes de escribir código
 - [x] Mockup/decisión concreta del look distinto del header en modo Global (ver arriba:
   acento ámbar + badge "GLOBAL").
 
-### Fase 1 — Backend: modelo de dominio
+### Fase 1 — Backend: modelo de dominio ✅ (completada junto con Fase 3 — ver nota)
 
-- [ ] `InstallOptions.agent_scopes: HashMap<...>` → `InstallOptions.scope: InstallScope`.
-- [ ] Eliminar `AgentScopeSelection` de uso activo (mantener solo para migración de
-  preferencias viejas).
-- [ ] `UiPreferences`: quitar `agent_scopes`; agregar `last_scope: InstallScope` y, si Fase 0
-  lo decidió, `last_project_path: Option<String>`.
-- [ ] Migración: un `preferences.json` viejo con `agent_scopes` debe seguir cargando sin
-  error, derivando un `last_scope` inicial razonable (Project por defecto).
-- [ ] Tests Rust de dominio actualizados/reescritos.
+- [x] `InstallOptions.agent_scopes: HashMap<...>` → `InstallOptions.scope: InstallScope`.
+- [x] Eliminar `AgentScopeSelection` por completo (no solo "de uso activo": no hacía falta
+  mantenerla ni para migración — serde ya ignora una clave `agentScopes` desconocida en un
+  `preferences.json` viejo sin `deny_unknown_fields`, así que no hay nada que parsear).
+- [x] `UiPreferences`: quitar `agent_scopes`; agregar `last_scope: InstallScope` (con
+  `#[derive(Default)]`/`#[default]` en `InstallScope`, no un `impl Default` manual — así lo
+  pidió Clippy) y `last_project_path: Option<String>`.
+- [x] `UninstallRequest` (no estaba en el plan original, pero era necesario): se le agregó
+  `scope: InstallScope` — sin esto no había forma de que el frontend le dijera al backend qué
+  scope desinstalar.
+- [x] Migración: un `preferences.json` viejo con `agentScopes` carga sin error y cae en
+  `last_scope: Project` — test reescrito
+  (`load_ignores_a_legacy_agent_scopes_map_and_defaults_last_scope_to_project`).
+- [x] Tests Rust de dominio actualizados/reescritos.
 
-### Fase 2 — Backend: discovery
+**Nota de ejecución**: Fase 1 y Fase 3 no se pudieron separar en commits independientes — el
+compilador de Rust exige que todo sitio que use `AgentScopeSelection`/`scopes_for`/
+`any_global` se actualice a la vez para que el crate compile, y eso es exactamente el trabajo
+de Fase 3 (`add_args_for_skill`, `remove()`, `update()`). Quedaron en un solo commit.
+
+### Fase 2 — Backend: discovery (pendiente)
 
 - [ ] `SkillsService::load_state_for` recibe el `scope` activo y escanea **solo** los
-  directorios correspondientes (ya no mezcla project+global siempre).
+  directorios correspondientes (hoy sigue mezclando project+global siempre — no tocado aún).
 - [ ] `Skill.installed`/`installed_agents` pasan a ser relativos al scope activo.
 - [ ] Tests de discovery/skills_service actualizados.
 
-### Fase 3 — Backend: install / uninstall / update
+### Fase 3 — Backend: install / uninstall / update ✅ (ver nota en Fase 1)
 
-- [ ] `add_args_for_skill`: de "hasta 2 grupos" → siempre 1 grupo con el scope activo.
-- [ ] `remove()`: pasar `--global` cuando el scope activo es Global.
-- [ ] `update`: usar el scope directo en vez de `any_global()`.
-- [ ] Implementar el fallback de cwd decidido en Fase 0.
-- [ ] Tests de `skills_cli.rs` actualizados (los de `agent_scopes`/grupos duales se reescriben).
+- [x] `add_args_for_skill`: de "hasta 2 grupos" → siempre 1 grupo con el scope activo.
+  Retorna `Vec<String>` en vez de `Vec<Vec<String>>`.
+- [x] `remove()`: pasa `--global` cuando `request.options.scope == InstallScope::Global`
+  (cierra el bug ya detectado antes de este refactor).
+- [x] `update`: usa `request.options.scope` directo en vez de `any_global()`.
+- [x] cwd de fallback en Global puro implementado en `resolve_cwd`: ignora `project_path` por
+  completo y usa `$HOME` (con `self.project_root` como último recurso si `$HOME` no está
+  seteado) — ver decisión de Fase 0.
+- [x] Tests de `skills_cli.rs` reescritos: se borraron los 2 tests de "grupos duales"
+  (`_splits_into_two_groups_for_mixed_scope`, `_puts_one_agent_in_both_groups...`, ya no
+  aplican), se agregaron `remove_passes_the_global_flag_when_the_active_scope_is_global` y
+  `global_scope_ignores_project_path_and_uses_home_as_cwd`.
+
+`task typecheck`/`task lint`/`task test` verdes desde la raíz tras Fase 1+3 (184 tests Rust +
+9 de integración + 219 frontend, sin tocar frontend todavía — la app real seguirá operando en
+Project scope hasta que el frontend empiece a mandar `scope`/`UninstallRequest.scope`, ya que
+ambos default a `Project` vía `#[serde(default)]`. Checkpoint seguro: nada se rompe estando a
+medio camino.
 
 ### Fase 4 — Frontend: estado
 

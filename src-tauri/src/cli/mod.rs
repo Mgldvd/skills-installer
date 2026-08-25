@@ -146,17 +146,13 @@ async fn run_install(
     }
 
     let agent_id = agent.unwrap_or_else(|| "universal".to_string());
-    let mut agent_scopes = std::collections::HashMap::new();
-    agent_scopes.insert(
-        agent_id.clone(),
-        crate::domain::AgentScopeSelection {
-            project: !global,
-            global,
-        },
-    );
     let options = InstallOptions {
         agents: vec![agent_id],
-        agent_scopes,
+        scope: if global {
+            crate::domain::InstallScope::Global
+        } else {
+            crate::domain::InstallScope::Project
+        },
         project_path: None,
         copy,
         dry_run,

@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 
-use super::install::AgentScopeSelection;
+use super::install::InstallScope;
 
 /// The five explicit presets from the product spec. `f64` values are what get
 /// persisted/validated; the labels are a frontend concern.
@@ -37,13 +35,17 @@ pub struct UiPreferences {
     /// from a saved (possibly stale) order.
     #[serde(default)]
     pub agent_order: Vec<String>,
-    /// Per-agent installation scope — Project and Global aren't exclusive,
-    /// so each agent gets its own independent pair of flags, set granularly
-    /// in the Agents dialog. Replaced the old single app-wide "default
-    /// scope" preference. An agent id missing from this map falls back to
-    /// Project-only; see `InstallOptions::scopes_for`, the identical rule.
+    /// The single active scope for the whole app, remembered across
+    /// launches — see `InstallScope`. Replaced the old per-agent
+    /// `agent_scopes` map (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`); an old
+    /// file's `agentScopes` key is simply ignored by serde, landing here on
+    /// the default `Project`.
     #[serde(default)]
-    pub agent_scopes: HashMap<String, AgentScopeSelection>,
+    pub last_scope: InstallScope,
+    /// The last project folder selected in the header, remembered across
+    /// launches so `Project` mode doesn't reset to empty on every start.
+    #[serde(default)]
+    pub last_project_path: Option<String>,
 }
 
 impl Default for UiPreferences {
@@ -59,7 +61,8 @@ impl Default for UiPreferences {
             local_source_path: None,
             compact_cards: false,
             agent_order: Vec::new(),
-            agent_scopes: HashMap::new(),
+            last_scope: InstallScope::Project,
+            last_project_path: None,
         }
     }
 }

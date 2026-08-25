@@ -58,16 +58,12 @@ impl SkillsCliInstaller {
         }
     }
 
-    /// Builds one complete `skills add` argument list per distinct scope
-    /// present among `options.agents` — almost always just one, but two
-    /// when the caller mixes Project- and Global-scoped agents in the same
-    /// install, since the real CLI's `--global` flag applies to its whole
-    /// invocation and can't be split per `--agent`. Deterministic order:
-    /// Project group (if any) first, then Global.
+    /// Builds the one `skills add` argument list for this Skill under the
+    /// request's single active scope — see `InstallScope`.
     fn add_args_for_skill(
         skill: &crate::domain::Skill,
         options: &crate::domain::InstallOptions,
-    ) -> Result<Vec<Vec<String>>, AppError> {
+    ) -> Result<Vec<String>, AppError> {
         let source = match &skill.source {
             SkillSource::Remote if skill.repository_url.starts_with("https://skills.sh/p/") => {
                 skill.repository_url.clone()
@@ -85,7 +81,7 @@ impl SkillsCliInstaller {
                 .display()
                 .to_string(),
         };
-        let base_args = vec![
+        let mut args = vec![
             "add".to_string(),
             source,
             "--skill".to_string(),
@@ -93,53 +89,27 @@ impl SkillsCliInstaller {
         ];
 
         // Translate our own ids (e.g. `vscode`) into whatever the real CLI
-        // recognizes (see `cli_agent_id`), deduping per group in case that
-        // collapses two selected rows onto the same underlying agent. An
-        // agent selected for *both* Project and Global lands in both lists
-        // — that's exactly what makes it install to both.
-        let mut project_agents: Vec<String> = Vec::new();
-        let mut global_agents: Vec<String> = Vec::new();
+        // recognizes (see `cli_agent_id`), deduping in case that collapses
+        // two selected rows onto the same underlying agent.
+        let mut agents: Vec<String> = Vec::new();
         for agent in &options.agents {
             let cli_id = crate::domain::cli_agent_id(agent).to_string();
-            let selection = options.scopes_for(agent);
-            if selection.project && !project_agents.contains(&cli_id) {
-                project_agents.push(cli_id.clone());
-            }
-            if selection.global && !global_agents.contains(&cli_id) {
-                global_agents.push(cli_id);
+            if !agents.contains(&cli_id) {
+                agents.push(cli_id);
             }
         }
-
-        let mut groups: Vec<(Vec<String>, bool)> = Vec::new();
-        if options.agents.is_empty() {
-            groups.push((Vec::new(), false));
-        } else {
-            if !project_agents.is_empty() {
-                groups.push((project_agents, false));
-            }
-            if !global_agents.is_empty() {
-                groups.push((global_agents, true));
-            }
+        if !agents.is_empty() {
+            args.push("--agent".into());
+            args.extend(agents);
         }
-
-        Ok(groups
-            .into_iter()
-            .map(|(agents, is_global)| {
-                let mut args = base_args.clone();
-                if !agents.is_empty() {
-                    args.push("--agent".into());
-                    args.extend(agents);
-                }
-                if is_global {
-                    args.push("--global".into());
-                }
-                if options.copy {
-                    args.push("--copy".into());
-                }
-                args.push("--yes".into());
-                args
-            })
-            .collect())
+        if options.scope == crate::domain::InstallScope::Global {
+            args.push("--global".into());
+        }
+        if options.copy {
+            args.push("--copy".into());
+        }
+        args.push("--yes".into());
+        Ok(args)
     }
 
     /// Runs one already-built argument list as a `skills` subprocess,
@@ -197,12 +167,24 @@ impl SkillsCliInstaller {
         }
     }
 
-    /// The directory a batch's `skills` invocations run in: the GUI's
-    /// selected destination folder when set (trimmed; empty/whitespace
-    /// treated the same as unset, see `empty_project_path_falls_back_to_project_root`
-    /// test), otherwise this installer's own project root.
-    fn resolve_cwd(&self, project_path: Option<&str>) -> PathBuf {
-        project_path
+    /// The directory a batch's `skills` invocations run in. In `Global`
+    /// scope, `project_path` is ignored entirely — Global installs don't
+    /// need a project folder, so this always runs from the user's home
+    /// directory (falling back to this installer's own project root only in
+    /// the pathological case where `$HOME` isn't set at all). In `Project`
+    /// scope: the GUI's selected destination folder when set (trimmed;
+    /// empty/whitespace treated the same as unset, see
+    /// `empty_project_path_falls_back_to_project_root` test), otherwise this
+    /// installer's own project root.
+    fn resolve_cwd(&self, options: &crate::domain::InstallOptions) -> PathBuf {
+        if options.scope == crate::domain::InstallScope::Global {
+            return std::env::var_os("HOME")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| self.project_root.clone());
+        }
+        options
+            .project_path
+            .as_deref()
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .map(PathBuf::from)
@@ -291,8 +273,8 @@ impl Installer for SkillsCliInstaller {
                 display_name: skill.display_name.clone(),
             });
 
-            let groups = match Self::add_args_for_skill(skill, &batch.options) {
-                Ok(groups) => groups,
+            let args = match Self::add_args_for_skill(skill, &batch.options) {
+                Ok(args) => args,
                 Err(err) => {
                     result.failed += 1;
                     result.per_skill.push(SkillInstallOutcome {
@@ -314,25 +296,19 @@ impl Installer for SkillsCliInstaller {
                 }
             };
 
-            let combined_preview = groups
-                .iter()
-                .map(|args| preview_command("skills", args))
-                .collect::<Vec<_>>()
-                .join("\n");
+            let command_preview = preview_command("skills", &args);
 
             if batch.options.dry_run {
-                for args in &groups {
-                    let _ = progress.send(InstallProgressEvent::Command {
-                        skill_id: skill.id.clone(),
-                        command: preview_command("skills", args),
-                    });
-                }
+                let _ = progress.send(InstallProgressEvent::Command {
+                    skill_id: skill.id.clone(),
+                    command: command_preview.clone(),
+                });
                 result.per_skill.push(SkillInstallOutcome {
                     skill_id: skill.id.clone(),
                     display_name: skill.display_name.clone(),
                     status: SkillInstallStatus::Skipped,
                     message: Some("dry run — command not executed".to_string()),
-                    command_preview: combined_preview,
+                    command_preview,
                 });
                 let _ = progress.send(InstallProgressEvent::SkillSuccess {
                     skill_id: skill.id.clone(),
@@ -349,7 +325,7 @@ impl Installer for SkillsCliInstaller {
                 Err(err) => {
                     let _ = progress.send(InstallProgressEvent::Command {
                         skill_id: skill.id.clone(),
-                        command: combined_preview.clone(),
+                        command: command_preview.clone(),
                     });
                     result.failed += 1;
                     result.per_skill.push(SkillInstallOutcome {
@@ -357,7 +333,7 @@ impl Installer for SkillsCliInstaller {
                         display_name: skill.display_name.clone(),
                         status: SkillInstallStatus::Failed,
                         message: Some(err.to_string()),
-                        command_preview: combined_preview,
+                        command_preview,
                     });
                     let _ = progress.send(InstallProgressEvent::SkillError {
                         skill_id: skill.id.clone(),
@@ -371,55 +347,37 @@ impl Installer for SkillsCliInstaller {
                 }
             };
 
-            let cwd = self.resolve_cwd(batch.options.project_path.as_deref());
-            let mut failures: Vec<String> = Vec::new();
-            let mut cancelled_here = false;
-            for args in groups {
-                match self
-                    .run_one_group(skill, args, resolved, cwd.clone(), &cancel, &progress)
-                    .await
-                {
-                    GroupOutcome::Success => {}
-                    GroupOutcome::Failed(message) => {
-                        failures.push(message);
-                        if !batch.options.continue_on_error {
-                            break;
-                        }
-                    }
-                    GroupOutcome::Cancelled => {
-                        cancelled_here = true;
-                        break;
-                    }
-                }
-            }
+            let cwd = self.resolve_cwd(&batch.options);
+            let outcome = self
+                .run_one_group(skill, args, resolved, cwd, &cancel, &progress)
+                .await;
 
-            if cancelled_here {
+            if let GroupOutcome::Cancelled = outcome {
                 result.cancelled = true;
                 break;
             }
 
-            if failures.is_empty() {
+            if let GroupOutcome::Success = outcome {
                 result.installed += 1;
                 result.per_skill.push(SkillInstallOutcome {
                     skill_id: skill.id.clone(),
                     display_name: skill.display_name.clone(),
                     status: SkillInstallStatus::Installed,
                     message: None,
-                    command_preview: combined_preview,
+                    command_preview,
                 });
                 let _ = progress.send(InstallProgressEvent::SkillSuccess {
                     skill_id: skill.id.clone(),
                     display_name: skill.display_name.clone(),
                 });
-            } else {
+            } else if let GroupOutcome::Failed(message) = outcome {
                 result.failed += 1;
-                let message = failures.join("; ");
                 result.per_skill.push(SkillInstallOutcome {
                     skill_id: skill.id.clone(),
                     display_name: skill.display_name.clone(),
                     status: SkillInstallStatus::Failed,
                     message: Some(message.clone()),
-                    command_preview: combined_preview,
+                    command_preview,
                 });
                 let _ = progress.send(InstallProgressEvent::SkillError {
                     skill_id: skill.id.clone(),
@@ -438,10 +396,7 @@ impl Installer for SkillsCliInstaller {
         // don't want left behind. Best-effort: ignore the error when there's
         // nothing to remove (dry runs, or every skill failing before the CLI
         // ever wrote one).
-        let _ = std::fs::remove_file(
-            self.resolve_cwd(batch.options.project_path.as_deref())
-                .join("skills-lock.json"),
-        );
+        let _ = std::fs::remove_file(self.resolve_cwd(&batch.options).join("skills-lock.json"));
 
         let _ = progress.send(InstallProgressEvent::Complete {
             result: result.clone(),
@@ -453,11 +408,11 @@ impl Installer for SkillsCliInstaller {
     /// `owner/repo` source, no `--skill` flag, unlike `add` — and accepts
     /// more than one name in a single invocation, so a bulk uninstall from
     /// the GUI is exactly one process call: `skills remove name1 name2 ...
-    /// --yes`. No `--agent`/`--global` filtering: this app currently only
-    /// ever detects project-scoped installs (see `skills::discovery`), so
-    /// removing without those flags — which the real CLI resolves against
-    /// every agent it finds the skill installed for, at project scope — is
-    /// the one behavior this app can honestly represent as "uninstalled".
+    /// --global? --yes`. `--global` is passed exactly when the request's
+    /// scope is `Global`, matching the app's single active scope — see
+    /// `InstallScope` and `REFACTOR_PROJECT_GLOBAL_SCOPE.md`. No `--agent`
+    /// filtering: the real CLI resolves a name against every agent it finds
+    /// the skill installed for within that scope.
     async fn remove(&self, request: RemoveRequest) -> Result<UninstallResult, AppError> {
         let requested = request.skills.len();
         if requested == 0 {
@@ -466,9 +421,12 @@ impl Installer for SkillsCliInstaller {
         let resolved = self.resolver.resolve().await?;
         let mut args = vec!["remove".to_string()];
         args.extend(request.skills.iter().map(|skill| skill.skill_name.clone()));
+        if request.options.scope == crate::domain::InstallScope::Global {
+            args.push("--global".to_string());
+        }
         args.push("--yes".to_string());
         let full_args: Vec<String> = resolved.leading_args.iter().cloned().chain(args).collect();
-        let cwd = self.resolve_cwd(request.options.project_path.as_deref());
+        let cwd = self.resolve_cwd(&request.options);
 
         match self
             .run_and_collect(&resolved.program, full_args, cwd, CancellationToken::new())
@@ -494,7 +452,7 @@ impl Installer for SkillsCliInstaller {
         let resolved = self.resolver.resolve().await?;
         let mut args = vec!["update".to_string(), "--yes".to_string()];
         args.push(
-            if request.options.any_global() {
+            if request.options.scope == crate::domain::InstallScope::Global {
                 "--global"
             } else {
                 "--project"
@@ -502,7 +460,7 @@ impl Installer for SkillsCliInstaller {
             .to_string(),
         );
         let full_args: Vec<String> = resolved.leading_args.iter().cloned().chain(args).collect();
-        let cwd = self.resolve_cwd(request.options.project_path.as_deref());
+        let cwd = self.resolve_cwd(&request.options);
 
         match self
             .run_and_collect(&resolved.program, full_args, cwd, CancellationToken::new())
@@ -523,25 +481,18 @@ mod tests {
     use crate::domain::InstallOptions;
 
     #[test]
-    fn add_args_for_skill_builds_one_group_when_every_agent_shares_a_scope() {
-        let global_only = crate::domain::AgentScopeSelection {
-            project: false,
-            global: true,
-        };
-        let mut agent_scopes = std::collections::HashMap::new();
-        agent_scopes.insert("claude-code".to_string(), global_only);
-        agent_scopes.insert("codex".to_string(), global_only);
+    fn add_args_for_skill_builds_a_single_arg_list_for_every_agent_under_the_active_scope() {
         let options = InstallOptions {
             agents: vec!["claude-code".into(), "codex".into()],
-            agent_scopes,
+            scope: crate::domain::InstallScope::Global,
             copy: true,
             ..InstallOptions::default()
         };
-        let groups =
+        let args =
             SkillsCliInstaller::add_args_for_skill(&remote_skill("triage"), &options).unwrap();
         assert_eq!(
-            groups,
-            vec![vec![
+            args,
+            vec![
                 "add".to_string(),
                 "mattpocock/skills".to_string(),
                 "--skill".to_string(),
@@ -552,7 +503,7 @@ mod tests {
                 "--global".to_string(),
                 "--copy".to_string(),
                 "--yes".to_string(),
-            ]]
+            ]
         );
     }
 
@@ -560,135 +511,56 @@ mod tests {
     fn add_args_for_skill_omits_optional_flags_when_unset() {
         let options = InstallOptions {
             agents: vec![],
+            scope: crate::domain::InstallScope::Project,
             copy: false,
             ..InstallOptions::default()
         };
-        let groups =
+        let args =
             SkillsCliInstaller::add_args_for_skill(&remote_skill("impeccable"), &options).unwrap();
         assert_eq!(
-            groups,
-            vec![vec![
+            args,
+            vec![
                 "add".to_string(),
                 "mattpocock/skills".to_string(),
                 "--skill".to_string(),
                 "impeccable".to_string(),
                 "--yes".to_string(),
-            ]]
+            ]
         );
     }
 
     #[test]
     fn add_args_for_skill_always_includes_yes() {
-        let groups =
+        let args =
             SkillsCliInstaller::add_args_for_skill(&remote_skill("s"), &InstallOptions::default())
                 .unwrap();
-        assert!(groups
-            .iter()
-            .all(|args| args.contains(&"--yes".to_string())));
+        assert!(args.contains(&"--yes".to_string()));
     }
 
-    // The real CLI's `--global` flag applies to its whole invocation, so
-    // mixing Project- and Global-scoped agents in one install has to become
-    // two separate `skills add` calls — this is the behavior that makes the
-    // Agents dialog's per-agent scope control actually take effect.
     #[test]
-    fn add_args_for_skill_splits_into_two_groups_for_mixed_scope() {
-        let mut agent_scopes = std::collections::HashMap::new();
-        agent_scopes.insert(
-            "claude-code".to_string(),
-            crate::domain::AgentScopeSelection {
-                project: false,
-                global: true,
-            },
-        );
-        // "cursor" is deliberately left out of `agent_scopes` — it must
-        // default to Project-only, same as `InstallOptions::scopes_for`.
-        let options = InstallOptions {
-            agents: vec!["claude-code".into(), "cursor".into()],
-            agent_scopes,
-            copy: false,
-            ..InstallOptions::default()
-        };
-        let groups =
-            SkillsCliInstaller::add_args_for_skill(&remote_skill("triage"), &options).unwrap();
-        assert_eq!(groups.len(), 2, "one group per distinct scope");
-        assert_eq!(
-            groups[0],
-            vec![
-                "add".to_string(),
-                "mattpocock/skills".to_string(),
-                "--skill".to_string(),
-                "triage".to_string(),
-                "--agent".to_string(),
-                "cursor".to_string(),
-                "--yes".to_string(),
-            ],
-            "Project group comes first and carries no --global flag"
-        );
-        assert_eq!(
-            groups[1],
-            vec![
-                "add".to_string(),
-                "mattpocock/skills".to_string(),
-                "--skill".to_string(),
-                "triage".to_string(),
-                "--agent".to_string(),
-                "claude-code".to_string(),
-                "--global".to_string(),
-                "--yes".to_string(),
-            ],
-            "Global group comes second"
-        );
-    }
-
-    // Project and Global aren't exclusive — the same agent, selected for
-    // both, must appear in *both* groups so it actually installs to both
-    // destinations from one action.
-    #[test]
-    fn add_args_for_skill_puts_one_agent_in_both_groups_when_selected_for_both_scopes() {
-        let mut agent_scopes = std::collections::HashMap::new();
-        agent_scopes.insert(
-            "claude-code".to_string(),
-            crate::domain::AgentScopeSelection {
-                project: true,
-                global: true,
-            },
-        );
+    fn add_args_for_skill_omits_global_flag_in_project_scope() {
         let options = InstallOptions {
             agents: vec!["claude-code".into()],
-            agent_scopes,
+            scope: crate::domain::InstallScope::Project,
             ..InstallOptions::default()
         };
-        let groups =
+        let args =
             SkillsCliInstaller::add_args_for_skill(&remote_skill("triage"), &options).unwrap();
-        assert_eq!(
-            groups.len(),
-            2,
-            "one group per scope, both containing claude-code"
-        );
-        assert!(
-            groups[0].contains(&"claude-code".to_string())
-                && !groups[0].contains(&"--global".to_string())
-        );
-        assert!(
-            groups[1].contains(&"claude-code".to_string())
-                && groups[1].contains(&"--global".to_string())
-        );
+        assert!(!args.contains(&"--global".to_string()));
     }
 
     // `vscode` has no CLI id of its own (see `domain::cli_agent_id`) — if it
-    // and `github-copilot` both land in the same scope group, the group must
-    // still send `--agent github-copilot` exactly once.
+    // and `github-copilot` are both selected, the args must still send
+    // `--agent github-copilot` exactly once.
     #[test]
-    fn add_args_for_skill_dedupes_translated_ids_within_a_group() {
+    fn add_args_for_skill_dedupes_translated_ids() {
         let options = InstallOptions {
             agents: vec!["vscode".into(), "github-copilot".into()],
             ..InstallOptions::default()
         };
-        let groups =
+        let args =
             SkillsCliInstaller::add_args_for_skill(&remote_skill("triage"), &options).unwrap();
-        assert_eq!(groups.len(), 1);
-        let agent_count = groups[0].iter().filter(|a| *a == "github-copilot").count();
+        let agent_count = args.iter().filter(|a| *a == "github-copilot").count();
         assert_eq!(agent_count, 1);
     }
 
@@ -1070,6 +942,41 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn global_scope_ignores_project_path_and_uses_home_as_cwd() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let installer = SkillsCliInstaller::with_resolver(
+            process_runner.clone(),
+            PathBuf::from("/tmp/some-project-root"),
+            resolver,
+        );
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        let options = crate::domain::InstallOptions {
+            scope: crate::domain::InstallScope::Global,
+            project_path: Some("/tmp/user-selected-folder".to_string()),
+            ..Default::default()
+        };
+        let batch = InstallBatch {
+            skills: vec![remote_skill("triage")],
+            options,
+        };
+        installer
+            .install(batch, tx, CancellationToken::new())
+            .await
+            .unwrap();
+        drop(rx);
+
+        let call = process_runner.calls.lock().unwrap()[0].clone();
+        let expected_home = std::env::var_os("HOME").map(PathBuf::from);
+        assert_eq!(
+            call.cwd, expected_home,
+            "Global scope ignores project_path and runs from $HOME"
+        );
+        assert_ne!(call.cwd, Some(PathBuf::from("/tmp/user-selected-folder")));
+    }
+
+    #[tokio::test]
     async fn removes_the_skills_lock_file_the_real_cli_leaves_behind() {
         let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::success()]));
         let (resolver, _guard) = resolver_with_fake_skills_executable();
@@ -1158,6 +1065,28 @@ mod tests {
         // No owner/repo, no --skill flag — just the bare skill names, per the
         // real CLI's `skills remove name1 name2 --yes` syntax.
         assert_eq!(call.args, vec!["remove", "triage", "tdd", "--yes"]);
+    }
+
+    #[tokio::test]
+    async fn remove_passes_the_global_flag_when_the_active_scope_is_global() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::success()]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let installer =
+            SkillsCliInstaller::with_resolver(process_runner.clone(), PathBuf::from("."), resolver);
+
+        installer
+            .remove(RemoveRequest {
+                skills: vec![remote_skill("triage")],
+                options: crate::domain::InstallOptions {
+                    scope: crate::domain::InstallScope::Global,
+                    ..Default::default()
+                },
+            })
+            .await
+            .unwrap();
+
+        let call = process_runner.calls.lock().unwrap()[0].clone();
+        assert_eq!(call.args, vec!["remove", "triage", "--global", "--yes"]);
     }
 
     #[tokio::test]

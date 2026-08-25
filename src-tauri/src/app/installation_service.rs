@@ -57,14 +57,9 @@ impl InstallationService {
                 )));
             }
         }
-        // Only matters when at least one selected agent actually resolves to
-        // Project scope — an all-Global selection never touches this path.
-        let has_project_scoped_agent = request
-            .options
-            .agents
-            .iter()
-            .any(|agent| request.options.scopes_for(agent).project);
-        if has_project_scoped_agent {
+        // Only matters in Project scope — a Global request never touches
+        // `project_path` (see `SkillsCliInstaller::resolve_cwd`).
+        if request.options.scope == crate::domain::InstallScope::Project {
             if let Some(path) = request.options.project_path.as_deref() {
                 if !std::path::Path::new(path).is_dir() {
                     return Err(AppError::Validation(format!(
@@ -145,6 +140,7 @@ impl InstallationService {
         let remove_request = RemoveRequest {
             skills,
             options: crate::domain::InstallOptions {
+                scope: request.scope,
                 project_path: request.project_path,
                 ..Default::default()
             },
@@ -326,6 +322,7 @@ mod tests {
         let skills = vec![sample_skill("triage", true), sample_skill("tdd", true)];
         let request = crate::domain::UninstallRequest {
             selection: SkillSelection::new(vec!["triage".to_string()]),
+            scope: crate::domain::InstallScope::Project,
             project_path: None,
         };
 
@@ -339,11 +336,29 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn uninstall_passes_the_requested_scope_through_to_the_installer() {
+        let fake = Arc::new(FakeInstaller::new(fake_dependency_status()));
+        let service = InstallationService::new(fake.clone());
+        let skills = vec![sample_skill("triage", true)];
+        let request = crate::domain::UninstallRequest {
+            selection: SkillSelection::new(vec!["triage".to_string()]),
+            scope: crate::domain::InstallScope::Global,
+            project_path: None,
+        };
+
+        service.uninstall(request, &skills).await.unwrap();
+
+        let calls = fake.remove_calls.lock().unwrap();
+        assert_eq!(calls[0].options.scope, crate::domain::InstallScope::Global);
+    }
+
+    #[tokio::test]
     async fn uninstall_rejects_an_empty_selection() {
         let fake = Arc::new(FakeInstaller::new(fake_dependency_status()));
         let service = InstallationService::new(fake);
         let request = crate::domain::UninstallRequest {
             selection: SkillSelection::default(),
+            scope: crate::domain::InstallScope::Project,
             project_path: None,
         };
 
