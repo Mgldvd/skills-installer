@@ -3,7 +3,6 @@
     <div class="app-header__brand">
       <img class="app-header__logo" :src="appLogo" alt="" aria-hidden="true" />
       <h1 class="app-header__title">Skills Installer</h1>
-      <span v-if="scope === 'global'" class="app-header__global-badge">Global</span>
     </div>
 
     <div class="app-header__item app-header__scope-switch" role="group" aria-label="Installation scope">
@@ -28,6 +27,7 @@
         Global
       </button>
     </div>
+    <span v-if="scope === 'global'" class="app-header__global-badge">Global</span>
 
     <div v-if="scope === 'project'" class="app-header__item app-header__destination">
       <span class="app-header__label">Project folder</span>

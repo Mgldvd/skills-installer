@@ -6,13 +6,19 @@
   background: var(--bg-panel);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
-  transition: border-color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
 
   // A distinct treatment independent of the user's own configurable accent
   // color — Global mode changes install/uninstall for every project on the
   // machine, not just the one currently selected, so this needs to read as
-  // unmistakable regardless of which accent the user has picked.
+  // unmistakable regardless of which accent the user has picked. The
+  // background tint stays deliberately faint — just enough to read as "not
+  // the normal panel background" at a glance, without competing with the
+  // badge/border for attention.
   &.app-header--global {
+    background: color-mix(in srgb, var(--warning) 8%, var(--bg-panel));
     border-color: var(--warning);
   }
 
@@ -25,6 +31,7 @@
   }
 
   .app-header__global-badge {
+    flex: 0 0 auto;
     padding: var(--space-2xs) var(--space-xs);
     border: 1px solid var(--warning);
     border-radius: var(--radius-sm);

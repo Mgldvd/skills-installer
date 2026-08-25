@@ -67,4 +67,16 @@ describe("AppHeader scope switch", () => {
     )).toBe("true");
     expect(wrapper.get(".app-header").classes()).toContain("app-header--global");
   });
+
+  // The badge sits right after the Project/Global buttons, not inside the
+  // brand — so the buttons never shift position when it appears/disappears.
+  it("places the Global badge right after the scope buttons, not inside the brand", () => {
+    const wrapper = mount(AppHeader, { props: { ...baseProps, scope: "global" } });
+
+    expect(wrapper.get(".app-header__brand").find(".app-header__global-badge").exists()).toBe(false);
+    const children = [...wrapper.get(".app-header").element.children].map((el) => el.className);
+    const switchIndex = children.findIndex((c) => c.includes("app-header__scope-switch"));
+    const badgeIndex = children.findIndex((c) => c.includes("app-header__global-badge"));
+    expect(badgeIndex).toBe(switchIndex + 1);
+  });
 });
