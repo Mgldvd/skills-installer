@@ -55,7 +55,7 @@ El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1
 
 1. Respeta estrictamente el alcance solicitado. Una tarea visual no autoriza cambios de lógica, persistencia, instalación, CLI ni contratos Rust/Tauri.
 2. Conserva los cambios existentes del usuario. No reviertas archivos no relacionados ni uses comandos destructivos.
-3. En componentes Vue usa `<script setup lang="ts">` y conserva el orden `template`, `script`, `style`.
+3. En componentes Vue usa `<script setup lang="ts">`.
 4. Mantén estilos específicos junto al componente. Los tokens compartidos pertenecen a `frontend/src/styles/tokens.scss`; los mixins de diálogos pertenecen a `dialog-base.scss`.
 5. Reutiliza componentes y variantes antes de crear implementaciones paralelas. Para Packs usa `components/PackBadge/PackBadge.vue`; para cerrar diálogos usa `CloseButton`; para sincronizar `<dialog>` usa `useNativeDialog`.
 6. No introduzcas Pinia ni otra librería de estado sin una necesidad explícita. El proyecto usa un store reactivo de módulo en `useAppState` y composables enfocados.
