@@ -232,11 +232,13 @@ contra el `projectRoot` de antes de restaurar.
 
 + 229 frontend (225 + 4 nuevos: AppHeader×2, AgentsDialog×1, InstallConfirmDialog×1).
 
-### Fase 7 — Bulk uninstall (verificación, no trabajo nuevo si Fases 2+3 están bien)
+### Fase 7 — Bulk uninstall ✅ (verificación, sin trabajo nuevo — Fases 2+3+4 ya lo resolvieron)
 
-- [ ] Confirmar que bulk-uninstall ya respeta el scope activo automáticamente.
-- [ ] Cerrar el gap conocido de "bulk uninstall no cubre Global" documentado antes de este
-  refactor.
+- [x] Confirmado: `App.vue::confirmUninstall` manda `scope: state.preferences.lastScope` en
+  el `UninstallRequest`; `SkillsCliInstaller::remove` (Fase 3) agrega `--global` cuando
+  corresponde.
+- [x] Gap cerrado: bulk-uninstall ahora cubre Global correctamente, sin trabajo dedicado —
+  fue consecuencia directa de las fases anteriores, tal como se esperaba en el plan original.
 
 ### Fase 8 — Rename Project → Preset
 
