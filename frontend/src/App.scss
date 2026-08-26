@@ -40,6 +40,12 @@
     border-top: 1px solid var(--border-soft);
   }
 
+  .app-shell__footer-status-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
   .app-shell__agents-summary {
     display: inline-flex;
     align-items: center;

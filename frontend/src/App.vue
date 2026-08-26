@@ -136,6 +136,32 @@
               Install Selected
             </button>
           </template>
+        </div>
+      </div>
+      <div class="app-shell__footer-status">
+        <span class="app-shell__dependency" :class="dependencyClass">
+          <span class="app-shell__dependency-dot" aria-hidden="true" />
+          Skills CLI {{ dependencyLabel }}
+        </span>
+        <div class="app-shell__footer-status-right">
+          <button
+            type="button"
+            class="app-shell__agents-summary"
+            :aria-label="`Open Agents settings. Currently selected: ${agentLabels}`"
+            :title="agentLabels"
+            @click="isAgentsOpen = true"
+          >
+            <span class="app-shell__manage-agents" aria-hidden="true">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
+              </svg>
+            </span>
+            Agents
+            <span v-if="state.preferences.defaultAgents.length" class="app-shell__agent-icons">
+              <AgentIcon v-for="id in state.preferences.defaultAgents" :key="id" :agent-id="id" />
+            </span>
+            <strong v-else class="app-shell__agent-none">None selected</strong>
+          </button>
           <button
             type="button"
             class="app-shell__footer-btn app-shell__footer-btn--icon app-shell__footer-btn--danger"
@@ -152,30 +178,6 @@
             </svg>
           </button>
         </div>
-      </div>
-      <div class="app-shell__footer-status">
-        <span class="app-shell__dependency" :class="dependencyClass">
-          <span class="app-shell__dependency-dot" aria-hidden="true" />
-          Skills CLI {{ dependencyLabel }}
-        </span>
-        <button
-          type="button"
-          class="app-shell__agents-summary"
-          :aria-label="`Open Agents settings. Currently selected: ${agentLabels}`"
-          :title="agentLabels"
-          @click="isAgentsOpen = true"
-        >
-          <span class="app-shell__manage-agents" aria-hidden="true">
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
-            </svg>
-          </span>
-          Agents
-          <span v-if="state.preferences.defaultAgents.length" class="app-shell__agent-icons">
-            <AgentIcon v-for="id in state.preferences.defaultAgents" :key="id" :agent-id="id" />
-          </span>
-          <strong v-else class="app-shell__agent-none">None selected</strong>
-        </button>
       </div>
     </footer>
 
