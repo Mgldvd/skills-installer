@@ -20,7 +20,7 @@ export function resetState(state: AppState) {
   state.groupBeingEditedId = null;
   state.isAddDialogOpen = false;
   state.preferences = defaultPreferences();
-  state.projects = [];
+  state.presets = [];
   state.dependencyStatus = null;
   state.installation = {
     isInstalling: false,

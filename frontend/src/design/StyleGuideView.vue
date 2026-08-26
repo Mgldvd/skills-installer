@@ -477,7 +477,7 @@
             <div class="app-shell__footer-row">
               <div class="app-shell__footer-left">
                 <button type="button" class="app-shell__footer-btn app-shell__footer-btn--add">Add Skill</button>
-                <button type="button" class="app-shell__footer-btn">Projects</button>
+                <button type="button" class="app-shell__footer-btn">Presets</button>
                 <button type="button" class="app-shell__footer-btn" aria-pressed="true">Preferences (pressed)</button>
                 <button type="button" class="app-shell__footer-btn app-shell__footer-btn--icon">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -595,7 +595,7 @@
         <div class="sg-row">
           <button type="button" class="sg-trigger" @click="skillsDialogOpen = true">Open SkillsDialog</button>
           <button type="button" class="sg-trigger" @click="tagsOpen = true">Open TagsDialog</button>
-          <button type="button" class="sg-trigger" @click="projectsOpen = true">Open ProjectsDialog</button>
+          <button type="button" class="sg-trigger" @click="presetsOpen = true">Open PresetsDialog</button>
           <button type="button" class="sg-trigger" @click="agentsDialogOpen = true">Open AgentsDialog</button>
           <button type="button" class="sg-trigger" @click="preferencesOpen = true">Open PreferencesDialog</button>
         </div>
@@ -637,7 +637,7 @@
 
       <SkillsDialog v-model:open="skillsDialogOpen" :skills="mockSkills" local-source-path="~/.control/skill" />
       <TagsDialog v-model:open="tagsOpen" :skills="mockSkills" :tags="mockTags" />
-      <ProjectsDialog v-model:open="projectsOpen" :projects="mockProjects" :installed-skill-names="['code-review', 'test-driven-development']" />
+      <PresetsDialog v-model:open="presetsOpen" :presets="mockPresets" :installed-skill-names="['code-review', 'test-driven-development']" />
       <AgentsDialog
         v-model:open="agentsDialogOpen"
         v-model="agentsSelection"
@@ -725,7 +725,7 @@ import InstallConfirmDialog from "../components/InstallConfirmDialog/InstallConf
 import InstallProgressPanel from "../components/InstallProgressPanel/InstallProgressPanel.vue";
 import PackBadge from "../components/PackBadge/PackBadge.vue";
 import PreferencesDialog from "../components/PreferencesDialog/PreferencesDialog.vue";
-import ProjectsDialog from "../components/ProjectsDialog/ProjectsDialog.vue";
+import PresetsDialog from "../components/PresetsDialog/PresetsDialog.vue";
 import SkillCard from "../components/SkillCard/SkillCard.vue";
 import SkillDescriptionDialog from "../components/SkillDescriptionDialog/SkillDescriptionDialog.vue";
 import SkillFilterBar from "../components/SkillFilterBar/SkillFilterBar.vue";
@@ -745,7 +745,7 @@ import {
   mockInstallationInstalling,
   mockInstallationSuccess,
   mockPreferences,
-  mockProjects,
+  mockPresets,
   mockSkills,
   mockSkillsWithUpdates,
   mockTags,
@@ -974,7 +974,7 @@ const deleteGroupWithSkillsOpen = ref(false);
 const installConfirmOpen = ref(false);
 const groupEditorCreateOpen = ref(false);
 const groupEditorEditOpen = ref(false);
-const projectsOpen = ref(false);
+const presetsOpen = ref(false);
 const tagsOpen = ref(false);
 const editSkillOpen = ref(false);
 const preferencesOpen = ref(false);

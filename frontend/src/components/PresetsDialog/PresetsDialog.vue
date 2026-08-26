@@ -1,50 +1,50 @@
 <template>
-  <dialog ref="dialogEl" class="projects-dialog" @close="emit('update:open', false)" @click="onBackdrop">
-    <section class="projects-dialog__panel">
-      <header class="projects-dialog__header">
+  <dialog ref="dialogEl" class="presets-dialog" @close="emit('update:open', false)" @click="onBackdrop">
+    <section class="presets-dialog__panel">
+      <header class="presets-dialog__header">
         <div>
-          <h2>Projects</h2>
+          <h2>Presets</h2>
           <p>Save which Skills are installed here, so you can re-select them after a fresh clone.</p>
         </div>
-        <CloseButton aria-label="Close Projects" @click="close" />
+        <CloseButton aria-label="Close Presets" @click="close" />
       </header>
 
-      <div class="projects-dialog__body">
-        <form class="projects-dialog__form" @submit.prevent="handleSave">
-          <label class="projects-dialog__field">
+      <div class="presets-dialog__body">
+        <form class="presets-dialog__form" @submit.prevent="handleSave">
+          <label class="presets-dialog__field">
             <span>Name</span>
             <input v-model="name" type="text" maxlength="64" required placeholder="e.g. Marketing Site" />
           </label>
-          <label class="projects-dialog__field">
+          <label class="presets-dialog__field">
             <span>Git URL <em>(optional)</em></span>
             <input v-model="gitUrl" type="url" placeholder="https://github.com/owner/repo" />
           </label>
-          <button type="submit" class="button button--primary projects-dialog__submit" :disabled="!canSave">
+          <button type="submit" class="button button--primary presets-dialog__submit" :disabled="!canSave">
             Save {{ installedSkillNames.length }} installed Skill{{ installedSkillNames.length === 1 ? "" : "s" }}
           </button>
         </form>
-        <p v-if="installedSkillNames.length === 0" class="projects-dialog__hint">
+        <p v-if="installedSkillNames.length === 0" class="presets-dialog__hint">
           Nothing installed yet in the current destination — install some Skills first.
         </p>
-        <p v-if="error" class="projects-dialog__error" role="alert">{{ error }}</p>
+        <p v-if="error" class="presets-dialog__error" role="alert">{{ error }}</p>
 
-        <ul v-if="projects.length" class="projects-dialog__list" aria-label="Saved Projects">
-          <li v-for="project in projects" :key="project.id" class="projects-dialog__row">
-            <div class="projects-dialog__info">
-              <strong class="projects-dialog__name">{{ project.name }}</strong>
-              <span class="projects-dialog__count">
-                {{ project.skillNames.length }} Skill{{ project.skillNames.length === 1 ? "" : "s" }}
+        <ul v-if="presets.length" class="presets-dialog__list" aria-label="Saved Presets">
+          <li v-for="preset in presets" :key="preset.id" class="presets-dialog__row">
+            <div class="presets-dialog__info">
+              <strong class="presets-dialog__name">{{ preset.name }}</strong>
+              <span class="presets-dialog__count">
+                {{ preset.skillNames.length }} Skill{{ preset.skillNames.length === 1 ? "" : "s" }}
               </span>
               <a
-                v-if="project.gitUrl"
-                class="projects-dialog__git-url"
-                :href="project.gitUrl"
-                :title="project.gitUrl"
-                @click.prevent="handleOpenGitUrl(project.gitUrl)"
+                v-if="preset.gitUrl"
+                class="presets-dialog__git-url"
+                :href="preset.gitUrl"
+                :title="preset.gitUrl"
+                @click.prevent="handleOpenGitUrl(preset.gitUrl)"
               >
                 <svg
-                  v-if="gitHostFromUrl(project.gitUrl) === 'github'"
-                  class="projects-dialog__git-icon"
+                  v-if="gitHostFromUrl(preset.gitUrl) === 'github'"
+                  class="presets-dialog__git-icon"
                   viewBox="0 0 16 16"
                   aria-hidden="true"
                 >
@@ -53,8 +53,8 @@
                   />
                 </svg>
                 <svg
-                  v-else-if="gitHostFromUrl(project.gitUrl) === 'gitlab'"
-                  class="projects-dialog__git-icon"
+                  v-else-if="gitHostFromUrl(preset.gitUrl) === 'gitlab'"
+                  class="presets-dialog__git-icon"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
                 >
@@ -62,7 +62,7 @@
                     d="M23.6 9.59v-.09L20.33.9a.85.85 0 0 0-1.61.16L16.7 7.16H7.37L5.37 1.03a.85.85 0 0 0-1.61-.15L.5 9.51v.09a10.03 10.03 0 0 0 3.15 11.24l.02.02.09.07 5.33 3.93 2.64 1.97 1.62 1.2a1 1 0 0 0 1.2 0l1.62-1.2 2.64-1.97 5.36-3.94.02-.01a10.03 10.03 0 0 0 3.13-11.25Z"
                   />
                 </svg>
-                <svg v-else class="projects-dialog__git-icon" viewBox="0 0 16 16" aria-hidden="true">
+                <svg v-else class="presets-dialog__git-icon" viewBox="0 0 16 16" aria-hidden="true">
                   <path
                     d="M6.5 4H4.5A1.5 1.5 0 0 0 3 5.5v6A1.5 1.5 0 0 0 4.5 13h6a1.5 1.5 0 0 0 1.5-1.5V9.5M9 3h4v4M7 9l6-6"
                     fill="none"
@@ -72,17 +72,17 @@
                     stroke-linejoin="round"
                   />
                 </svg>
-                {{ project.gitUrl }}
+                {{ preset.gitUrl }}
               </a>
             </div>
-            <div class="projects-dialog__actions">
-              <button type="button" class="button button--primary" @click="emit('load', project.id)">Load</button>
+            <div class="presets-dialog__actions">
+              <button type="button" class="button button--primary" @click="emit('load', preset.id)">Load</button>
               <button
                 type="button"
-                class="projects-dialog__delete"
-                :aria-label="`Delete ${project.name}`"
-                :title="`Delete ${project.name}`"
-                @click="requestDelete(project)"
+                class="presets-dialog__delete"
+                :aria-label="`Delete ${preset.name}`"
+                :title="`Delete ${preset.name}`"
+                @click="requestDelete(preset)"
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true">
                   <path
@@ -93,7 +93,7 @@
             </div>
           </li>
         </ul>
-        <p v-else class="projects-dialog__empty">No Projects saved yet.</p>
+        <p v-else class="presets-dialog__empty">No Presets saved yet.</p>
       </div>
     </section>
   </dialog>
@@ -104,14 +104,14 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { computed, ref, watch } from "vue";
 
 import { useNativeDialog } from "../../composables/useNativeDialog";
-import type { Project } from "../../types";
+import type { Preset } from "../../types";
 import { gitHostFromUrl, repoNameFromGitUrl } from "../../utils/gitUrl";
 import CloseButton from "../CloseButton/CloseButton.vue";
 
 const props = withDefaults(
   defineProps<{
     open: boolean;
-    projects: Project[];
+    presets: Preset[];
     installedSkillNames: string[];
     error?: string | null;
   }>(),
@@ -121,8 +121,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   "update:open": [boolean];
   save: [name: string, gitUrl: string | null];
-  load: [projectId: string];
-  delete: [projectId: string];
+  load: [presetId: string];
+  delete: [presetId: string];
 }>();
 
 const dialogEl = ref<HTMLDialogElement | null>(null);
@@ -157,9 +157,9 @@ function handleOpenGitUrl(url: string) {
   openUrl(url).catch(() => undefined);
 }
 
-function requestDelete(project: Project) {
-  if (window.confirm(`Delete “${project.name}”? This only removes the saved Project, not any installed Skills.`)) {
-    emit("delete", project.id);
+function requestDelete(preset: Preset) {
+  if (window.confirm(`Delete “${preset.name}”? This only removes the saved Preset, not any installed Skills.`)) {
+    emit("delete", preset.id);
   }
 }
 
@@ -171,4 +171,4 @@ function onBackdrop(event: MouseEvent) {
 }
 </script>
 
-<style scoped lang="scss" src="./ProjectsDialog.scss"></style>
+<style scoped lang="scss" src="./PresetsDialog.scss"></style>

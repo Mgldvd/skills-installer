@@ -17,9 +17,9 @@ vi.mock("../src/services/backend", () => ({
   installSkills: vi.fn(),
   cancelInstallation: vi.fn(),
   previewSkillUrl: vi.fn(),
-  getProjects: vi.fn(),
-  saveProject: vi.fn(),
-  deleteProject: vi.fn(),
+  getPresets: vi.fn(),
+  savePreset: vi.fn(),
+  deletePreset: vi.fn(),
 }));
 
 import App from "../src/App.vue";
@@ -51,7 +51,7 @@ function mockLoadedApp() {
     version: "1.0.0",
     detail: null,
   });
-  vi.mocked(backend.getProjects).mockResolvedValue([]);
+  vi.mocked(backend.getPresets).mockResolvedValue([]);
 }
 
 describe("App", () => {
@@ -594,7 +594,7 @@ describe("App", () => {
   it("surfaces a load error as a toast rather than a silent failure", async () => {
     vi.mocked(backend.getApplicationState).mockRejectedValue(new Error("disk on fire"));
     vi.mocked(backend.getPreferences).mockResolvedValue(defaultPreferences());
-    vi.mocked(backend.getProjects).mockResolvedValue([]);
+    vi.mocked(backend.getPresets).mockResolvedValue([]);
     vi.mocked(backend.getDependencyStatus).mockResolvedValue({
       available: false,
       source: "unavailable",
@@ -609,7 +609,7 @@ describe("App", () => {
     expect(wrapper.text()).toContain("disk on fire");
   });
 
-  it("Save Project captures the skillName of every currently installed Skill, not the checkbox selection", async () => {
+  it("Save Preset captures the skillName of every currently installed Skill, not the checkbox selection", async () => {
     mockLoadedApp();
     vi.mocked(backend.getApplicationState).mockResolvedValue({
       version: 1,
@@ -624,29 +624,29 @@ describe("App", () => {
       projectRoot: "/home/user/project",
     });
     const saved = { id: "atlas", name: "Atlas", gitUrl: "https://github.com/me/atlas", skillNames: ["triage"] };
-    vi.mocked(backend.saveProject).mockResolvedValue(saved);
+    vi.mocked(backend.savePreset).mockResolvedValue(saved);
     const wrapper = mount(App);
     await flushPromises();
     state.selectedSkillIds = new Set(["b"]); // deliberately not what gets saved
 
-    const projectsButton = wrapper.findAll(".app-shell__footer-btn").find((b) => b.text() === "Projects")!;
-    await projectsButton.trigger("click");
-    await wrapper.get(".projects-dialog__form input[type=text]").setValue("Atlas");
-    await wrapper.get(".projects-dialog__form input[type=url]").setValue("https://github.com/me/atlas");
-    await wrapper.get(".projects-dialog__form").trigger("submit");
+    const presetsButton = wrapper.findAll(".app-shell__footer-btn").find((b) => b.text() === "Presets")!;
+    await presetsButton.trigger("click");
+    await wrapper.get(".presets-dialog__form input[type=text]").setValue("Atlas");
+    await wrapper.get(".presets-dialog__form input[type=url]").setValue("https://github.com/me/atlas");
+    await wrapper.get(".presets-dialog__form").trigger("submit");
     await flushPromises();
 
-    expect(backend.saveProject).toHaveBeenCalledWith({
+    expect(backend.savePreset).toHaveBeenCalledWith({
       name: "Atlas",
       gitUrl: "https://github.com/me/atlas",
       skillNames: ["triage"],
     });
-    expect(state.projects).toContainEqual(saved);
+    expect(state.presets).toContainEqual(saved);
   });
 
-  it("Load Project replaces the selection with matching Skills and skips any not found here", async () => {
+  it("Load Preset replaces the selection with matching Skills and skips any not found here", async () => {
     mockLoadedApp();
-    vi.mocked(backend.getProjects).mockResolvedValue([
+    vi.mocked(backend.getPresets).mockResolvedValue([
       { id: "atlas", name: "Atlas", gitUrl: null, skillNames: ["alpha-skill", "ghost-skill"] },
     ]);
     const wrapper = mount(App);
@@ -655,28 +655,28 @@ describe("App", () => {
     state.selectedSkillIds = new Set(["b"]);
     await nextTick();
 
-    const projectsButton = wrapper.findAll(".app-shell__footer-btn").find((b) => b.text() === "Projects")!;
-    await projectsButton.trigger("click");
-    await wrapper.get(".projects-dialog__row .button").trigger("click");
+    const presetsButton = wrapper.findAll(".app-shell__footer-btn").find((b) => b.text() === "Presets")!;
+    await presetsButton.trigger("click");
+    await wrapper.get(".presets-dialog__row .button").trigger("click");
 
     expect(state.selectedSkillIds).toEqual(new Set(["a"]));
-    expect((wrapper.get(".projects-dialog").element as HTMLDialogElement).open).toBe(false);
+    expect((wrapper.get(".presets-dialog").element as HTMLDialogElement).open).toBe(false);
   });
 
-  it("Delete Project removes it from the saved list via the backend", async () => {
+  it("Delete Preset removes it from the saved list via the backend", async () => {
     mockLoadedApp();
-    vi.mocked(backend.getProjects).mockResolvedValue([{ id: "atlas", name: "Atlas", gitUrl: null, skillNames: ["a"] }]);
-    vi.mocked(backend.deleteProject).mockResolvedValue(undefined);
+    vi.mocked(backend.getPresets).mockResolvedValue([{ id: "atlas", name: "Atlas", gitUrl: null, skillNames: ["a"] }]);
+    vi.mocked(backend.deletePreset).mockResolvedValue(undefined);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const wrapper = mount(App);
     await flushPromises();
 
-    const projectsButton = wrapper.findAll(".app-shell__footer-btn").find((b) => b.text() === "Projects")!;
-    await projectsButton.trigger("click");
-    await wrapper.get(".projects-dialog__row .projects-dialog__delete").trigger("click");
+    const presetsButton = wrapper.findAll(".app-shell__footer-btn").find((b) => b.text() === "Presets")!;
+    await presetsButton.trigger("click");
+    await wrapper.get(".presets-dialog__row .presets-dialog__delete").trigger("click");
     await flushPromises();
 
-    expect(backend.deleteProject).toHaveBeenCalledWith("atlas");
-    expect(state.projects).toEqual([]);
+    expect(backend.deletePreset).toHaveBeenCalledWith("atlas");
+    expect(state.presets).toEqual([]);
   });
 });

@@ -6,7 +6,7 @@ import {
   defaultInstallOptions,
   defaultPreferences,
   type InstallOptions,
-  type Project,
+  type Preset,
   type Skill,
   type SkillGroup,
   type SkillTag,
@@ -160,21 +160,21 @@ export const mockSkills: Skill[] = [
 
 export const mockSkillsWithUpdates = new Set<string>(["skill-style-guide"]);
 
-export const mockProjects: Project[] = [
+export const mockPresets: Preset[] = [
   {
-    id: "project-marketing",
+    id: "preset-marketing",
     name: "Marketing Site",
     gitUrl: "https://github.com/acme/marketing-site",
     skillNames: ["code-review", "readme-instructions"],
   },
   {
-    id: "project-internal-tools",
+    id: "preset-internal-tools",
     name: "Internal Tools",
     gitUrl: "https://gitlab.com/acme/internal-tools",
     skillNames: ["test-driven-development", "security-review", "domain-modeling"],
   },
   {
-    id: "project-sandbox",
+    id: "preset-sandbox",
     name: "Sandbox",
     gitUrl: null,
     skillNames: [],

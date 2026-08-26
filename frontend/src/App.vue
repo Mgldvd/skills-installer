@@ -70,8 +70,8 @@
           <button type="button" class="app-shell__footer-btn app-shell__footer-btn--add" @click="openAddDialog">
             Add Skill
           </button>
-          <button type="button" class="app-shell__footer-btn" @click="isProjectsOpen = !isProjectsOpen">
-            Projects
+          <button type="button" class="app-shell__footer-btn" @click="isPresetsOpen = !isPresetsOpen">
+            Presets
           </button>
           <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
             Preferences
@@ -245,14 +245,14 @@
       @update="handleUpdateTag"
       @delete="handleDeleteTag"
     />
-    <ProjectsDialog
-      v-model:open="isProjectsOpen"
-      :projects="state.projects"
+    <PresetsDialog
+      v-model:open="isPresetsOpen"
+      :presets="state.presets"
       :installed-skill-names="installedSkillNames"
-      :error="projectsError"
-      @save="handleSaveProject"
-      @load="handleLoadProject"
-      @delete="handleDeleteProject"
+      :error="presetsError"
+      @save="handleSavePreset"
+      @load="handleLoadPreset"
+      @delete="handleDeletePreset"
     />
 
     <ToastHost />
@@ -270,7 +270,7 @@ import EditSkillDialog from "./components/EditSkillDialog/EditSkillDialog.vue";
 import InstallConfirmDialog from "./components/InstallConfirmDialog/InstallConfirmDialog.vue";
 import InstallProgressPanel from "./components/InstallProgressPanel/InstallProgressPanel.vue";
 import TagsDialog from "./components/TagsDialog/TagsDialog.vue";
-import ProjectsDialog from "./components/ProjectsDialog/ProjectsDialog.vue";
+import PresetsDialog from "./components/PresetsDialog/PresetsDialog.vue";
 import PreferencesDialog from "./components/PreferencesDialog/PreferencesDialog.vue";
 import SkillFilterBar from "./components/SkillFilterBar/SkillFilterBar.vue";
 import SkillGrid from "./components/SkillGrid/SkillGrid.vue";
@@ -279,7 +279,7 @@ import ToastHost from "./components/ToastHost/ToastHost.vue";
 import { resetInstallationState, useAppState } from "./composables/useAppState";
 import { useInstallation } from "./composables/useInstallation";
 import { useTags } from "./composables/useTags";
-import { useProjects } from "./composables/useProjects";
+import { usePresets } from "./composables/usePresets";
 import { usePreferences } from "./composables/usePreferences";
 import { useSkills } from "./composables/useSkills";
 import { useToasts } from "./composables/useToasts";
@@ -301,7 +301,7 @@ const {
   checkForUpdates,
 } = useSkills();
 const tags = useTags();
-const projects = useProjects();
+const presets = usePresets();
 const { install, cancel, checkDependencies } = useInstallation();
 const { load: loadPreferences, update: updatePreferencesPartial } = usePreferences();
 const { push: pushToast } = useToasts();
@@ -312,8 +312,8 @@ const isAgentsOpen = ref(false);
 const isTagsOpen = ref(false);
 const tagsError = ref<string | null>(null);
 const pendingTagKeys = ref(new Set<string>());
-const isProjectsOpen = ref(false);
-const projectsError = ref<string | null>(null);
+const isPresetsOpen = ref(false);
+const presetsError = ref<string | null>(null);
 const isAddDialogOpen = ref(false);
 const addSkillError = ref<string | null>(null);
 const isDeletingCatalogSkills = ref(false);
@@ -381,7 +381,7 @@ const skillsNeedingAgents = computed(() =>
 );
 const skillsNeedingAgentsCount = computed(() => skillsNeedingAgents.value.length);
 
-// What "Save Project" would capture right now — every currently installed
+// What "Save Preset" would capture right now — every currently installed
 // Skill's portable `skillName`, not the current checkbox selection.
 const installedSkillNames = computed(() => state.skills.filter((skill) => skill.installed).map((skill) => skill.skillName));
 
@@ -528,7 +528,7 @@ function describeError(error: unknown): string {
 
 onMounted(async () => {
   try {
-    await Promise.all([loadAll(), loadPreferences(), projects.loadAll()]);
+    await Promise.all([loadAll(), loadPreferences(), presets.loadAll()]);
     // loadAll()'s initial load always comes back Project-scoped against the
     // app's own launch directory (the backend has no preferences to consult
     // yet at that point) — once the persisted scope/folder are in, restore
@@ -659,40 +659,40 @@ function handleReorderTags(tagIds: string[]) {
   void tagAction(() => tags.reorder(tagIds), "Could not reorder Packs.");
 }
 
-async function handleSaveProject(name: string, gitUrl: string | null) {
+async function handleSavePreset(name: string, gitUrl: string | null) {
   try {
-    await projects.save(name, gitUrl, installedSkillNames.value);
-    projectsError.value = null;
-    pushToast(`Project "${name}" saved.`, "success");
+    await presets.save(name, gitUrl, installedSkillNames.value);
+    presetsError.value = null;
+    pushToast(`Preset "${name}" saved.`, "success");
   } catch (error) {
-    projectsError.value = describeError(error);
+    presetsError.value = describeError(error);
   }
 }
 
 // Replaces the current selection outright (matching "Load" semantics, not
-// "add to") — Skills the Project references that no longer exist here (a
+// "add to") — Skills the Preset references that no longer exist here (a
 // different machine, a removed Skill, an unconfigured Local catalog) are
 // silently skipped rather than failing the whole load.
-function handleLoadProject(projectId: string) {
-  const project = state.projects.find((p) => p.id === projectId);
-  if (!project) return;
-  const names = new Set(project.skillNames);
+function handleLoadPreset(presetId: string) {
+  const preset = state.presets.find((p) => p.id === presetId);
+  if (!preset) return;
+  const names = new Set(preset.skillNames);
   const ids = state.skills.filter((skill) => skill.enabled && names.has(skill.skillName)).map((skill) => skill.id);
   state.selectedSkillIds = new Set(ids);
-  isProjectsOpen.value = false;
-  const missing = project.skillNames.length - ids.length;
+  isPresetsOpen.value = false;
+  const missing = preset.skillNames.length - ids.length;
   if (missing > 0) {
     pushToast(
-      `Selected ${ids.length} of ${project.skillNames.length} Skills from "${project.name}" — ${missing} not found here.`,
+      `Selected ${ids.length} of ${preset.skillNames.length} Skills from "${preset.name}" — ${missing} not found here.`,
       ids.length ? "success" : "error",
     );
   } else {
-    pushToast(`Selected ${ids.length} Skills from "${project.name}".`, "success");
+    pushToast(`Selected ${ids.length} Skills from "${preset.name}".`, "success");
   }
 }
 
-function handleDeleteProject(projectId: string) {
-  projects.remove(projectId).catch((error) => pushToast(describeError(error), "error"));
+function handleDeletePreset(presetId: string) {
+  presets.remove(presetId).catch((error) => pushToast(describeError(error), "error"));
 }
 
 function openAddDialog() {

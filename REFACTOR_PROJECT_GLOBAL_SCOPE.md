@@ -240,15 +240,33 @@ contra el `projectRoot` de antes de restaurar.
 - [x] Gap cerrado: bulk-uninstall ahora cubre Global correctamente, sin trabajo dedicado —
   fue consecuencia directa de las fases anteriores, tal como se esperaba en el plan original.
 
-### Fase 8 — Rename Project → Preset
+### Fase 8 — Rename Project → Preset ✅
 
-- [ ] `domain::Project` → `domain::Preset`.
-- [ ] `ProjectsService` → `PresetsService`; `projects.json` → `presets.json` (con migración
-  de nombre de archivo si ya existe uno viejo).
-- [ ] `ProjectsDialog.vue` → `PresetsDialog.vue`; `useProjects.ts` → `usePresets.ts`.
-- [ ] Textos de UI en español/inglés actualizados donde digan "Project" refiriéndose al preset.
-- [ ] `PROMT.md` línea 13 ("alcance Project o Global") revisada/actualizada si el lenguaje
-  cambió con este refactor.
+- [x] `domain::Project` → `domain::Preset` (`src-tauri/src/domain/preset.rs`, antes `project.rs`).
+- [x] `ProjectsService` → `PresetsService`; `src-tauri/src/presets/` (antes `projects/`).
+  `projects.json` → `presets.json` con migración: si `presets.json` no existe pero
+  `projects.json` (legacy) sí, se lee ese y se persiste inmediatamente como `presets.json`
+  (mismo patrón ya usado para `agentScopes`→`lastScope`). Test nuevo:
+  `list_migrates_a_legacy_projects_json_file_in_place`.
+- [x] Comandos Tauri: `commands/projects.rs` → `commands/presets.rs`
+  (`get_projects/save_project/delete_project` → `get_presets/save_preset/delete_preset`).
+- [x] `ProjectsDialog.vue` → `PresetsDialog.vue`; `useProjects.ts` → `usePresets.ts`;
+  `types/project.ts` → `types/preset.ts`; `AppState.projects` → `AppState.presets`.
+- [x] Textos de UI en español/inglés actualizados donde decían "Project" refiriéndose al preset
+  (botón de footer, título de diálogo, estado vacío, confirmación de borrado, mensajes de toast).
+- [x] `PROMT.md` línea 13 ("alcance Project o Global") revisada: se refiere a `InstallScope`
+  (el modo Project/Global del header), no al concepto de preset — no requería cambio.
+- [x] Tests: `ProjectsDialog.spec.ts` → `PresetsDialog.spec.ts`, `useProjects.spec.ts` →
+  `usePresets.spec.ts`, y todos los bloques de `App.spec.ts` que ejercitaban Save/Load/Delete
+  Project renombrados a Preset (mocks de backend, selectores CSS `.projects-dialog*` →
+  `.presets-dialog*`, texto de botón "Projects"→"Presets", `state.projects`→`state.presets`).
+  `test-utils.ts::resetState` tenía un bug latente (`state.projects = []` con el campo ya
+  renombrado a `presets`) que `task typecheck` **no** detectó porque `tsconfig.app.json` no
+  cubre `frontend/tests/*.ts` — corregido.
+
+`task typecheck`/`task lint`/`task test` verdes desde la raíz: 185 tests Rust + 9 de integración
++ 231 frontend (229 + 2 nuevos: `list_migrates_a_legacy_projects_json_file_in_place` en Rust
+cuenta aparte, más los tests ya existentes renombrados sin pérdida de cobertura).
 
 ### Fase 9 — Tests y validación final
 

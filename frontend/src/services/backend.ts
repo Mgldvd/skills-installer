@@ -10,7 +10,7 @@ import type {
   InstallResult,
   InstallScope,
   ParsedSkillSource,
-  Project,
+  Preset,
   Skill,
   SkillTag,
   UiPreferences,
@@ -123,20 +123,20 @@ export async function updatePreferences(preferences: UiPreferences): Promise<UiP
   return call("update_preferences", { preferences });
 }
 
-export interface SaveProjectArgs {
+export interface SavePresetArgs {
   name: string;
   gitUrl?: string | null;
   skillNames: string[];
 }
 
-export async function getProjects(): Promise<Project[]> {
-  return call("get_projects");
+export async function getPresets(): Promise<Preset[]> {
+  return call("get_presets");
 }
-export async function saveProject(args: SaveProjectArgs): Promise<Project> {
-  return call("save_project", { args });
+export async function savePreset(args: SavePresetArgs): Promise<Preset> {
+  return call("save_preset", { args });
 }
-export async function deleteProject(projectId: string): Promise<void> {
-  return call("delete_project", { projectId });
+export async function deletePreset(presetId: string): Promise<void> {
+  return call("delete_preset", { presetId });
 }
 
 export interface CliInstallResult {
