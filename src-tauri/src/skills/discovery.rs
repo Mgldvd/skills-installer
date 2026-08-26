@@ -147,26 +147,53 @@ pub fn discover_installed_agents(project_root: &Path) -> HashMap<String, Vec<Str
 }
 
 /// Per-agent *global* (`$HOME`-relative) install destination — the Global
-/// scope counterpart to `AGENT_PROJECT_DIRS`, mirroring the frontend's
-/// `SUPPORTED_AGENTS[].globalPath` (same authoritative source: the real
-/// `skills` CLI's own Supported Agents table). Kept in sync by hand — there
-/// is no shared source of truth across the Rust/TS boundary. Unlike project
-/// paths, these are almost all agent-exclusive; only `github-copilot` and
-/// `vscode` share one (`~/.copilot/skills`), since VS Code's Copilot Chat
-/// and other Copilot surfaces are account-scoped to the same directory —
-/// see `domain::cli_agent_id`.
+/// scope counterpart to `AGENT_PROJECT_DIRS`.
+///
+/// The table below was originally transcribed from the `skills` CLI's own
+/// Supported Agents README table (like `AGENT_PROJECT_DIRS`, and like the
+/// frontend's now-corrected `SUPPORTED_AGENTS[].globalPath`), which claimed
+/// most agents got their own exclusive global directory. That turned out to
+/// be **wrong** — verified 2026-08-25 by actually running the real CLI
+/// (`npx skills add ... --global`) against a scratch `$HOME` for every
+/// agent id and inspecting what landed on disk. In practice `~/.agents/skills`
+/// is the CLI's shared global destination for nearly every agent — including
+/// ones the README implied had a dedicated directory of their own
+/// (`universal`, `codex`, `gemini-cli`, `cursor`, `opencode`,
+/// `github-copilot`/`vscode`) — mirroring how `.agents/skills` already works
+/// at the project scope. `~/.codex/skills`, `~/.gemini/skills`,
+/// `~/.cursor/skills`, `~/.config/opencode/skills`, `~/.copilot/skills`, and
+/// `~/.config/agents/skills` are never actually written by the real CLI and
+/// were dropped. Only `claude-code` gets a true dedicated *and separate*
+/// copy (`~/.claude/skills`, in addition to also being covered by
+/// `~/.agents/skills`); `pi`, `openclaw`, `openhands`, `windsurf`, and
+/// `hermes-agent` likewise get both their own dedicated copy and are listed
+/// as covered by the shared directory in the CLI's own install summary.
+/// Kept in sync by hand with the frontend's `SUPPORTED_AGENTS[].globalPath`
+/// — there is no shared source of truth across the Rust/TS boundary.
 const AGENT_GLOBAL_DIRS: &[(&str, &[&str])] = &[
-    (".config/agents/skills", &["universal"]),
     (".claude/skills", &["claude-code"]),
-    (".codex/skills", &["codex"]),
-    (".gemini/skills", &["gemini-cli"]),
-    (".cursor/skills", &["cursor"]),
+    (
+        ".agents/skills",
+        &[
+            "universal",
+            "claude-code",
+            "codex",
+            "gemini-cli",
+            "cursor",
+            "opencode",
+            "github-copilot",
+            "vscode",
+            "pi",
+            "openclaw",
+            "zed",
+            "openhands",
+            "windsurf",
+            "hermes-agent",
+        ],
+    ),
     (".codeium/windsurf/skills", &["windsurf"]),
-    (".config/opencode/skills", &["opencode"]),
-    (".copilot/skills", &["github-copilot", "vscode"]),
     (".pi/agent/skills", &["pi"]),
     (".openclaw/skills", &["openclaw"]),
-    (".agents/skills", &["zed"]),
     (".openhands/skills", &["openhands"]),
     (".hermes/skills", &["hermes-agent"]),
 ];
@@ -321,26 +348,44 @@ mod tests {
     #[test]
     fn discover_installed_agents_globally_finds_a_skill_in_an_agent_exclusive_global_dir() {
         let home = tempfile::tempdir().unwrap();
-        write_skill_at(&home.path().join(".codex").join("skills"), "triage");
+        write_skill_at(&home.path().join(".hermes").join("skills"), "triage");
 
         let agents = discover_installed_agents_globally(home.path());
         assert_eq!(
             agents.get("triage").cloned().unwrap_or_default(),
-            vec!["codex"]
+            vec!["hermes-agent"]
         );
     }
 
     #[test]
-    fn discover_installed_agents_globally_reports_both_agents_sharing_the_copilot_dir() {
+    fn discover_installed_agents_globally_reports_every_agent_sharing_the_agents_dir() {
         let home = tempfile::tempdir().unwrap();
-        write_skill_at(&home.path().join(".copilot").join("skills"), "triage");
+        write_skill_at(&home.path().join(".agents").join("skills"), "triage");
 
         let mut agents = discover_installed_agents_globally(home.path())
             .get("triage")
             .cloned()
             .unwrap_or_default();
         agents.sort();
-        assert_eq!(agents, vec!["github-copilot", "vscode"]);
+        assert_eq!(
+            agents,
+            vec![
+                "claude-code",
+                "codex",
+                "cursor",
+                "gemini-cli",
+                "github-copilot",
+                "hermes-agent",
+                "openclaw",
+                "opencode",
+                "openhands",
+                "pi",
+                "universal",
+                "vscode",
+                "windsurf",
+                "zed",
+            ]
+        );
     }
 
     #[test]

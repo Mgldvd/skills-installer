@@ -27,31 +27,36 @@ export interface SupportedAgent {
   projectPath: string;
   globalPath: string;
 }
+// The `globalPath` values below were originally transcribed from the
+// `skills` CLI's own Supported Agents README table, like `projectPath`. That
+// table turned out to be wrong about global scope — verified 2026-08-25 by
+// actually running the real CLI (`npx skills add ... --global`) against a
+// scratch `$HOME` for every agent id and inspecting what landed on disk (see
+// Rust's `AGENT_GLOBAL_DIRS` for the discovery-side counterpart, kept in
+// sync with this table by hand). `~/.agents/skills` turned out to be the
+// CLI's shared global destination for nearly every agent, mirroring how
+// `.agents/skills` already works at the project scope — including agents
+// the README implied had a dedicated directory of their own. Only
+// `claude-code`, `pi`, `openclaw`, `openhands`, `windsurf`, and
+// `hermes-agent` get a genuinely separate dedicated copy in addition to
+// being covered by the shared directory.
 export const SUPPORTED_AGENTS: SupportedAgent[] = [
-  {
-    id: "universal",
-    label: "Universal (.agents)",
-    projectPath: ".agents/skills",
-    globalPath: "~/.config/agents/skills",
-  },
+  { id: "universal", label: "Universal (.agents)", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
   { id: "claude-code", label: "Claude Code", projectPath: ".claude/skills", globalPath: "~/.claude/skills" },
-  // Per the `skills` CLI's own Supported Agents table (vercel-labs/skills
-  // README) — the authoritative source for every path below, since that CLI
-  // is what actually performs the install: Codex's project path is the
-  // shared `.agents/skills`, but its *global* path is its own dedicated
-  // `~/.codex/skills`, not shared with Universal.
-  { id: "codex", label: "Codex", projectPath: ".agents/skills", globalPath: "~/.codex/skills" },
-  { id: "gemini-cli", label: "Gemini CLI", projectPath: ".agents/skills", globalPath: "~/.gemini/skills" },
-  { id: "cursor", label: "Cursor", projectPath: ".agents/skills", globalPath: "~/.cursor/skills" },
+  { id: "codex", label: "Codex", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
+  { id: "gemini-cli", label: "Gemini CLI", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
+  { id: "cursor", label: "Cursor", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
   { id: "windsurf", label: "Windsurf", projectPath: ".windsurf/skills", globalPath: "~/.codeium/windsurf/skills" },
-  { id: "opencode", label: "OpenCode", projectPath: ".agents/skills", globalPath: "~/.config/opencode/skills" },
-  { id: "github-copilot", label: "GitHub Copilot", projectPath: ".agents/skills", globalPath: "~/.copilot/skills" },
+  { id: "opencode", label: "OpenCode", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
+  { id: "github-copilot", label: "GitHub Copilot", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
   // A separate row from `github-copilot` for how users actually think about
   // it, even though both install through the same underlying `skills` CLI
   // agent (see Rust's `domain::cli_agent_id`) — VS Code's Copilot Chat/agent
   // mode has no CLI id of its own. `.github/skills` is its own dedicated
-  // directory per VS Code's docs, distinct from the generic Copilot path.
-  { id: "vscode", label: "VS Code", projectPath: ".github/skills", globalPath: "~/.copilot/skills" },
+  // *project*-scope directory per VS Code's docs, distinct from the generic
+  // Copilot path — but at global scope it lands in the shared directory
+  // like everything else.
+  { id: "vscode", label: "VS Code", projectPath: ".github/skills", globalPath: "~/.agents/skills" },
   { id: "pi", label: "Pi", projectPath: ".pi/skills", globalPath: "~/.pi/agent/skills" },
   // Per the `skills` CLI's Supported Agents table: OpenClaw's project path
   // is a bare `skills/` at the project root, not `.agents/skills`.
@@ -60,11 +65,7 @@ export const SUPPORTED_AGENTS: SupportedAgent[] = [
   // Cline, Dexto, Kimi Code CLI, Loaf, and Warp per the `skills` CLI's table
   // — none of them have a dedicated directory of their own.
   { id: "zed", label: "Zed", projectPath: ".agents/skills", globalPath: "~/.agents/skills" },
-  // Per the `skills` CLI's table, OpenHands has its own dedicated directory
-  // at both scopes — not the shared `.agents/skills` convention.
   { id: "openhands", label: "OpenHands", projectPath: ".openhands/skills", globalPath: "~/.openhands/skills" },
-  // Per the `skills` CLI's table, Hermes Agent has its own dedicated
-  // directory at both scopes — not the shared `.agents/skills` convention.
   { id: "hermes-agent", label: "Hermes Agent", projectPath: ".hermes/skills", globalPath: "~/.hermes/skills" },
 ];
 

@@ -265,16 +265,38 @@ contra el `projectRoot` de antes de restaurar.
   cubre `frontend/tests/*.ts` — corregido.
 
 `task typecheck`/`task lint`/`task test` verdes desde la raíz: 185 tests Rust + 9 de integración
+
 + 231 frontend (229 + 2 nuevos: `list_migrates_a_legacy_projects_json_file_in_place` en Rust
-cuenta aparte, más los tests ya existentes renombrados sin pérdida de cobertura).
+  cuenta aparte, más los tests ya existentes renombrados sin pérdida de cobertura).
 
 ### Fase 9 — Tests y validación final
 
-- [ ] Test de migración explícito: cargar un `preferences.json` viejo con `agent_scopes` y
-  confirmar que no rompe y cae en un `last_scope` sano.
-- [ ] `task typecheck`, `task lint`, `task test` en verde desde la raíz.
+- [x] Test de migración explícito: `load_ignores_a_legacy_agent_scopes_map_and_defaults_last_scope_to_project`
+  (`src-tauri/src/preferences/service.rs`) — ya existía desde una fase anterior, confirmado en
+  verde.
+- [x] `task typecheck`, `task lint`, `task test` en verde desde la raíz (185 Rust + 9 integración
+  + 231 frontend).
 - [ ] Verificación manual en la app real (no solo tests) de: cambiar de modo en el header,
-  instalar en cada modo, desinstalar en cada modo, bulk-uninstall en modo Global.
+  instalar en cada modo, desinstalar en cada modo, bulk-uninstall en modo Global. **Pendiente:
+  requiere una ventana Tauri nativa, fuera del alcance de las herramientas de automatización de
+  browser disponibles — el usuario lo hace corriendo `task dev` y reporta el resultado.**
+
+**Bug real encontrado durante esta verificación (2026-08-25)**: instalar en modo Global con
+varios agentes activos (`claude-code`, `codex`, `opencode`, `universal`) dejaba el badge
+"Missing N agents" mal en la tarjeta del Skill después de instalar sin errores. Causa raíz:
+`AGENT_GLOBAL_DIRS` (`src-tauri/src/skills/discovery.rs`) y `SUPPORTED_AGENTS[].globalPath`
+(`frontend/src/types/preferences.ts`) fueron transcritas de la tabla del README del CLI
+`skills`, que resultó estar **desactualizada/incorrecta** para el scope global: verificado
+corriendo el CLI real (`npx skills add ... --global`) contra un `$HOME` de prueba para cada
+agente e inspeccionando qué se escribió en disco. En la práctica `~/.agents/skills` es el
+destino global compartido para casi todos los agentes (incluyendo `codex`, `opencode`,
+`universal`, `gemini-cli`, `cursor`, `github-copilot`/`vscode`, que la tabla vieja marcaba con
+directorios propios que el CLI real nunca escribe: `~/.codex/skills`, `~/.config/opencode/skills`,
+`~/.config/agents/skills`, `~/.gemini/skills`, `~/.cursor/skills`, `~/.copilot/skills`).
+Corregidas ambas tablas para reflejar el comportamiento real; tests de discovery actualizados
+(`discover_installed_agents_globally_reports_every_agent_sharing_the_agents_dir` reemplaza al
+test viejo del directorio `.copilot`). Pipeline verde después del fix: 185 Rust + 9 integración +
+231 frontend.
 
 ---
 
