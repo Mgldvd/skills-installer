@@ -1386,10 +1386,17 @@ skills:
         .unwrap();
 
         let state = service.load_state().unwrap();
+        // `skill_name` now tracks the SKILL.md front matter's own `name:`
+        // ("Only Claude") rather than the enclosing directory
+        // ("only-claude") — see `discover_skills_in_directory`. The real
+        // Skills CLI keeps that raw front matter value untouched in the
+        // installed copy even though it slugifies the destination
+        // directory, so this fixture's directory/front-matter split
+        // mirrors what actually lands on disk.
         let only_claude = state
             .skills
             .iter()
-            .find(|s| s.skill_name == "only-claude")
+            .find(|s| s.skill_name == "Only Claude")
             .unwrap();
         assert!(only_claude.installed);
         assert_eq!(

@@ -42,10 +42,6 @@ pub struct UiPreferences {
     /// the default `Project`.
     #[serde(default)]
     pub last_scope: InstallScope,
-    /// The last project folder selected in the header, remembered across
-    /// launches so `Project` mode doesn't reset to empty on every start.
-    #[serde(default)]
-    pub last_project_path: Option<String>,
 }
 
 impl Default for UiPreferences {
@@ -62,7 +58,6 @@ impl Default for UiPreferences {
             compact_cards: false,
             agent_order: Vec::new(),
             last_scope: InstallScope::Project,
-            last_project_path: None,
         }
     }
 }

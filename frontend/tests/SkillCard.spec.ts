@@ -172,7 +172,9 @@ describe("SkillCard", () => {
     });
 
     expect(wrapper.get(".skill-card__source").classes()).toContain("source-icon--local");
-    expect(wrapper.text()).toContain("Workflow");
+    // Assigned packs render as icon-only color swatches (see the next test)
+    // — the name is only in the accessible title, not as visible text.
+    expect(wrapper.get(".pack-badge").attributes("title")).toBe("Workflow");
     expect(wrapper.classes()).toContain("is-installed");
   });
 
@@ -187,7 +189,7 @@ describe("SkillCard", () => {
     expect(wrapper.text()).not.toContain("No packs");
   });
 
-  it("renders Pack markers as static compact badges with their configured color", () => {
+  it("renders Pack markers as static icon-only badges with their configured color", () => {
     const wrapper = mount(SkillCard, {
       props: {
         skill: makeSkill({ tags: ["workflow"] }),
@@ -197,8 +199,10 @@ describe("SkillCard", () => {
     });
     const badge = wrapper.get(".pack-badge");
     expect(badge.element.tagName).toBe("SPAN");
-    expect(badge.classes()).toContain("pack-badge--compact");
+    expect(badge.classes()).toContain("pack-badge--icon-only");
     expect(badge.attributes("style")).toContain("--pack-color: #14B8A6");
+    // Icon-only: no visible dot/label, just the colored swatch.
+    expect(badge.find(".pack-badge__label").exists()).toBe(false);
   });
 
   it("shows the Update button only for an installed Local skill flagged with hasUpdate", () => {

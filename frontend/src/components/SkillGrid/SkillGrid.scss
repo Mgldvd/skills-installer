@@ -1,7 +1,17 @@
 .skill-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  grid-auto-rows: calc(13.25rem * var(--font-scale));
+  // A fixed height, not `auto`: `auto` sized every row to its own tallest
+  // card, which looked tidy within a row but made rows of different
+  // content wildly different heights from *each other* — a card grid reads
+  // as sloppy, not compact, when neighboring rows don't line up. Sized for
+  // the realistic worst case (a two-line title over one row of footer
+  // icons — `.skill-card__title`'s own `line-clamp: 2` caps it there) so
+  // that case still fits without clipping, while still being far smaller
+  // than the old reservation this replaced (13.25rem), because the footer
+  // itself no longer reserves room for the separate labeled-tags row that
+  // used to sit above the agent icons.
+  grid-auto-rows: calc(10.25rem * var(--font-scale));
   gap: var(--space-sm);
   align-items: stretch;
 
@@ -11,7 +21,9 @@
   }
 
   @at-root .skill-grid--compact {
-    grid-auto-rows: calc(9.25rem * var(--font-scale));
+    // No description row to budget for, so the same two-line-title-plus-
+    // footer worst case fits in less overall height than the default view.
+    grid-auto-rows: calc(6.5rem * var(--font-scale));
   }
 
   @at-root .skill-grid--list {
@@ -26,16 +38,49 @@
 
   @media (max-width: 699px) {
     grid-template-columns: 1fr;
-
-    grid-auto-rows: calc(13.5rem * var(--font-scale));
   }
+}
 
-  .skill-grid__empty {
-    grid-column: 1 / -1;
-    text-align: center;
-    color: var(--text-muted);
-    padding: var(--space-xl) 0;
+// The three status groups (`groups` in the script) each get their own
+// header + `.skill-grid` — see SkillGrid.vue. Kept as siblings under one
+// wrapper, not nested inside a shared grid, so each section's row of cards
+// lays out independently of the others.
+.skill-grid-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skill-grid__empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-xl) 0;
+}
+
+.skill-grid__section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-xs);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+
+  // The label + count sit at a fixed width; a rule fills whatever's left,
+  // matching the "-- label ----" divider look instead of a plain heading.
+  &::after {
+    content: "";
+    flex: 1 1 auto;
+    height: 1px;
+    background: var(--border-soft);
   }
+}
+
+.skill-grid__section-count {
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .skill-grid-move {
@@ -49,11 +94,15 @@
   }
 }
 
+// Matches `SkillCard.scss`'s own `(pointer: coarse)` bump to the edit
+// button's min-height (1.75rem -> 2.75rem, +1rem) so the fixed row is still
+// tall enough for the touch-sized footer.
 @media (pointer: coarse) {
   .skill-grid {
-    grid-auto-rows: calc(14.25rem * var(--font-scale));
+    grid-auto-rows: calc(11.25rem * var(--font-scale));
+
     @at-root .skill-grid--compact {
-      grid-auto-rows: calc(10.25rem * var(--font-scale));
+      grid-auto-rows: calc(7.5rem * var(--font-scale));
     }
   }
 }

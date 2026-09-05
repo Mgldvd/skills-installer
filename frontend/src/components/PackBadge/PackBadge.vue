@@ -8,6 +8,7 @@
       'pack-badge--partial': partial,
       'pack-badge--compact': compact,
       'pack-badge--muted': muted,
+      'pack-badge--icon-only': iconOnly,
     }"
     :type="interactive ? 'button' : undefined"
     :aria-pressed="interactive ? pressedState : undefined"
@@ -18,8 +19,10 @@
     @click="handleClick"
   >
     <span class="pack-badge__dot" aria-hidden="true" />
-    <span class="pack-badge__label">{{ name }}</span>
-    <slot name="trailing" />
+    <template v-if="!iconOnly">
+      <span class="pack-badge__label">{{ name }}</span>
+      <slot name="trailing" />
+    </template>
   </component>
 </template>
 
@@ -38,6 +41,10 @@ const props = withDefaults(
     disabled?: boolean;
     ariaLabel?: string;
     title?: string;
+    /** Renders just the colored swatch, no dot or label — a small fixed
+     * square sized to sit inline with other icon-tile rows (e.g. a
+     * SkillCard's agent icons), for contexts too tight for the full pill. */
+    iconOnly?: boolean;
   }>(),
   {
     interactive: false,
@@ -48,6 +55,7 @@ const props = withDefaults(
     disabled: false,
     ariaLabel: undefined,
     title: undefined,
+    iconOnly: false,
   },
 );
 

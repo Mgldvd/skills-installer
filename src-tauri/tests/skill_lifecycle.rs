@@ -193,10 +193,14 @@ fn the_skill_shows_up_in_local_discovery_while_its_files_are_on_disk() {
         "Issue Triage",
     );
 
+    // `skill_name` tracks the front matter's own `name:` ("Issue Triage"),
+    // not the enclosing directory ("issue-triage") — the real Skills CLI
+    // matches `--skill` against that raw front matter value, not the
+    // folder it lives in (see `discover_skills_in_directory`).
     let skills = discover_local_skills(&root);
     let found = skills
         .iter()
-        .find(|s| s.skill_name == "issue-triage")
+        .find(|s| s.skill_name == "Issue Triage")
         .expect("discovered locally");
     assert!(found.local);
     assert!(found.installed);
@@ -424,7 +428,7 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
     assert!(here
         .skills
         .iter()
-        .any(|s| s.skill_name == "issue-triage" && s.installed));
+        .any(|s| s.skill_name == "Issue Triage" && s.installed));
 
     // A different, empty folder must not inherit that status — the GUI's
     // "Installed" badge tracks whatever folder is currently selected, not
@@ -441,7 +445,7 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
     let triage_there = there
         .skills
         .iter()
-        .find(|s| s.skill_name == "issue-triage")
+        .find(|s| s.skill_name == "Issue Triage")
         .expect("still listed in the catalog");
     assert!(
         !triage_there.installed,

@@ -15,8 +15,13 @@
     gap: var(--space-xs);
   }
 
+  // Grows to fill whatever space the (fixed-width) sort group on the left
+  // doesn't use, so the search input inside it — the only other flexible
+  // element in this row — ends up centered in the remaining space rather
+  // than shrink-wrapped against the right edge.
   .skill-filter-bar__group--filter {
-    margin-left: auto;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .skill-filter-bar__label {
@@ -32,10 +37,12 @@
     position: relative;
     display: flex;
     align-items: center;
+    flex: 1 1 auto;
+    min-width: 8rem;
 
     svg {
       position: absolute;
-      left: var(--space-xs);
+      left: var(--space-sm);
       width: 0.9rem;
       height: 0.9rem;
       fill: none;
@@ -45,14 +52,19 @@
     }
 
     input {
-      width: 11rem;
-      min-height: 1.9rem;
-      padding: 0.2rem var(--space-xs) 0.2rem 1.75rem;
-      border: 1px solid var(--border-soft);
+      width: 100%;
+      min-height: 2.15rem;
+      padding: 0.35rem var(--space-sm) 0.35rem 2.1rem;
+      border: 1px solid var(--border-strong);
       border-radius: var(--radius-sm);
-      background: var(--bg-panel);
+      background: var(--bg-card);
       color: var(--text-primary);
-      font-size: var(--font-size-xs);
+      font-size: var(--font-size-sm);
+      box-shadow: var(--shadow-sm);
+
+      &::placeholder {
+        color: var(--text-muted);
+      }
 
       body.is-keyboard-navigation &:focus-visible {
         border-color: var(--accent);
@@ -64,6 +76,7 @@
   .skill-filter-bar__pack {
     display: flex;
     align-items: center;
+    flex: 0 0 auto;
     gap: var(--space-2xs);
     color: var(--text-muted);
     font-size: var(--font-size-xs);
@@ -162,10 +175,6 @@
 
   @media (max-width: 900px) {
     flex-wrap: wrap;
-
-    .skill-filter-bar__group--filter {
-      margin-left: 0;
-    }
   }
 
   @media (max-width: 680px) {
@@ -174,12 +183,6 @@
 
     .skill-filter-bar__group {
       flex-wrap: wrap;
-    }
-    .skill-filter-bar__search {
-      flex: 1;
-      input {
-        width: 100%;
-      }
     }
   }
 }

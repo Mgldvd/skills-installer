@@ -1,10 +1,14 @@
 .skill-card {
   position: relative;
   display: grid;
-  grid-template-rows:
-    calc(2.7rem * var(--font-scale)) calc(3.45rem * var(--font-scale))
-    minmax(3.75rem, auto);
-  gap: var(--space-xs);
+  // The title row is `auto`, not a fixed reservation for a worst-case
+  // 2-line title: `.skill-card__title`'s own `-webkit-line-clamp: 2` +
+  // `max-height` already cap it at two lines regardless, so `auto` just
+  // lets a one-line title (the common case) take only the height it
+  // actually needs instead of always reserving room for a second line
+  // that usually isn't there.
+  grid-template-rows: auto calc(3.45rem * var(--font-scale)) minmax(1.75rem, auto);
+  gap: var(--space-2xs);
   height: 100%;
   padding: var(--space-sm);
   box-sizing: border-box;
@@ -62,7 +66,7 @@
     opacity: 0.68;
   }
   &.is-compact {
-    grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(3.75rem, auto);
+    grid-template-rows: auto minmax(1.75rem, auto);
   }
   &.is-list {
     display: flex;
@@ -122,7 +126,6 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-sm);
-    height: calc(2.7rem * var(--font-scale));
     min-height: 0;
     padding-right: 2.25rem;
     pointer-events: none;
@@ -174,12 +177,18 @@
     animation: skill-card-spin 0.7s linear infinite;
   }
 
+  // The corner-triangle shape only ever showed in grid/compact cards — the
+  // card's own border-color and background tint (see `.is-selected` etc.
+  // below) already carry the same status, so grid mode hides this node
+  // entirely rather than duplicating that with a triangle. List mode still
+  // shows it, repositioned into a leading color strip: a thin row has no
+  // border/background tint of its own to lean on the way a card does.
   .skill-card__selection-ribbon {
+    display: none;
     position: absolute;
     top: 0;
     right: 0;
     z-index: 3;
-    display: block;
     width: 1.25rem;
     height: 1.25rem;
     background: var(--bg-muted);
@@ -187,10 +196,8 @@
     pointer-events: none;
     transition: background-color var(--transition-fast);
   }
-  // In list mode the corner triangle doesn't read well on a thin row, so it
-  // becomes a leading color strip instead — same status colors, same DOM
-  // node, just repositioned by CSS rather than duplicating the template.
   &.is-list .skill-card__selection-ribbon {
+    display: block;
     position: static;
     flex: 0 0 auto;
     width: 0.3rem;
@@ -263,14 +270,6 @@
     align-items: center;
     flex: 1 1 auto;
     min-width: 0;
-    gap: var(--space-2xs);
-  }
-
-  .skill-card__packs {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    flex-wrap: wrap;
     gap: var(--space-2xs);
   }
 
@@ -379,15 +378,13 @@
 
 @media (pointer: coarse) {
   .skill-card {
-    grid-template-rows:
-      calc(2.7rem * var(--font-scale)) calc(3.45rem * var(--font-scale))
-      minmax(4.75rem, auto);
+    grid-template-rows: auto calc(3.45rem * var(--font-scale)) minmax(2.75rem, auto);
 
     .skill-card__edit {
       min-height: 2.75rem;
     }
     &.is-compact {
-      grid-template-rows: calc(2.7rem * var(--font-scale)) minmax(4.75rem, auto);
+      grid-template-rows: auto minmax(2.75rem, auto);
     }
   }
 }

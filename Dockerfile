@@ -34,9 +34,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # system-wide state, so switch back explicitly for this step. Root stays
 # the effective user all the way through CMD (no `USER master` below):
 # `HOST_UID`/`HOST_GID` (see compose.yml) are only known at `docker compose
-# run` time, not at image-build time, so `scripts/dist-container.sh` itself
-# remaps the base image's non-root user to match them and drops from root
-# via `gosu` before doing anything else — see that script.
+# run` time, not at image-build time, so `.tasks/scripts/dist-container.sh`
+# itself remaps the base image's non-root user to match them and drops from
+# root via `gosu` before doing anything else — see that script.
 USER root
 
 # patchelf: required by Tauri's Linux bundler for AppImage RPATH patching,
@@ -45,8 +45,8 @@ USER root
 # nothing and removes the doubt. clippy/rustfmt: `task lint` needs both;
 # the base image's Rust install doesn't document including them, so this
 # adds them if missing (a fast no-op if they're already present). gosu:
-# lets `scripts/dist-container.sh` drop from root to a uid/gid-matched user
-# before touching the bind-mounted repo — see that script for why. xdg-utils:
+# lets `.tasks/scripts/dist-container.sh` drop from root to a uid/gid-matched
+# user before touching the bind-mounted repo — see that script for why. xdg-utils:
 # provides /usr/bin/xdg-open, which linuxdeploy shells out to during the
 # AppImage bundling step (desktop-file/MIME setup) — not part of the base
 # image, and its absence fails bundling outright rather than skipping it.
@@ -57,8 +57,8 @@ RUN apt-get update \
 
 # go-task/task: not packaged for Debian/Ubuntu, so installed via the
 # project's own official install script rather than apt. This container's
-# entrypoint (scripts/dist-container.sh) now runs `task release` — the repo
-# no longer has a Makefile.
+# entrypoint (.tasks/scripts/dist-container.sh) now runs `task release` —
+# the repo no longer has a Makefile.
 RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
 WORKDIR /workspace
@@ -66,4 +66,4 @@ WORKDIR /workspace
 # Plain (non-login) shell: `bash -lc` sources /etc/profile and friends,
 # which on some Debian-derived images reset PATH from scratch and drop
 # cargo's directory again even though ENV set it correctly above.
-CMD ["bash", "scripts/dist-container.sh"]
+CMD ["bash", ".tasks/scripts/dist-container.sh"]

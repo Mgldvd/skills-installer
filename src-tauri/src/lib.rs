@@ -61,6 +61,33 @@ fn resolve_original_cwd(owd: Option<PathBuf>, current_dir: Option<PathBuf>) -> P
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
+/// Picks the project folder the GUI opens into.
+///
+/// Terminal-launched (`skills-installer` typed in a project directory, or
+/// the detached relaunch preserving that terminal's cwd) — trust `cwd`, so
+/// installing "here" installs into the project the user is actually in.
+///
+/// Desktop-launched (double-click, app menu, file manager) — `cwd` just
+/// reflects wherever the launcher happened to be (e.g. the AppImage file's
+/// own folder under `~/Downloads`), never a real project, so fall back to
+/// `default_root` instead of leaking that path into the UI.
+fn resolve_gui_project_root(
+    launched_from_terminal: bool,
+    cwd: PathBuf,
+    default_root: PathBuf,
+) -> PathBuf {
+    // The `/tmp/.mount_` case is reachable even when terminal-launched: only
+    // if `$OWD` was unset (a non-standard AppImage runtime, or none at all)
+    // and `current_dir()` still landed inside the ephemeral mount tree —
+    // never a meaningful project destination, and it disappears when the
+    // process exits.
+    if launched_from_terminal && !cwd.to_string_lossy().starts_with("/tmp/.mount_") {
+        cwd
+    } else {
+        default_root
+    }
+}
+
 /// True only for the first, terminal-attached launch of an AppImage — e.g.
 /// via the `skills` launcher `install_cli_command` symlinks into
 /// `~/.local/bin`. A `.desktop` entry or file-manager double-click already
@@ -68,12 +95,34 @@ fn resolve_original_cwd(owd: Option<PathBuf>, current_dir: Option<PathBuf>) -> P
 /// `SKILLS_INSTALLER_GUI_DETACHED` marks the already-detached relaunch so
 /// this doesn't loop.
 fn should_relaunch_detached() -> bool {
-    use std::io::IsTerminal;
     should_relaunch(
         std::env::var_os("APPIMAGE").is_some(),
         std::env::var_os("SKILLS_INSTALLER_GUI_DETACHED").is_some(),
-        std::io::stdout().is_terminal(),
+        stdout_is_terminal(),
     )
+}
+
+fn stdout_is_terminal() -> bool {
+    use std::io::IsTerminal;
+    std::io::stdout().is_terminal()
+}
+
+/// True when this launch traces back to a terminal: either stdout is a
+/// terminal right now (`skills-installer` typed directly, or any GUI build
+/// run directly from a shell), or this is the detached relaunch child that
+/// `relaunch_gui_detached` spawned to release that original terminal — its
+/// own stdout is redirected to `/dev/null`, so `SKILLS_INSTALLER_GUI_DETACHED`
+/// is what still marks it as terminal-launched.
+fn launched_from_terminal() -> bool {
+    std::env::var_os("SKILLS_INSTALLER_GUI_DETACHED").is_some() || stdout_is_terminal()
+}
+
+/// Where the GUI opens when there's no real launch directory to trust (see
+/// `resolve_gui_project_root`).
+fn default_gui_project_root() -> PathBuf {
+    std::env::var_os("HOME")
+        .map(|home| PathBuf::from(home).join("projects"))
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 fn should_relaunch(is_appimage: bool, already_detached: bool, stdout_is_terminal: bool) -> bool {
@@ -129,18 +178,11 @@ fn relaunch_gui_detached() -> std::io::Result<()> {
 // main.rs/lib.rs split exists purely for module organization, not to
 // satisfy a mobile entry-point requirement.
 fn run_gui(config_override: Option<PathBuf>) {
-    // Preserve the launch context: starting the app from a project must
-    // install into that project, never silently redirect to HOME.
-    let mut project_root = original_cwd();
-    // Last-resort safety net: only reachable if `$OWD` was unset (a
-    // non-standard AppImage runtime, or none at all) and `current_dir()`
-    // still landed inside the ephemeral mount tree — never a meaningful
-    // project destination, and it disappears when the process exits.
-    if project_root.to_string_lossy().starts_with("/tmp/.mount_") {
-        if let Some(home) = std::env::var_os("HOME") {
-            project_root = PathBuf::from(home);
-        }
-    }
+    let project_root = resolve_gui_project_root(
+        launched_from_terminal(),
+        original_cwd(),
+        default_gui_project_root(),
+    );
     let services = app::ApplicationServices::new(config_override, project_root);
     let state = commands::AppState { services };
 
@@ -216,6 +258,36 @@ mod tests {
         let resolved = resolve_original_cwd(Some(owd), Some(current_dir.clone()));
 
         assert_eq!(resolved, current_dir);
+    }
+
+    #[test]
+    fn resolve_gui_project_root_trusts_cwd_when_launched_from_terminal() {
+        let cwd = PathBuf::from("/home/someone/my-project");
+        let default_root = PathBuf::from("/home/someone/projects");
+
+        let resolved = resolve_gui_project_root(true, cwd.clone(), default_root);
+
+        assert_eq!(resolved, cwd);
+    }
+
+    #[test]
+    fn resolve_gui_project_root_falls_back_to_default_when_desktop_launched() {
+        let cwd = PathBuf::from("/home/someone/Downloads");
+        let default_root = PathBuf::from("/home/someone/projects");
+
+        let resolved = resolve_gui_project_root(false, cwd, default_root.clone());
+
+        assert_eq!(resolved, default_root);
+    }
+
+    #[test]
+    fn resolve_gui_project_root_falls_back_to_default_when_cwd_is_still_the_ephemeral_mount() {
+        let cwd = PathBuf::from("/tmp/.mount_whatever");
+        let default_root = PathBuf::from("/home/someone/projects");
+
+        let resolved = resolve_gui_project_root(true, cwd, default_root.clone());
+
+        assert_eq!(resolved, default_root);
     }
 
     #[test]

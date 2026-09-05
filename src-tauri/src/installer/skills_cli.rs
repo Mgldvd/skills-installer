@@ -138,14 +138,23 @@ impl SkillsCliInstaller {
         let (tx, mut rx) = mpsc::unbounded_channel::<crate::process::ProcessOutputLine>();
         let progress_for_output = progress.clone();
         let skill_id_for_output = skill.id.clone();
+        // Also collected here (not just forwarded to `progress`) so a
+        // failure can quote the CLI's own explanation in its message — see
+        // `failure_message`. The live progress panel already streams every
+        // line as it arrives, but that transcript scrolls away once the
+        // panel collapses, and the bare "exited with code 1" this used to
+        // fall back to told a user nothing about *why*.
         let output_task = tokio::spawn(async move {
+            let mut lines = Vec::new();
             while let Some(line) = rx.recv().await {
+                lines.push(line.line.clone());
                 let _ = progress_for_output.send(InstallProgressEvent::Output {
                     skill_id: skill_id_for_output.clone(),
                     line: line.line,
                     stream: line.stream,
                 });
             }
+            lines
         });
 
         let spec = ProcessSpec {
@@ -155,12 +164,12 @@ impl SkillsCliInstaller {
             env: Vec::new(),
         };
         let outcome = self.process_runner.run(spec, tx, cancel.clone()).await;
-        let _ = output_task.await;
+        let output_lines = output_task.await.unwrap_or_default();
 
         match outcome {
             Ok(ProcessOutcome::Completed { exit_code: 0 }) => GroupOutcome::Success,
             Ok(ProcessOutcome::Completed { exit_code }) => {
-                GroupOutcome::Failed(format!("exited with code {exit_code}"))
+                GroupOutcome::Failed(failure_message(exit_code, &output_lines))
             }
             Ok(ProcessOutcome::Cancelled) => GroupOutcome::Cancelled,
             Err(err) => GroupOutcome::Failed(err.to_string()),
@@ -191,24 +200,63 @@ impl SkillsCliInstaller {
             .unwrap_or_else(|| self.project_root.clone())
     }
 
+    /// Like `run_one_group`, but for the no-progress-panel calls (`remove`,
+    /// `update`): no `InstallProgressEvent`s to stream, just the outcome —
+    /// plus every line the process printed, still collected here (not
+    /// discarded) so a failing caller can build a `failure_message` instead
+    /// of a bare exit code.
     async fn run_and_collect(
         &self,
         program: &str,
         args: Vec<String>,
         cwd: PathBuf,
         cancel: CancellationToken,
-    ) -> Result<ProcessOutcome, AppError> {
+    ) -> Result<(ProcessOutcome, Vec<String>), AppError> {
         let (tx, mut rx) = mpsc::unbounded_channel::<crate::process::ProcessOutputLine>();
-        let drain = tokio::spawn(async move { while rx.recv().await.is_some() {} });
+        let drain = tokio::spawn(async move {
+            let mut lines = Vec::new();
+            while let Some(line) = rx.recv().await {
+                lines.push(line.line);
+            }
+            lines
+        });
         let spec = ProcessSpec {
             program: program.to_string(),
             args,
             cwd: Some(cwd),
             env: Vec::new(),
         };
-        let outcome = self.process_runner.run(spec, tx, cancel).await;
-        let _ = drain.await;
-        outcome
+        let outcome = self.process_runner.run(spec, tx, cancel).await?;
+        let output_lines = drain.await.unwrap_or_default();
+        Ok((outcome, output_lines))
+    }
+}
+
+/// Box-drawing characters the real `skills` CLI's prompt library
+/// (`@clack/prompts`) uses to frame each step (`│  Source: ...`) — a line
+/// made up of nothing else is pure decoration, not information, and is
+/// dropped from the failure message.
+const PROMPT_FRAME_CHARS: &str = "│─╭╮╰╯├┤┬┴┼";
+
+/// Turns a failing `skills` process's exit code and streamed output into a
+/// message a user can actually act on. `exit_code` alone ("exited with code
+/// 1") is what this used to return, and it names nothing about what went
+/// wrong — the actual reason (e.g. "No matching skills found for: x") is
+/// only ever in the process's own output. Blank lines and pure prompt-frame
+/// separators are dropped; everything else is kept, in the order the CLI
+/// printed it, so multi-line explanations (like a "No matching skills
+/// found" error followed by the list of skills that *were* found) survive
+/// intact instead of being lost.
+fn failure_message(exit_code: i32, output_lines: &[String]) -> String {
+    let detail: Vec<&str> = output_lines
+        .iter()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty() && !line.chars().all(|c| PROMPT_FRAME_CHARS.contains(c)))
+        .collect();
+    if detail.is_empty() {
+        format!("exited with code {exit_code}")
+    } else {
+        format!("exited with code {exit_code}:\n{}", detail.join("\n"))
     }
 }
 
@@ -428,10 +476,10 @@ impl Installer for SkillsCliInstaller {
         let full_args: Vec<String> = resolved.leading_args.iter().cloned().chain(args).collect();
         let cwd = self.resolve_cwd(&request.options);
 
-        match self
+        let (outcome, output_lines) = self
             .run_and_collect(&resolved.program, full_args, cwd, CancellationToken::new())
-            .await?
-        {
+            .await?;
+        match outcome {
             ProcessOutcome::Completed { exit_code: 0 } => Ok(UninstallResult {
                 requested,
                 removed: requested,
@@ -442,7 +490,7 @@ impl Installer for SkillsCliInstaller {
                 requested,
                 removed: 0,
                 failed: requested,
-                message: Some(format!("exited with code {exit_code}")),
+                message: Some(failure_message(exit_code, &output_lines)),
             }),
             ProcessOutcome::Cancelled => Err(AppError::Cancelled),
         }
@@ -462,13 +510,14 @@ impl Installer for SkillsCliInstaller {
         let full_args: Vec<String> = resolved.leading_args.iter().cloned().chain(args).collect();
         let cwd = self.resolve_cwd(&request.options);
 
-        match self
+        let (outcome, output_lines) = self
             .run_and_collect(&resolved.program, full_args, cwd, CancellationToken::new())
-            .await?
-        {
+            .await?;
+        match outcome {
             ProcessOutcome::Completed { exit_code: 0 } => Ok(()),
             ProcessOutcome::Completed { exit_code } => Err(AppError::Installation(format!(
-                "update exited with code {exit_code}"
+                "update {}",
+                failure_message(exit_code, &output_lines)
             ))),
             ProcessOutcome::Cancelled => Err(AppError::Cancelled),
         }
@@ -821,6 +870,62 @@ mod tests {
         );
     }
 
+    // A failing `skills` process almost always explains itself on
+    // stdout/stderr (e.g. "No matching skills found for: x") — the old
+    // "exited with code 1" message discarded that explanation entirely, so
+    // a user had no way to tell *why* an install failed short of scrolling
+    // back through the live output panel. `failure_message` folds it in.
+    #[tokio::test]
+    async fn failed_install_message_includes_the_clis_own_output() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::failure(1)
+            .with_output(OutputStream::Stdout, "◇  Found 1 skill")
+            .with_output(
+                OutputStream::Stderr,
+                "■  No matching skills found for: no-co-author",
+            )
+            .with_output(OutputStream::Stdout, "●  Available skills:")
+            .with_output(OutputStream::Stdout, "│    - no-ai-attribution")]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let installer =
+            SkillsCliInstaller::with_resolver(process_runner.clone(), PathBuf::from("."), resolver);
+
+        let (tx, rx) = mpsc::unbounded_channel();
+        let batch = InstallBatch {
+            skills: vec![remote_skill("no-co-author")],
+            options: crate::domain::InstallOptions::default(),
+        };
+        let result = installer
+            .install(batch, tx, CancellationToken::new())
+            .await
+            .unwrap();
+        drop(rx);
+
+        let message = result.per_skill[0].message.as_deref().unwrap();
+        assert!(message.contains("exited with code 1"));
+        assert!(message.contains("No matching skills found for: no-co-author"));
+        assert!(message.contains("Available skills:"));
+        assert!(message.contains("no-ai-attribution"));
+    }
+
+    #[test]
+    fn failure_message_falls_back_to_the_bare_exit_code_when_there_is_no_output() {
+        assert_eq!(failure_message(1, &[]), "exited with code 1");
+    }
+
+    #[test]
+    fn failure_message_drops_blank_lines_and_pure_prompt_frame_separators() {
+        let lines = vec![
+            "│".to_string(),
+            "  ".to_string(),
+            "╭──────╮".to_string(),
+            "real error text".to_string(),
+        ];
+        assert_eq!(
+            failure_message(1, &lines),
+            "exited with code 1:\nreal error text"
+        );
+    }
+
     #[tokio::test]
     async fn cancellation_before_the_loop_starts_marks_the_result_cancelled() {
         let process_runner = Arc::new(FakeProcessRunner::new(vec![]));
@@ -1091,7 +1196,8 @@ mod tests {
 
     #[tokio::test]
     async fn remove_reports_failure_on_a_non_zero_exit_code() {
-        let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::failure(1)]));
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::failure(1)
+            .with_output(OutputStream::Stderr, "■  triage is not installed here")]));
         let (resolver, _guard) = resolver_with_fake_skills_executable();
         let installer =
             SkillsCliInstaller::with_resolver(process_runner.clone(), PathBuf::from("."), resolver);
@@ -1106,7 +1212,31 @@ mod tests {
 
         assert_eq!(result.removed, 0);
         assert_eq!(result.failed, 1);
-        assert!(result.message.is_some());
+        // Same fix as `install`'s `failure_message`: the CLI's own
+        // explanation, not just the exit code.
+        assert!(result
+            .message
+            .as_deref()
+            .unwrap()
+            .contains("triage is not installed here"));
+    }
+
+    #[tokio::test]
+    async fn update_error_includes_the_clis_own_output() {
+        let process_runner = Arc::new(FakeProcessRunner::new(vec![FakeProcessResult::failure(1)
+            .with_output(OutputStream::Stderr, "■  lock file is corrupted")]));
+        let (resolver, _guard) = resolver_with_fake_skills_executable();
+        let installer =
+            SkillsCliInstaller::with_resolver(process_runner.clone(), PathBuf::from("."), resolver);
+
+        let err = installer
+            .update(UpdateRequest {
+                options: crate::domain::InstallOptions::default(),
+            })
+            .await
+            .unwrap_err();
+
+        assert!(err.to_string().contains("lock file is corrupted"));
     }
 
     #[tokio::test]

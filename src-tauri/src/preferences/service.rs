@@ -288,7 +288,6 @@ mod tests {
         let preferences = service.load().unwrap();
 
         assert_eq!(preferences.last_scope, crate::domain::InstallScope::Project);
-        assert_eq!(preferences.last_project_path, None);
     }
 
     #[test]

@@ -46,27 +46,29 @@
   .app-header__scope-switch {
     display: inline-flex;
     flex: 0 0 auto;
-    overflow: hidden;
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
+    gap: var(--space-2xs);
   }
 
+  // Two independent pill buttons with a gap between them, not one shape
+  // split by a divider line — each carries its own border/radius so there's
+  // still a visible break between "Project" and "Global" without a hard
+  // line running through the middle.
   .app-header__scope-btn {
     padding: var(--space-2xs) var(--space-sm);
-    border: none;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
     background: var(--bg-card);
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     font-weight: 600;
     cursor: pointer;
 
-    &:not(:first-child) {
-      border-left: 1px solid var(--border-soft);
-    }
     &:hover {
+      border-color: var(--border-strong);
       color: var(--text-primary);
     }
     &.is-active {
+      border-color: var(--accent);
       background: var(--accent);
       color: var(--bg-panel);
     }

@@ -53,6 +53,27 @@
     padding: 0.2rem 0.4rem;
   }
 
+  // Just the colored border/fill plus its dot, shrunk to the same fixed
+  // square footprint as an agent-icon tile so it can sit directly in that
+  // row instead of a full-width labeled pill — see SkillCard's
+  // `.skill-card__agents`. The dot stays (only the label/trailing slot are
+  // dropped): an empty tinted box with nothing inside reads as a broken
+  // icon, not a color swatch.
+  @at-root .pack-badge--icon-only {
+    width: 1.5rem;
+    height: 1.5rem;
+    min-height: 0;
+    padding: 0;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    .pack-badge__dot {
+      width: 0.875rem;
+      height: 0.875rem;
+      flex-basis: 0.875rem;
+    }
+  }
+
   @at-root .pack-badge--interactive {
     cursor: pointer;
 

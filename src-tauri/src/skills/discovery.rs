@@ -253,10 +253,22 @@ pub fn discover_skills_in_directory(skills_dir: &Path) -> Vec<Skill> {
             .to_string();
 
         let front_matter = extract_front_matter(&content).unwrap_or_default();
-        let display_name = front_matter
+        // The real `skills` CLI's `--skill <name>` matches against the
+        // SKILL.md front matter's own `name:` field, not the folder it
+        // lives in, and it names the install destination after that same
+        // field (verified against the real vercel-labs/skills CLI) — so
+        // whenever an author's folder name and declared `name:` diverge,
+        // sending the folder name as `--skill` fails with "No matching
+        // skills found" and the install silently never happens. Falls back
+        // to `dir_name` only when front matter has no (non-blank) `name`.
+        let skill_name = front_matter
             .name
-            .clone()
+            .as_deref()
+            .map(str::trim)
+            .filter(|name| !name.is_empty())
+            .map(str::to_string)
             .unwrap_or_else(|| dir_name.clone());
+        let display_name = skill_name.clone();
         let description = front_matter.description.unwrap_or_default();
         let id = slugify(&dir_name);
 
@@ -270,7 +282,7 @@ pub fn discover_skills_in_directory(skills_dir: &Path) -> Vec<Skill> {
             },
             repository: String::new(),
             repository_url: String::new(),
-            skill_name: dir_name,
+            skill_name,
             skills_url: String::new(),
             group_id: OTHER_GROUP_ID.to_string(),
             tags: Vec::new(),

@@ -477,7 +477,6 @@ const installOptionsFromPreferences = computed(() => ({
 function handleProjectPathUpdate(path: string) {
   state.projectRoot = path;
   refresh().catch((error) => pushToast(describeError(error), "error"));
-  updatePreferencesPartial({ lastProjectPath: path }).catch((error) => pushToast(describeError(error), "error"));
 }
 
 function handleScopeUpdate(scope: InstallScope) {
@@ -533,13 +532,12 @@ onMounted(async () => {
     await Promise.all([loadAll(), loadPreferences(), presets.loadAll()]);
     // loadAll()'s initial load always comes back Project-scoped against the
     // app's own launch directory (the backend has no preferences to consult
-    // yet at that point) — once the persisted scope/folder are in, restore
-    // them and reload, but only if doing so actually changes anything; most
-    // launches have nothing to restore, and re-scanning identical state on
-    // every single startup would be pure waste.
-    const launchProjectRoot = state.projectRoot;
-    if (state.preferences.lastProjectPath) state.projectRoot = state.preferences.lastProjectPath;
-    if (state.preferences.lastScope === "global" || state.projectRoot !== launchProjectRoot) {
+    // yet at that point) — the project folder itself is deliberately never
+    // restored from a previous launch (it must always track where the app
+    // was actually opened from, see `resolve_gui_project_root` on the
+    // backend); only the persisted scope is, so restore that and reload,
+    // but only if doing so actually changes anything.
+    if (state.preferences.lastScope === "global") {
       await refresh();
     }
   } catch (error) {

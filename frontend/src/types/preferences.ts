@@ -16,9 +16,6 @@ export interface UiPreferences {
    * the old per-agent `agentScopes` map (see
    * REFACTOR_PROJECT_GLOBAL_SCOPE.md). */
   lastScope: InstallScope;
-  /** The last project folder selected in the header, remembered across
-   * launches. */
-  lastProjectPath: string | null;
 }
 
 export interface SupportedAgent {
@@ -94,6 +91,5 @@ export function defaultPreferences(): UiPreferences {
     compactCards: false,
     agentOrder: [],
     lastScope: "project",
-    lastProjectPath: null,
   };
 }

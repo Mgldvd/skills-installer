@@ -36,7 +36,7 @@
           interactive
           :selected="tagState(tag.id) === 'all'"
           :partial="tagState(tag.id) === 'some'"
-          :disabled="tagSkillCount(tag.id) === 0"
+          :disabled="tagSkillCount(tag.id) === 0 || tagAllInstalled(tag.id)"
           :title="`${tagTitle(tag.id, tag.name)}. Drag to reorder; Alt+Left or Alt+Right also moves it.`"
           @click="emit('toggleTag', tag.id)"
           @keydown.alt.left.prevent="moveTag(tag.id, -1)"
@@ -115,9 +115,17 @@ function tagState(tagId: string): "none" | "some" | "all" {
   const count = skills.filter((skill) => selected.value.has(skill.id)).length;
   return count === 0 ? "none" : count === skills.length ? "all" : "some";
 }
+// Nothing left to select for install when every Skill this Pack covers is
+// already installed — greyed out and unclickable rather than toggling a
+// selection that would install nothing.
+function tagAllInstalled(tagId: string): boolean {
+  const skills = taggedSkills(tagId);
+  return skills.length > 0 && skills.every((skill) => skill.installed);
+}
 function tagTitle(tagId: string, name: string) {
   const count = tagSkillCount(tagId);
   if (!count) return `${name} has no Skills assigned`;
+  if (tagAllInstalled(tagId)) return `${name}: all ${count} Skill${count === 1 ? "" : "s"} already installed`;
   return tagState(tagId) === "all" ? `Remove ${count} ${name} Skills from selection` : `Select ${count} ${name} Skills`;
 }
 function insertionSide(targetId: string): "before" | "after" | null {

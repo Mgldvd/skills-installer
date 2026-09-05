@@ -31,3 +31,5 @@ npm-debug.log*
 # Fixture project root used by the skill install/discovery lifecycle tests
 # (each test claims its own subdirectory and wipes it before running)
 /test-skills/
+
+.env

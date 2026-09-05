@@ -34,6 +34,30 @@ describe("SkillToolbar Pack preselection", () => {
     expect(badge.classes()).toContain("pack-badge--partial");
   });
 
+  it("disables a Pack once every Skill it covers is already installed", async () => {
+    const skills = [
+      makeSkill({ id: "a", tags: ["recommended"], installed: true }),
+      makeSkill({ id: "b", tags: ["recommended"], installed: true }),
+    ];
+    const wrapper = mount(SkillToolbar, { props: { tags, skills, selectedIds: [] } });
+    const badge = wrapper.get(".skill-toolbar__tag");
+
+    expect(badge.attributes("disabled")).toBeDefined();
+    expect(badge.attributes("title")).toContain("already installed");
+
+    await badge.trigger("click");
+    expect(wrapper.emitted("toggleTag")).toBeUndefined();
+  });
+
+  it("keeps a Pack clickable when only some of its Skills are installed", () => {
+    const skills = [
+      makeSkill({ id: "a", tags: ["recommended"], installed: true }),
+      makeSkill({ id: "b", tags: ["recommended"], installed: false }),
+    ];
+    const wrapper = mount(SkillToolbar, { props: { tags, skills, selectedIds: [] } });
+    expect(wrapper.get(".skill-toolbar__tag").attributes("disabled")).toBeUndefined();
+  });
+
   it("emits one Pack toggle without opening another menu", async () => {
     const wrapper = mount(SkillToolbar, {
       props: { tags, skills: [makeSkill({ tags: ["recommended"] })], selectedIds: [] },

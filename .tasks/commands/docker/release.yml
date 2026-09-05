@@ -33,3 +33,17 @@ tasks:
       - echo
       - echo "Artifacts generados en {{.ROOT_DIR}}/{{.DIST_DIR}}"
       - ls -lah {{.DIST_DIR}}
+
+  "docker:release-install":
+    desc: Run docker:release, then copy the built AppImage to LOCAL_INSTALL (LOCAL_APP/LOCAL_INSTALL, from .env) — builds only, same as docker:release, if either is unset.
+    cmds:
+      - task: docker:release
+      - |
+        if [ -n "${LOCAL_APP:-}" ] && [ -n "${LOCAL_INSTALL:-}" ]; then
+          mkdir -p "$LOCAL_INSTALL"
+          dest="${LOCAL_INSTALL%/}/$LOCAL_APP"
+          cp "{{.DIST_DIR}}/$LOCAL_APP" "$dest"
+          echo "Instalado: $dest"
+        else
+          echo "LOCAL_APP/LOCAL_INSTALL no configurados en .env — build generado en {{.DIST_DIR}}/, sin instalar."
+        fi

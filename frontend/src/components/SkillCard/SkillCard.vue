@@ -54,10 +54,8 @@
     </div>
 
     <footer class="skill-card__footer">
-      <div class="skill-card__meta">
-        <SourceIcon class="skill-card__source" :local="skill.local" />
+      <div v-if="showUpdateButton" class="skill-card__meta">
         <button
-          v-if="showUpdateButton"
           type="button"
           class="skill-card__update"
           :aria-label="`Update ${skill.displayName} to the local version`"
@@ -66,12 +64,13 @@
         >
           Update
         </button>
-        <div v-if="assignedTags.length" class="skill-card__packs" aria-label="Assigned packs">
-          <PackBadge v-for="tag in assignedTags" :key="tag.id" :name="tag.name" :color="tag.color" :title="tag.name" compact />
-        </div>
       </div>
       <div class="skill-card__actions">
-        <div v-if="collapsedAgentIcons.length" class="skill-card__agents" aria-label="Agent install status">
+        <div
+          v-if="collapsedAgentIcons.length || assignedTags.length"
+          class="skill-card__agents"
+          aria-label="Agent install status and assigned packs"
+        >
           <span
             v-for="entry in collapsedAgentIcons"
             :key="entry.id"
@@ -81,7 +80,16 @@
           >
             <AgentIcon :agent-id="entry.id" />
           </span>
+          <PackBadge
+            v-for="tag in assignedTags"
+            :key="tag.id"
+            :name="tag.name"
+            :color="tag.color"
+            :title="tag.name"
+            icon-only
+          />
         </div>
+        <SourceIcon class="skill-card__source" :local="skill.local" />
         <button
           type="button"
           class="skill-card__edit"
