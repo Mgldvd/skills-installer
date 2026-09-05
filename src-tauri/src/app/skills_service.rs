@@ -372,8 +372,8 @@ impl SkillsService {
     /// instead of the app's launch-time directory, and discovers against
     /// exactly one scope — `Project` scans only `project_root`'s agent
     /// directories, `Global` scans only the user's home directory, never
-    /// both (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`: the app has a single
-    /// active scope, not a per-agent mix). The GUI calls this with whatever
+    /// both — the app has a single active scope, not a per-agent mix. The
+    /// GUI calls this with whatever
     /// folder/scope the user currently has selected in the header — the
     /// "Installed" badge must track that selection, not the folder the app
     /// happened to start in, or picking an empty folder would still show
@@ -1272,10 +1272,9 @@ skills:
 
     #[test]
     fn load_state_for_never_mixes_project_and_global_scope_discovery() {
-        // The app has a single active scope (see REFACTOR_PROJECT_GLOBAL_SCOPE.md):
-        // Project-scope discovery must never pick up a Global-only install,
-        // and vice versa — replaces the old always-merge-both behavior this
-        // test used to assert.
+        // The app has a single active scope: Project-scope discovery must
+        // never pick up a Global-only install, and vice versa — replaces
+        // the old always-merge-both behavior this test used to assert.
         let tmp = tempfile::tempdir().unwrap();
         let service = service_with_curated_config(tmp.path());
 

@@ -13,8 +13,7 @@ export interface UiPreferences {
    * Empty means "no customization yet" — see `resolveAgentOrder`. */
   agentOrder: string[];
   /** The app's single active scope, remembered across launches — replaced
-   * the old per-agent `agentScopes` map (see
-   * REFACTOR_PROJECT_GLOBAL_SCOPE.md). */
+   * the old per-agent `agentScopes` map. */
   lastScope: InstallScope;
 }
 

@@ -50,9 +50,9 @@ describe("AgentsDialog", () => {
     expect(universalPath.classes()).not.toContain("agents-dialog__path--own");
   });
 
-  // Scope is a single app-wide switch now (see REFACTOR_PROJECT_GLOBAL_SCOPE.md),
-  // not a per-agent toggle — this dialog just shows both destinations as
-  // reference info, always, for every agent.
+  // Scope is a single app-wide switch now, not a per-agent toggle — this
+  // dialog just shows both destinations as reference info, always, for
+  // every agent.
   it("always shows both the Project and Global path for every agent", () => {
     const wrapper = mount(AgentsDialog, { props: { open: true, modelValue: [], agentOrder: [], scope: "project" } });
     const claudeRow = wrapper.findAll(".agents-dialog__toggle").find((b) => b.text().includes("Claude Code"))!;

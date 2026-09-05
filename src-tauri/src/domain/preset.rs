@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 ///
 /// Named `Preset`, not `Project`: an unrelated, unfortunately-named
 /// `InstallScope::Project` (the active install destination/scope selected
-/// in the header) already uses that word for something entirely different
-/// — see `REFACTOR_PROJECT_GLOBAL_SCOPE.md` for why this type was renamed.
+/// in the header) already uses that word for something entirely different,
+/// so this type was renamed to avoid the clash.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Preset {

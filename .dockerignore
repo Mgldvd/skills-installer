@@ -1,6 +1,5 @@
 .git
 .gitignore
-dist
-frontend/dist
+.generated
 frontend/node_modules
 src-tauri/target

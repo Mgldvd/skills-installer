@@ -13,7 +13,7 @@ use super::migrate::migrate;
 /// The curated default configuration, compiled directly into the binary so
 /// the app is fully usable immediately after installation with no loose
 /// YAML file required next to it.
-const EMBEDDED_DEFAULT_YAML: &str = include_str!("../../../configs/skills.yaml");
+const EMBEDDED_DEFAULT_YAML: &str = include_str!("../../configs/skills.yaml");
 
 /// Loads, validates, and atomically persists the skill/group configuration.
 /// Both the GUI command layer and the CLI go through this one service —

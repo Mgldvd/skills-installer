@@ -1,8 +1,8 @@
 import type { SkillSelection } from "./skill";
 
-/** The app's single active scope — see REFACTOR_PROJECT_GLOBAL_SCOPE.md.
- * Replaced the old per-agent, non-exclusive `AgentScopeSelection`: one value
- * applies to every agent in a request, mirroring Rust's `InstallScope`. */
+/** The app's single active scope. Replaced the old per-agent, non-exclusive
+ * `AgentScopeSelection`: one value applies to every agent in a request,
+ * mirroring Rust's `InstallScope`. */
 export type InstallScope = "project" | "global";
 
 export interface InstallOptions {

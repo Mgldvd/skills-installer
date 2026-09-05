@@ -8,8 +8,8 @@ use super::skill::SkillSelection;
 ///
 /// Earlier versions of this app had a per-agent, non-exclusive
 /// `AgentScopeSelection { project, global }` instead — deliberately
-/// replaced by this single value (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`)
-/// because letting Project and Global mix per agent, per request, made both
+/// replaced by this single value because letting Project and Global mix
+/// per agent, per request, made both
 /// the UI and the install/uninstall code paths hard to reason about (most
 /// concretely: uninstall could never honestly represent which scope a
 /// removal targeted). An old `preferences.json`/`InstallOptions` payload

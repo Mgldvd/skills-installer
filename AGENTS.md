@@ -6,6 +6,14 @@ Skills Installer es una aplicación Linux para descubrir, organizar e instalar A
 
 El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1.85) y Tauri v2. Las instalaciones se delegan al Skills CLI mediante procesos con argumentos estructurados y transmiten comando, `stdout`, `stderr`, progreso, resultados y errores hacia la interfaz.
 
+## Memoria del proyecto
+
+Antes de tocar código, lee `memory/STATUS.md` (estado actual, trabajo en curso o sin
+commitear) y el índice de `memory/decisions/` (decisiones de arquitectura ya tomadas,
+con su porqué — no las reabras sin confirmación explícita del usuario). Al aceptar una
+decisión de arquitectura no obvia, agrega un ADR nuevo ahí; al cambiar el estado del
+proyecto de forma relevante, actualiza `memory/STATUS.md`.
+
 ## Estructura vigente
 
 - `frontend/src/App.vue`: composición de la interfaz y conexión de los flujos principales.
@@ -26,7 +34,7 @@ El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1
 - `src-tauri/src/installer/`: integración con Skills CLI y resolución de dependencias.
 - `src-tauri/src/process/`: ejecución segura, streaming, vista previa y limpieza ANSI.
 - `src-tauri/src/cli/`: argumentos y ejecución de la CLI sin iniciar el bucle gráfico.
-- `configs/skills.yaml`: catálogo predeterminado incluido en el binario.
+- `src-tauri/configs/skills.yaml`: catálogo predeterminado incluido en el binario.
 - `src-tauri/tauri.conf.json`: ventana mínima de 760 × 560 y bundles Linux AppImage/DEB.
 
 ## Estado actual del producto
@@ -44,7 +52,7 @@ El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1
 
 ## Compatibilidad y fuentes de verdad
 
-- La configuración activa se busca, en orden, mediante `--config`, `./skills.yaml`, `./skills.confg`, la ruta XDG del usuario y finalmente `configs/skills.yaml` embebido. Conserva esta precedencia y sus pruebas.
+- La configuración activa se busca, en orden, mediante `--config`, `./skills.yaml`, `./skills.confg`, la ruta XDG del usuario y finalmente `src-tauri/configs/skills.yaml` embebido. Conserva esta precedencia y sus pruebas.
 - El YAML moderno persiste Packs bajo `tags`. La clave `packs` solo se acepta como entrada heredada y no se vuelve a serializar.
 - `groups` y los componentes/commands relacionados permanecen por compatibilidad histórica, pero no forman parte del flujo gráfico registrado actual. No construyas nuevas funciones sobre Groups ni los presentes en la UI salvo que la tarea autorice explícitamente reactivarlos.
 - Las habilidades locales se descubren por `SKILL.md`. `localSkillTags` conserva sus asignaciones de Packs. La carpeta local es una fuente del catálogo, nunca el destino de instalación.
@@ -63,7 +71,7 @@ El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1
 8. Los comandos Tauri deben ser fachadas delgadas. La lógica pertenece a `src-tauri/src/app/` o al módulo de dominio correspondiente.
 9. Nunca construyas ejecuciones con strings de shell. Conserva `Command::new(program).args(args)`, `ProcessRunner`, las vistas previas seguras y el aislamiento del proceso.
 10. Para progreso de instalación conserva un `tauri::ipc::Channel` ligado a cada invocación; no lo reemplaces por listeners globales que mezclen instalaciones.
-11. Usa npm y `frontend/package-lock.json` como flujo oficial. No cambies el proyecto a pnpm, yarn o Bun aunque exista un `bun.lock` heredado.
+11. Usa npm y `frontend/package-lock.json` como flujo oficial. No cambies el proyecto a pnpm, yarn o Bun.
 12. El proyecto apunta únicamente a Linux desktop. No añadas rutas mobile ni supongas que AppImage elimina las dependencias de GTK/WebKitGTK.
 
 ## UI, UX y accesibilidad
@@ -102,7 +110,7 @@ El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1
 - Indigo: `#6366F1`
 - Violet: `#A855F7`
 
-Cuando una tarea autorice cambiar la paleta, mantén sincronizados `frontend/src/utils/color.ts`, los selectores de `AddSkillDialog` y `TagsDialog`, cualquier selector heredado aún cubierto por pruebas, `configs/skills.yaml` y `src-tauri/src/config/color.rs`. La paleta de acentos de Preferences es un subconjunto independiente y solo debe cambiar si el alcance lo requiere.
+Cuando una tarea autorice cambiar la paleta, mantén sincronizados `frontend/src/utils/color.ts`, los selectores de `AddSkillDialog` y `TagsDialog`, cualquier selector heredado aún cubierto por pruebas, `src-tauri/configs/skills.yaml` y `src-tauri/src/config/color.rs`. La paleta de acentos de Preferences es un subconjunto independiente y solo debe cambiar si el alcance lo requiere.
 
 ## Validación requerida
 
@@ -115,7 +123,7 @@ npm test
 npm run build
 ```
 
-Si `frontend/dist` tiene permisos incompatibles, valida Vite con un destino temporal:
+Si `.generated/frontend` tiene permisos incompatibles, valida Vite con un destino temporal:
 
 ```bash
 npx vite build --outDir /tmp/skills-installer-build

@@ -13,8 +13,8 @@ use crate::platform::app_config_dir;
 /// survives independently of the directory it was saved from.
 ///
 /// This service, its file, and `Preset` itself were all renamed from
-/// "Project(s)" (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`) — `list()` migrates
-/// an older install's `projects.json` in place the first time it's read.
+/// "Project(s)" — `list()` migrates an older install's `projects.json` in
+/// place the first time it's read.
 #[derive(Clone)]
 pub struct PresetsService {
     path_override: Option<PathBuf>,
@@ -257,10 +257,10 @@ mod tests {
         assert!(service.delete("nope").is_err());
     }
 
-    // Migration from the old "Project" naming (see REFACTOR_PROJECT_GLOBAL_SCOPE.md):
-    // an existing projects.json next to where presets.json would live must
-    // still be readable, and gets copied over to presets.json in place so
-    // later writes land in the new file.
+    // Migration from the old "Project" naming: an existing projects.json
+    // next to where presets.json would live must still be readable, and
+    // gets copied over to presets.json in place so later writes land in
+    // the new file.
     #[test]
     fn list_migrates_a_legacy_projects_json_file_in_place() {
         let tmp = tempfile::tempdir().unwrap();

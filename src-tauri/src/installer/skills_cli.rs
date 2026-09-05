@@ -457,10 +457,9 @@ impl Installer for SkillsCliInstaller {
     /// more than one name in a single invocation, so a bulk uninstall from
     /// the GUI is exactly one process call: `skills remove name1 name2 ...
     /// --global? --yes`. `--global` is passed exactly when the request's
-    /// scope is `Global`, matching the app's single active scope — see
-    /// `InstallScope` and `REFACTOR_PROJECT_GLOBAL_SCOPE.md`. No `--agent`
-    /// filtering: the real CLI resolves a name against every agent it finds
-    /// the skill installed for within that scope.
+    /// scope is `Global`, matching the app's single active `InstallScope`.
+    /// No `--agent` filtering: the real CLI resolves a name against every
+    /// agent it finds the skill installed for within that scope.
     async fn remove(&self, request: RemoveRequest) -> Result<UninstallResult, AppError> {
         let requested = request.skills.len();
         if requested == 0 {

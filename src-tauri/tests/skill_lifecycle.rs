@@ -1,10 +1,11 @@
 //! Exercises the app's core purpose end to end — installing and managing
 //! Skills for a given project folder — against a real, inspectable fixture
-//! directory (`<repo root>/test-skills`) instead of an ephemeral tempdir, so
-//! a failure can be diagnosed by looking at what's actually left on disk.
-//! `test-skills/` is gitignored; each test claims its own subdirectory under
-//! it and wipes that subdirectory before running, so tests never interfere
-//! with each other or with leftovers from a previous run.
+//! directory (`<repo root>/.generated/test-skills`) instead of an ephemeral
+//! tempdir, so a failure can be diagnosed by looking at what's actually left
+//! on disk. `.generated/` is gitignored; each test claims its own
+//! subdirectory under it and wipes that subdirectory before running, so
+//! tests never interfere with each other or with leftovers from a previous
+//! run.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -15,11 +16,13 @@ use skills_installer_lib::domain::UiPreferences;
 use skills_installer_lib::preferences::PreferencesService;
 use skills_installer_lib::skills::{discover_installed_agents, discover_local_skills};
 
-/// A fresh, isolated fixture directory under `<repo root>/test-skills/<case>`.
+/// A fresh, isolated fixture directory under
+/// `<repo root>/.generated/test-skills/<case>`.
 fn fixture_root(case: &str) -> PathBuf {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .expect("src-tauri has a parent directory (the repo root)")
+        .join(".generated")
         .join("test-skills")
         .join(case);
     if root.exists() {

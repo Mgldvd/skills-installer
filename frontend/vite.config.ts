@@ -8,6 +8,13 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [vue()],
   build: {
+    // Keeps every generated/non-versioned artifact under a single
+    // `.generated/` at the repo root instead of `frontend/dist` — see
+    // `tauri.conf.json`'s `frontendDist`, which must point here too.
+    outDir: resolve(import.meta.dirname, "../.generated/frontend"),
+    // outDir sits outside this project's root, so Vite otherwise refuses to
+    // clear it automatically before each build.
+    emptyOutDir: true,
     rollupOptions: {
       // The style guide (design.html) is a separate, standalone entry —
       // not part of the app's own routing — so it needs to be listed

@@ -37,9 +37,8 @@ pub struct UiPreferences {
     pub agent_order: Vec<String>,
     /// The single active scope for the whole app, remembered across
     /// launches — see `InstallScope`. Replaced the old per-agent
-    /// `agent_scopes` map (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`); an old
-    /// file's `agentScopes` key is simply ignored by serde, landing here on
-    /// the default `Project`.
+    /// `agent_scopes` map; an old file's `agentScopes` key is simply
+    /// ignored by serde, landing here on the default `Project`.
     #[serde(default)]
     pub last_scope: InstallScope,
 }

@@ -4,7 +4,7 @@ set -Eeuo pipefail
 # This container runs as root by default (see Dockerfile — HOST_UID/GID
 # are only known at `docker compose run` time, not at image-build time).
 # A root process writing into `/workspace`, the bind-mounted repo, leaves
-# every file it touches (frontend/dist, dist/, ...) owned by root on the
+# every file it touches (src-tauri/target, .generated, ...) owned by root on the
 # host — which then blocks a normal host-side `npm install`/`cargo build`
 # with EACCES. Fix: remap the base image's existing non-root user
 # ("master") to whatever uid/gid actually owns the repo on the host

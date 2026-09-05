@@ -12,8 +12,9 @@ vars:
   FRONTEND_DIR: frontend
   TAURI_DIR: src-tauri
   TAURI_BIN: frontend/node_modules/.bin/tauri
-  DIST_DIR: dist
-  TEST_DIR: test
+  GENERATED_DIR: .generated
+  DIST_DIR: .generated/dist
+  TEST_DIR: .generated/smoke
   CLI_BIN: src-tauri/target/debug/skills-installer
   VERSION:
     sh: grep -m1 '^version' src-tauri/Cargo.toml | cut -d '"' -f2

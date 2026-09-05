@@ -269,8 +269,8 @@ mod tests {
     }
 
     // `agentScopes` was the old per-agent scope map, replaced by the single
-    // `lastScope` field (see `REFACTOR_PROJECT_GLOBAL_SCOPE.md`). A
-    // preferences.json saved by that earlier version still has this key —
+    // `lastScope` field. A preferences.json saved by that earlier version
+    // still has this key —
     // it must load without error, simply ignoring the removed field and
     // defaulting `last_scope` to `Project`, rather than hard-failing the
     // whole file.
