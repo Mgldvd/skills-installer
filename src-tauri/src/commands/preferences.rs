@@ -89,10 +89,10 @@ fn install_linux_cli(
 
     let bin_dir = home.join(".local/bin");
     std::fs::create_dir_all(&bin_dir)?;
-    // Named "skills-installer", not the shorter "skills": the latter is one
-    // character off from the Linux system's own `skill`/`snice` (procps)
-    // commands, which was confusing enough in practice to drop.
-    let command_path = bin_dir.join("skills-installer");
+    // Named "skills-control-deck", not the shorter "skills": the latter is
+    // one character off from the Linux system's own `skill`/`snice`
+    // (procps) commands, which was confusing enough in practice to drop.
+    let command_path = bin_dir.join("skills-control-deck");
 
     match std::fs::symlink_metadata(&command_path) {
         Ok(metadata) if metadata.file_type().is_symlink() => {
@@ -103,7 +103,7 @@ fn install_linux_cli(
         }
         Ok(_) => {
             return Err(AppError::Io(format!(
-                "{} already exists and was not created by Skills Installer",
+                "{} already exists and was not created by Skills Control Deck",
                 command_path.display()
             )));
         }
@@ -143,7 +143,7 @@ mod cli_tests {
     use super::install_linux_cli;
 
     #[test]
-    fn installs_skills_installer_symlink_in_user_local_bin() {
+    fn installs_skills_control_deck_symlink_in_user_local_bin() {
         let temp = tempfile::tempdir().unwrap();
         let executable = temp.path().join("Skills.AppImage");
         std::fs::write(&executable, "binary").unwrap();
@@ -161,7 +161,7 @@ mod cli_tests {
         let temp = tempfile::tempdir().unwrap();
         let executable = temp.path().join("app");
         std::fs::write(&executable, "binary").unwrap();
-        let command = temp.path().join(".local/bin/skills-installer");
+        let command = temp.path().join(".local/bin/skills-control-deck");
         std::fs::create_dir_all(command.parent().unwrap()).unwrap();
         std::fs::write(&command, "user command").unwrap();
 

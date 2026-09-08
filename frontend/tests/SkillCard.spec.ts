@@ -238,6 +238,28 @@ describe("SkillCard", () => {
     expect(wrapper.emitted("toggle")).toBeUndefined();
   });
 
+  // Unlike a plain already-installed skill (selection disabled — nothing
+  // left to install), one flagged with an update available stays
+  // selectable: re-installing it via Install Selected is exactly how a
+  // batch update works, and the card itself flags `has-update` for the
+  // highlighted-border styling.
+  it("keeps selection enabled for an already-installed skill with an update available", async () => {
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({ id: "triage", local: true, installed: true }),
+        selected: false,
+        hasUpdate: true,
+      },
+    });
+
+    expect(wrapper.classes()).toContain("has-update");
+    expect(wrapper.find(".skill-card__selection-surface").attributes("disabled")).toBeUndefined();
+    expect(wrapper.find(".skill-card__selection-surface").attributes("aria-label")).toContain("update available");
+
+    await wrapper.find(".skill-card__selection-surface").trigger("click");
+    expect(wrapper.emitted("toggle")).toEqual([["triage"]]);
+  });
+
   it("shows one icon per agent the skill is installed for, with no overlap", () => {
     const wrapper = mount(SkillCard, {
       props: {

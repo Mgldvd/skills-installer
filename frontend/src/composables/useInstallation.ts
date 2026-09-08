@@ -5,7 +5,7 @@ import { resetInstallationState, useAppState } from "./useAppState";
 export function useInstallation() {
   const state = useAppState();
 
-  function handleEvent(event: InstallProgressEvent) {
+  function handleEvent(event: InstallProgressEvent, onSkillSuccess?: (skillId: string) => void) {
     switch (event.event) {
       case "start":
         state.installation.total = event.data.total;
@@ -33,6 +33,7 @@ export function useInstallation() {
       case "skill-success":
         state.installation.perSkillStatus[event.data.skillId] = "installed";
         state.installation.displayNames[event.data.skillId] = event.data.displayName;
+        onSkillSuccess?.(event.data.skillId);
         break;
       case "skill-error":
         state.installation.perSkillStatus[event.data.skillId] = "failed";
@@ -49,12 +50,16 @@ export function useInstallation() {
     }
   }
 
-  async function install(request: InstallRequest) {
+  /** `onSkillSuccess` fires as each Skill in the batch finishes — the caller
+   * uses it to move that Skill into the "Installed" section right away
+   * instead of leaving the whole grid frozen until every Skill in the
+   * selection is done (see App.vue's `runInstall`). */
+  async function install(request: InstallRequest, onSkillSuccess?: (skillId: string) => void) {
     resetInstallationState();
     state.installation.isInstalling = true;
     state.installation.total = request.selection.skillIds.length;
     try {
-      const result = await backend.installSkills(request, handleEvent);
+      const result = await backend.installSkills(request, (event) => handleEvent(event, onSkillSuccess));
       state.installation.result = result;
       return result;
     } catch (error) {

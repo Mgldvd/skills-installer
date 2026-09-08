@@ -6,14 +6,14 @@
 > breaking changes, and assumptions specific to the author's setup.
 
 <div align="center">
-  <img src=".images/icon.png" alt="Skills Installer logo" width="128">
+  <img src=".images/icon.png" alt="Skills Control Deck logo" width="128">
 
-# Skills Installer
+# Skills Control Deck
 
 A simple desktop app for finding, organizing, and installing Agent Skills.
 </div>
 
-Skills Installer gives you one place to manage the skills you use with AI coding agents. Add skills from [skills.sh](https://skills.sh), discover skills stored on your computer, group them into reusable Packs, and install them into the agents and projects you choose.
+Skills Control Deck gives you one place to manage the skills you use with AI coding agents. Add skills from [skills.sh](https://skills.sh), discover skills stored on your computer, group them into reusable Packs, and install them into the agents and projects you choose.
 
 ## What you can do
 
@@ -36,10 +36,10 @@ Skills Installer gives you one place to manage the skills you use with AI coding
 4. Review your selection and click **Install Selected**.
 5. Follow the installation progress directly in the app.
 
-Skills Installer uses the [Skills CLI](https://www.npmjs.com/package/skills) to perform installations. The app shows exactly what is happening while keeping skill selection and organization easy to manage.
+Skills Control Deck uses the [Skills CLI](https://www.npmjs.com/package/skills) to perform installations. The app shows exactly what is happening while keeping skill selection and organization easy to manage.
 
 <div align="center">
-  <img src=".images/preview.png" alt="Skills Installer application preview" height="450">
+  <img src=".images/preview.png" alt="Skills Control Deck application preview" height="450">
 </div>
 
 ## Packs
@@ -50,15 +50,15 @@ Selecting a Pack selects its assigned skills in one step. Packs organize your ch
 
 ## Local skills
 
-You can point the app to a folder containing local skill definitions. Skills Installer discovers folders with a `SKILL.md` file and adds them to the catalog alongside remote skills.
+You can point the app to a folder containing local skill definitions. Skills Control Deck discovers folders with a `SKILL.md` file and adds them to the catalog alongside remote skills.
 
 The local folder is only a source. You still choose the project or global destination when installing.
 
 ## Graphical app and command line
 
-Skills Installer can be used as a desktop application or from the command line. Both provide access to the same catalog and installation behavior.
+Skills Control Deck can be used as a desktop application or from the command line. Both provide access to the same catalog and installation behavior.
 
-Run `skills-installer` to open the desktop app, or use `skills-installer --help` to see the available command-line options.
+Run `skills-control-deck` to open the desktop app, or use `skills-control-deck --help` to see the available command-line options.
 
 ## Requirements
 

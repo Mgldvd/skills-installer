@@ -7,7 +7,7 @@ use crate::error::AppError;
 use crate::platform::app_config_dir;
 
 /// Persists `UiPreferences` separately from skill configuration (own JSON
-/// file at `$XDG_CONFIG_HOME/skills-installer/preferences.json`) — this is
+/// file at `$XDG_CONFIG_HOME/skills-control-deck/preferences.json`) — this is
 /// pure UI/installation-default state, not shareable/curated content, so it
 /// doesn't belong in `skills.yaml`.
 #[derive(Clone)]

@@ -38,7 +38,7 @@ fi
 
 readonly LOCK_FILE="frontend/package-lock.json"
 readonly MODULES_DIR="frontend/node_modules"
-readonly LOCK_STAMP="$MODULES_DIR/.skills-installer-lock-hash"
+readonly LOCK_STAMP="$MODULES_DIR/.skills-control-deck-lock-hash"
 readonly LOCK_HASH="$(sha256sum "$LOCK_FILE" | cut -d' ' -f1)"
 
 installed_hash=""

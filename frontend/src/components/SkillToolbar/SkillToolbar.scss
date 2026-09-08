@@ -104,6 +104,7 @@
   }
 
   .skill-toolbar__select-missing,
+  .skill-toolbar__update-all,
   .skill-toolbar__clear {
     min-height: 2rem;
     padding: 0 var(--space-sm);
@@ -126,6 +127,19 @@
 
     &:hover:not(:disabled) {
       background: var(--accent-soft-strong);
+    }
+  }
+
+  // Same warning color as a card's own Update badge (see SkillCard.scss),
+  // so this bulk action reads as the same kind of "content changed" concern.
+  .skill-toolbar__update-all {
+    border: 1px solid var(--warning);
+    background: var(--warning-soft);
+    color: var(--warning);
+
+    &:hover:not(:disabled) {
+      background: var(--warning);
+      color: var(--bg-panel);
     }
   }
 

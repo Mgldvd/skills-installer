@@ -9,6 +9,7 @@
       'is-installed': skill.installed,
       'is-partially-installed': isPartiallyInstalled,
       'is-installing': installing,
+      'has-update': showUpdateButton,
       'is-delete-mode': deleteMode,
       'is-delete-selected': deleteMode && deleteSelected,
     }"
@@ -28,7 +29,7 @@
       class="skill-card__selection-surface"
       :aria-pressed="selected"
       :aria-label="ariaLabel"
-      :disabled="!skill.enabled || isFullyInstalled"
+      :disabled="!skill.enabled || (isFullyInstalled && !hasUpdate)"
       @click="emit('toggle', skill.id)"
     />
 
@@ -44,6 +45,16 @@
         <span class="skill-card__spinner" aria-hidden="true" />
         Installing…
       </span>
+      <button
+        v-else-if="showUpdateButton"
+        type="button"
+        class="skill-card__update"
+        :aria-label="`Update ${skill.displayName} to the local version`"
+        title="Update to the local version"
+        @click="emit('update', skill.id)"
+      >
+        Update
+      </button>
       <span v-else-if="isPartiallyInstalled" class="skill-card__partial" :title="missingAgentsTitle">
         Missing {{ missingAgents.length }} agent{{ missingAgents.length === 1 ? "" : "s" }}
       </span>
@@ -54,17 +65,6 @@
     </div>
 
     <footer class="skill-card__footer">
-      <div v-if="showUpdateButton" class="skill-card__meta">
-        <button
-          type="button"
-          class="skill-card__update"
-          :aria-label="`Update ${skill.displayName} to the local version`"
-          title="Update to the local version"
-          @click="emit('update', skill.id)"
-        >
-          Update
-        </button>
-      </div>
       <div class="skill-card__actions">
         <div
           v-if="collapsedAgentIcons.length || assignedTags.length"
@@ -162,6 +162,9 @@ const isPartiallyInstalled = computed(() => props.skill.installed && missingAgen
 const isFullyInstalled = computed(() => props.skill.installed && !isPartiallyInstalled.value);
 
 const ariaLabel = computed(() => {
+  if (isFullyInstalled.value && props.hasUpdate) {
+    return `${props.skill.displayName}, update available${props.selected ? ", selected" : ", not selected"}`;
+  }
   if (isFullyInstalled.value) return `${props.skill.displayName}, already installed`;
   if (props.installing) return `${props.skill.displayName}, installing`;
   if (isPartiallyInstalled.value) {

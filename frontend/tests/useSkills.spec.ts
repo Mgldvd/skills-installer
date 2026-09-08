@@ -109,6 +109,38 @@ describe("useSkills", () => {
     expect(state.selectedSkillIds.has("a")).toBe(true);
   });
 
+  // Re-installing a fully-installed Skill is exactly how an update happens
+  // (see App.vue's install()/handleUpdateSkill), so unlike a plain
+  // already-installed Skill, one flagged in `skillsWithUpdates` must stay
+  // selectable — otherwise a batch "Install Selected" could never update it.
+  it("toggleSelected still allows selecting a fully-installed skill flagged with an update available", () => {
+    state.skills = [makeSkill({ id: "a", installed: true, installedAgents: ["universal"] })];
+    state.skillsWithUpdates = new Set(["a"]);
+
+    const { toggleSelected } = useSkills();
+    toggleSelected("a");
+    expect(state.selectedSkillIds.has("a")).toBe(true);
+  });
+
+  it("refresh keeps a skill selected across the reload if it's flagged with an update available", async () => {
+    state.skills = [makeSkill({ id: "a", installed: true, installedAgents: ["universal"] })];
+    state.selectedSkillIds = new Set(["a"]);
+    state.skillsWithUpdates = new Set(["a"]);
+    vi.mocked(backend.refresh).mockResolvedValue({
+      version: 1,
+      defaults: { agent: null, copy: true, scope: "project" },
+      groups: [makeGroup()],
+      skills: [makeSkill({ id: "a", installed: true, installedAgents: ["universal"] })],
+      sourcePath: null,
+      isEmbeddedDefault: true,
+    });
+
+    const { refresh } = useSkills();
+    await refresh();
+
+    expect(state.selectedSkillIds).toEqual(new Set(["a"]));
+  });
+
   it("restoreDefaultSelection resets selection to exactly the current preselected set", () => {
     state.skills = [makeSkill({ id: "a", preselected: true }), makeSkill({ id: "b", preselected: false })];
     state.selectedSkillIds = new Set(["a", "b"]);

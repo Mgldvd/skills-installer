@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    skills_installer_lib::start();
+    skills_control_deck_lib::start();
 }

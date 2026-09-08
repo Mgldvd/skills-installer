@@ -65,8 +65,14 @@ export function useSkills() {
 
   function pruneInstalledFromSelection() {
     if (!state.selectedSkillIds.size) return;
+    // A skill fully installed for every targeted agent normally has nothing
+    // left to select for — except one with an update available, where
+    // "install" is exactly how re-selecting it and hitting Install Selected
+    // updates it (see toggleSelected and App.vue's handleSelectUpdates).
     const doneIds = new Set(
-      state.skills.filter((s) => isFullyInstalledForTargets(s)).map((s) => s.id),
+      state.skills
+        .filter((s) => isFullyInstalledForTargets(s) && !state.skillsWithUpdates.has(s.id))
+        .map((s) => s.id),
     );
     if (![...state.selectedSkillIds].some((id) => doneIds.has(id))) return;
     state.selectedSkillIds = new Set([...state.selectedSkillIds].filter((id) => !doneIds.has(id)));
@@ -82,9 +88,13 @@ export function useSkills() {
     // from selection, never added — there's nothing left to install, so
     // selecting it would just let a batch install silently re-request
     // something already done. One only installed for *some* targeted
-    // agents stays selectable, so re-installing can close the gap.
+    // agents stays selectable, so re-installing can close the gap — and so
+    // does one with an update available: re-installing it is exactly how an
+    // update happens (see App.vue's install()/handleUpdateSkill).
     const skill = state.skills.find((s) => s.id === skillId);
-    if (!alreadySelected && skill && isFullyInstalledForTargets(skill)) return;
+    if (!alreadySelected && skill && isFullyInstalledForTargets(skill) && !state.skillsWithUpdates.has(skillId)) {
+      return;
+    }
     const next = new Set(state.selectedSkillIds);
     if (alreadySelected) next.delete(skillId);
     else next.add(skillId);

@@ -10,11 +10,11 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use skills_installer_lib::app::SkillsService;
-use skills_installer_lib::config::ConfigurationService;
-use skills_installer_lib::domain::UiPreferences;
-use skills_installer_lib::preferences::PreferencesService;
-use skills_installer_lib::skills::{discover_installed_agents, discover_local_skills};
+use skills_control_deck_lib::app::SkillsService;
+use skills_control_deck_lib::config::ConfigurationService;
+use skills_control_deck_lib::domain::UiPreferences;
+use skills_control_deck_lib::preferences::PreferencesService;
+use skills_control_deck_lib::skills::{discover_installed_agents, discover_local_skills};
 
 /// A fresh, isolated fixture directory under
 /// `<repo root>/.generated/test-skills/<case>`.
@@ -317,7 +317,10 @@ skills:
     );
 
     let before = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state before install");
     let triage_before = before
         .skills
@@ -333,7 +336,10 @@ skills:
     write_skill(&root, &[".agents", "skills"], "triage", "triage");
 
     let after = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state after install");
     let triage_after = after
         .skills
@@ -386,7 +392,10 @@ skills:
 
     write_skill(&root, &[".claude", "skills"], "triage", "triage");
     let installed = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state while installed");
     assert!(
         installed
@@ -400,7 +409,10 @@ skills:
     remove_skill(&root, &[".claude", "skills"], "triage");
 
     let deleted = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state after delete");
     let triage_after = deleted
         .skills
@@ -426,7 +438,10 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
     );
 
     let here = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state for the fixture root");
     assert!(here
         .skills
@@ -442,7 +457,7 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
     let there = service
         .load_state_for(
             &elsewhere,
-            skills_installer_lib::domain::InstallScope::Project,
+            skills_control_deck_lib::domain::InstallScope::Project,
         )
         .expect("load state for an empty folder");
     let triage_there = there
@@ -468,7 +483,10 @@ fn load_state_for_lists_a_skill_installed_only_outside_the_catalog_as_unrecogniz
     write_skill(&root, &[".windsurf", "skills"], "foo", "Foo Skill");
 
     let state = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state");
 
     assert_eq!(state.unrecognized_skills.len(), 1);
@@ -510,7 +528,10 @@ skills:
     write_skill(&root, &[".claude", "skills"], "triage", "triage");
 
     let state = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state");
 
     assert!(
@@ -535,7 +556,10 @@ fn load_state_for_does_not_list_a_local_catalog_skill_as_unrecognized_even_when_
     write_skill(&root, &[".windsurf", "skills"], "bar", "bar");
 
     let state = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state");
 
     assert!(
@@ -559,7 +583,10 @@ fn copy_unrecognized_skill_into_catalog_makes_it_a_real_independent_copy() {
     write_skill(&root, &[".windsurf", "skills"], "foo", "Foo Skill");
 
     let before = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state before copy");
     let source_path = before.unrecognized_skills[0].path.clone();
 
@@ -587,7 +614,10 @@ fn copy_unrecognized_skill_into_catalog_makes_it_a_real_independent_copy() {
     // The next load treats it like any other catalog Skill: a card, marked
     // installed, and no longer "unrecognized".
     let after = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state after copy");
     assert!(after.unrecognized_skills.is_empty());
     let foo = after
@@ -607,7 +637,10 @@ fn copy_unrecognized_skill_into_catalog_fails_when_the_name_already_exists_there
     write_skill(&root, &[".agents", "skills"], "foo", "Existing Foo");
 
     let state = service
-        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .load_state_for(
+            &root,
+            skills_control_deck_lib::domain::InstallScope::Project,
+        )
         .expect("load state");
     let source_path = state
         .unrecognized_skills

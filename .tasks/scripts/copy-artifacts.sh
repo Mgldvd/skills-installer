@@ -11,15 +11,15 @@ if [ -z "$appimage_src" ]; then
   echo "No AppImage found under $tauri_dir/target/release/bundle/appimage" >&2
   exit 1
 fi
-cp "$appimage_src" "$dist_dir/Skills-Installer-$version-x86_64.AppImage"
-echo "Copied $appimage_src -> $dist_dir/Skills-Installer-$version-x86_64.AppImage"
-cp "$appimage_src" "$dist_dir/skills-installer.AppImage"
-echo "Copied $appimage_src -> $dist_dir/skills-installer.AppImage"
+cp "$appimage_src" "$dist_dir/Skills-Control-Deck-$version-x86_64.AppImage"
+echo "Copied $appimage_src -> $dist_dir/Skills-Control-Deck-$version-x86_64.AppImage"
+cp "$appimage_src" "$dist_dir/skills-control-deck.AppImage"
+echo "Copied $appimage_src -> $dist_dir/skills-control-deck.AppImage"
 
 deb_src=$(find "$tauri_dir/target/release/bundle/deb" -maxdepth 1 -name '*.deb' | head -n1)
 if [ -z "$deb_src" ]; then
   echo "No .deb found under $tauri_dir/target/release/bundle/deb" >&2
   exit 1
 fi
-cp "$deb_src" "$dist_dir/skills-installer_${version}_amd64.deb"
-echo "Copied $deb_src -> $dist_dir/skills-installer_${version}_amd64.deb"
+cp "$deb_src" "$dist_dir/skills-control-deck_${version}_amd64.deb"
+echo "Copied $deb_src -> $dist_dir/skills-control-deck_${version}_amd64.deb"

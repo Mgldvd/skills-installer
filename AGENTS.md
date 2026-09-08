@@ -2,17 +2,19 @@
 
 ## Propósito del repositorio
 
-Skills Installer es una aplicación Linux para descubrir, organizar e instalar Agent Skills remotos o locales. El mismo binario ofrece una interfaz de escritorio Tauri/Vue y una CLI; ambos caminos reutilizan los mismos servicios de aplicación escritos en Rust.
+Skills Control Deck es una aplicación Linux para descubrir, organizar e instalar Agent Skills remotos o locales. El mismo binario ofrece una interfaz de escritorio Tauri/Vue y una CLI; ambos caminos reutilizan los mismos servicios de aplicación escritos en Rust.
 
 El frontend usa Vue 3, TypeScript, Vite y SCSS. El backend usa Rust 2021 (MSRV 1.85) y Tauri v2. Las instalaciones se delegan al Skills CLI mediante procesos con argumentos estructurados y transmiten comando, `stdout`, `stderr`, progreso, resultados y errores hacia la interfaz.
 
 ## Memoria del proyecto
 
-Antes de tocar código, lee `memory/STATUS.md` (estado actual, trabajo en curso o sin
-commitear) y el índice de `memory/decisions/` (decisiones de arquitectura ya tomadas,
-con su porqué — no las reabras sin confirmación explícita del usuario). Al aceptar una
-decisión de arquitectura no obvia, agrega un ADR nuevo ahí; al cambiar el estado del
-proyecto de forma relevante, actualiza `memory/STATUS.md`.
+La memoria del proyecto vive en `.memory/` (formato OKF v0.2). Antes de un trabajo
+significativo, lee `.memory/index.md` y seguí solo la documentación relevante a la
+tarea; lee `.memory/STATUS.md` cuando importe el estado actual o en curso. Tratá
+`.memory/decisions/` como el porqué durable de decisiones significativas — no las
+reabras sin confirmación explícita del usuario. Si un cambio de código deja la memoria
+del proyecto falsa o materialmente incompleta, actualizá el documento afectado en el
+mismo cambio.
 
 ## Estructura vigente
 
@@ -126,7 +128,7 @@ npm run build
 Si `.generated/frontend` tiene permisos incompatibles, valida Vite con un destino temporal:
 
 ```bash
-npx vite build --outDir /tmp/skills-installer-build
+npx vite build --outDir /tmp/skills-control-deck-build
 ```
 
 Para cambios Rust/Tauri, cuando el toolchain esté disponible, ejecuta desde la raíz:

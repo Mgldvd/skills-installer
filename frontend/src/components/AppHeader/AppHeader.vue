@@ -2,7 +2,7 @@
   <header class="app-header" :class="{ 'app-header--global': scope === 'global' }">
     <div class="app-header__brand">
       <img class="app-header__logo" :src="appLogo" alt="" aria-hidden="true" />
-      <h1 class="app-header__title">Skills Installer</h1>
+      <h1 class="app-header__title">Skills Control Deck</h1>
     </div>
 
     <div class="app-header__item app-header__scope-switch" role="group" aria-label="Installation scope">

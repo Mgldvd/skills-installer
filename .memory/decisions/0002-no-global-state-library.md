@@ -1,7 +1,13 @@
-# 0002. Sin librería de estado global (Pinia); store reactivo de módulo
+---
+type: Decision
+title: Sin librería de estado global (Pinia); store reactivo de módulo
+description: El estado compartido del frontend vive en un store reactivo de módulo (useAppState), no en Pinia ni otra librería de manejo de estado.
+status: stable
+decision_status: accepted
+date: "fundacional; presente desde el primer commit del proyecto"
+---
 
-- Status: Accepted
-- Date: fundacional (presente desde el primer commit del proyecto)
+# 0002. Sin librería de estado global (Pinia); store reactivo de módulo
 
 ## Contexto
 

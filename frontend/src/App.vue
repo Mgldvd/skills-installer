@@ -13,10 +13,12 @@
         :skills="state.skills"
         :selected-ids="[...state.selectedSkillIds]"
         :needs-agents-count="skillsNeedingAgentsCount"
+        :needs-update-count="state.skillsWithUpdates.size"
         @toggle-tag="toggleTagSelection"
         @reorder-tags="handleReorderTags"
         @clear-selection="clearSelection"
         @select-missing="handleSelectMissingAgents"
+        @select-updates="handleSelectUpdates"
         @open-packs="isTagsOpen = !isTagsOpen"
       />
 
@@ -78,21 +80,6 @@
           </button>
           <button type="button" class="app-shell__footer-btn" @click="isPreferencesOpen = !isPreferencesOpen">
             Preferences
-          </button>
-          <button
-            type="button"
-            class="app-shell__footer-btn app-shell__footer-btn--icon"
-            :class="{ 'is-loading': isCheckingForUpdates }"
-            :disabled="isCheckingForUpdates"
-            :aria-label="isCheckingForUpdates ? 'Checking for Skills updates…' : 'Check for Skills updates'"
-            title="Check for Skills updates"
-            @click="handleCheckForUpdates"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <polyline points="23 4 23 10 17 10" />
-              <polyline points="1 20 1 14 7 14" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
           </button>
         </div>
         <div class="app-shell__footer-actions">
@@ -276,7 +263,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 import AddSkillDialog from "./components/AddSkillDialog/AddSkillDialog.vue";
 import AgentIcon from "./components/AgentIcon/AgentIcon.vue";
@@ -323,7 +310,6 @@ const { install, cancel, checkDependencies } = useInstallation();
 const { load: loadPreferences, update: updatePreferencesPartial } = usePreferences();
 const { push: pushToast } = useToasts();
 
-const isCheckingForUpdates = ref(false);
 const isPreferencesOpen = ref(false);
 const isAgentsOpen = ref(false);
 const isTagsOpen = ref(false);
@@ -565,6 +551,15 @@ function handleSelectMissingAgents() {
   state.selectedSkillIds = new Set([...state.selectedSkillIds, ...skillIds]);
 }
 
+// Selects every Skill `checkForUpdates` flagged as outdated — re-installing
+// (Install Selected, below) is exactly how updating one works, so this just
+// gets the whole batch into the same selection instead of clicking each
+// card's own Update button one at a time.
+function handleSelectUpdates() {
+  if (!state.skillsWithUpdates.size) return;
+  state.selectedSkillIds = new Set([...state.selectedSkillIds, ...state.skillsWithUpdates]);
+}
+
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -603,6 +598,18 @@ onMounted(async () => {
   }
 });
 
+// Skills deleted by hand (from the project's `.agents/skills` folder, or
+// from the catalog itself) leave the GUI showing them as still there until
+// something happens to trigger a `refresh()` — there's no filesystem
+// watcher. Regaining window focus is the moment that matters in practice:
+// the user switched to a file manager or terminal, deleted something, and
+// switched back — so treat that as "recheck disk" instead of leaving the
+// grid stale until an unrelated action (install, toggling scope) happens to
+// refresh it. `refreshSoon` already exists for exactly this "at most one
+// refresh in flight" purpose (see `runInstall`).
+onMounted(() => window.addEventListener("focus", refreshSoon));
+onUnmounted(() => window.removeEventListener("focus", refreshSoon));
+
 function handlePreferencesUpdate(partial: Parameters<typeof updatePreferencesPartial>[0]) {
   updatePreferencesPartial(partial).catch((error) => pushToast(describeError(error), "error"));
 }
@@ -621,7 +628,7 @@ async function handleExportConfig() {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "skills-installer-config.json";
+    link.download = "skills-control-deck-config.json";
     link.click();
     window.URL.revokeObjectURL(url);
     pushToast("Configuration exported", "success");
@@ -661,7 +668,7 @@ async function handleInstallCli() {
     const result = await backend.installCliCommand();
     const pathNote = result.pathConfigured
       ? ""
-      : ` Add ${result.commandPath.replace(/\/skills-installer$/, "")} to your PATH.`;
+      : ` Add ${result.commandPath.replace(/\/skills-control-deck$/, "")} to your PATH.`;
     pushToast(`Command installed at ${result.commandPath}.${pathNote}`, "success");
   } catch (error) {
     pushToast(describeError(error), "error");
@@ -929,13 +936,37 @@ function handleInstallClick() {
 // (a skipped chip there excludes that agent from just this run, without
 // touching the configured defaults) — falls back to those defaults when the
 // dialog was skipped entirely (see handleInstallClick).
+// Runs at most one `refresh()` at a time, queuing exactly one more if a
+// Skill finishes while it's in flight — called after every Skill in a batch
+// install succeeds (see `runInstall`) so it moves into the "Installed"
+// section right away instead of the whole grid waiting for the batch to
+// finish. `refresh()` re-derives everything from disk, so overlapping calls
+// are harmless, just wasted work; this just avoids piling them up.
+let refreshInFlight: Promise<void> | null = null;
+let refreshQueued = false;
+function refreshSoon() {
+  if (refreshInFlight) {
+    refreshQueued = true;
+    return;
+  }
+  refreshInFlight = refresh()
+    .catch((error) => pushToast(describeError(error), "error"))
+    .finally(() => {
+      refreshInFlight = null;
+      if (refreshQueued) {
+        refreshQueued = false;
+        refreshSoon();
+      }
+    });
+}
+
 async function runInstall(agentsOverride?: string[]) {
   const request: InstallRequest = {
     selection: { skillIds: [...state.selectedSkillIds] },
     options: { ...installOptionsFromPreferences.value, agents: agentsOverride ?? installOptionsFromPreferences.value.agents },
   };
   try {
-    await install(request);
+    await install(request, refreshSoon);
     await refresh();
   } catch (error) {
     pushToast(describeError(error), "error");
@@ -946,40 +977,20 @@ function handleCancelInstall() {
   cancel().catch((error) => pushToast(describeError(error), "error"));
 }
 
-// Shared between the manual "Check for Updates" click and the automatic
-// pass on app open (see `onMounted`): a Local Skill Source catalog that
-// isn't a git repo gets no cheap way to know which skills changed, and one
-// that is but has uncommitted changes just had those changes (re)signed by
-// this same check — either way, a one-line nudge instead of silence.
+// Runs once automatically after the initial load (see `onMounted`): a Local
+// Skill Source catalog that isn't a git repo gets no cheap way to know
+// which skills changed, and one that is but has uncommitted changes just
+// had those changes (re)signed by this same check — either way, a one-line
+// nudge instead of silence.
 function notifyCatalogGitStatus(report: LocalUpdatesReport) {
   if (report.catalogVersioned === false) {
     pushToast(
-      "Your Local Skill Source folder isn't a git repository, so Skills Installer can't cheaply tell which skills changed. Run `git init` there to enable automatic Skill signing.",
+      "Your Local Skill Source folder isn't a git repository, so Skills Control Deck can't cheaply tell which skills changed. Run `git init` there to enable automatic Skill signing.",
       "info",
     );
   } else if (report.catalogDirtySkillNames.length > 0) {
     const names = report.catalogDirtySkillNames.join(", ");
     pushToast(`Signed uncommitted changes in your skills folder (${names}) — commit them when ready.`, "info");
-  }
-}
-
-async function handleCheckForUpdates() {
-  isCheckingForUpdates.value = true;
-  try {
-    const report = await checkForUpdates();
-    if (report.outdatedSkillIds.length === 0) {
-      pushToast("All installed Local skills are up to date.", "success");
-    } else {
-      pushToast(
-        `${report.outdatedSkillIds.length} Local skill${report.outdatedSkillIds.length === 1 ? "" : "s"} can be updated.`,
-        "success",
-      );
-    }
-    notifyCatalogGitStatus(report);
-  } catch (error) {
-    pushToast(describeError(error), "error");
-  } finally {
-    isCheckingForUpdates.value = false;
   }
 }
 

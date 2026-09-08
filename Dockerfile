@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     npm_config_fetch_retry_mintimeout=10000 \
     npm_config_fetch_retry_maxtimeout=120000 \
     npm_config_fetch_timeout=300000 \
-    SKILLS_INSTALLER_RELEASE_CONTAINER=1
+    SKILLS_CONTROL_DECK_RELEASE_CONTAINER=1
 
 # Marks that we're running inside this image, so the Taskfile's release-
 # producing tasks (build/appimage/deb/release) can refuse to run on a bare

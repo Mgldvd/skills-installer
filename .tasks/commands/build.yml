@@ -5,7 +5,7 @@ tasks:
     summary: Build the release-grade raw executable and the configured bundles (AppImage + .deb, per src-tauri/tauri.conf.json's bundle.targets). Only runs inside the Docker release container — use `task docker:release`.
     deps: [frontend-deps]
     preconditions:
-      - sh: '[ "${SKILLS_INSTALLER_RELEASE_CONTAINER:-}" = "1" ]'
+      - sh: '[ "${SKILLS_CONTROL_DECK_RELEASE_CONTAINER:-}" = "1" ]'
         msg: "task build (and artifacts/release, which depend on it) only run inside the Docker release container, so every distributable artifact comes from the same fixed, reproducible environment. Run `task docker:release` instead."
     cmds:
       - "{{.TAURI_BIN}} build"

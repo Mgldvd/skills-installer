@@ -4,4 +4,4 @@ tasks:
   "build:debug":
     summary: Build a debug CLI binary (no frontend bundling, no AppImage/deb) for fast local install testing.
     cmds:
-      - cargo build --manifest-path {{.TAURI_DIR}}/Cargo.toml --bin skills-installer
+      - cargo build --manifest-path {{.TAURI_DIR}}/Cargo.toml --bin skills-control-deck

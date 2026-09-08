@@ -78,6 +78,22 @@
       >
         Select missing{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
       </button>
+      <!-- Selects every outdated local Skill so the same Install Selected
+           button below re-installs (= updates) them in one batch, instead
+           of clicking each card's own Update button one at a time. -->
+      <button
+        type="button"
+        class="skill-toolbar__update-all"
+        :disabled="needsUpdateCount === 0"
+        :title="
+          needsUpdateCount
+            ? `Add the ${needsUpdateCount} outdated Skill${needsUpdateCount === 1 ? '' : 's'} to the selection`
+            : 'No installed Skill has an update available'
+        "
+        @click="emit('selectUpdates')"
+      >
+        Update all{{ needsUpdateCount ? ` (${needsUpdateCount})` : "" }}
+      </button>
       <button
         type="button"
         class="skill-toolbar__clear"
@@ -103,12 +119,14 @@ const props = withDefaults(
     skills?: Skill[];
     selectedIds?: string[];
     needsAgentsCount?: number;
+    needsUpdateCount?: number;
   }>(),
   {
     tags: () => [],
     skills: () => [],
     selectedIds: () => [],
     needsAgentsCount: 0,
+    needsUpdateCount: 0,
   },
 );
 
@@ -117,6 +135,7 @@ const emit = defineEmits<{
   reorderTags: [tagIds: string[]];
   clearSelection: [];
   selectMissing: [];
+  selectUpdates: [];
   openPacks: [];
 }>();
 const draggedTagId = ref<string | null>(null);

@@ -294,10 +294,6 @@
         stroke-linecap: round;
         stroke-linejoin: round;
       }
-
-      &.is-loading svg {
-        animation: app-shell-spin 0.9s linear infinite;
-      }
     }
 
     // Bulk-uninstall's trash toggle and its "Confirm" action — hardcoded to
@@ -332,17 +328,5 @@
   .app-shell__agent-none {
     color: var(--text-muted);
     font-weight: 600;
-  }
-}
-
-@keyframes app-shell-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-shell__footer-btn--icon.is-loading svg {
-    animation: none;
   }
 }

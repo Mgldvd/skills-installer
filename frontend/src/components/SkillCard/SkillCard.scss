@@ -42,6 +42,12 @@
   &.is-partially-installed {
     border-color: color-mix(in srgb, var(--warning) 22%, var(--border-soft));
   }
+  // Comes after `.is-partially-installed` so a genuine content update (not
+  // just a missing-agent gap) wins with the full-strength warning color —
+  // there's a concrete action to take, not just a passive hint.
+  &.has-update {
+    border-color: var(--warning);
+  }
   &.is-selected {
     border-color: var(--accent);
     background: var(--accent-soft);
@@ -89,9 +95,6 @@
       max-height: none;
     }
 
-    // The grid layout stacks meta/tags above agents/edit to give both room
-    // to grow; a list row is already a single horizontal line, so the
-    // footer goes back to laying its two children side by side.
     .skill-card__footer {
       flex: 0 0 auto;
       flex-direction: row;
@@ -258,22 +261,15 @@
     -webkit-line-clamp: 2;
   }
 
-  // Two stacked rows — meta/tags on top, agent icons + edit below — so
-  // neither has to squeeze the other for width as more tags or agent
-  // icons are added; a `.is-list` row overrides this back to one line.
+  // `flex-direction: column` (not the row default) so its one child
+  // (`.skill-card__actions`) stretches to the full card width via the
+  // default cross-axis `align-items: stretch` — without it, the child
+  // shrinks to its content width and `justify-content` just centers that
+  // shrunk block instead of spreading agents/tags left and edit right.
   .skill-card__footer {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: var(--space-2xs);
-  }
-
-  .skill-card__meta {
-    display: flex;
-    align-items: center;
-    flex: 1 1 auto;
-    min-width: 0;
-    gap: var(--space-2xs);
   }
 
   .skill-card__actions {
@@ -286,6 +282,10 @@
   .skill-card__update {
     position: relative;
     z-index: 2;
+    // The header (`.skill-card__top`) turns off pointer events so clicks
+    // pass through its non-interactive text to the full-card selection
+    // button beneath — this button needs them back to be clickable.
+    pointer-events: auto;
     padding: var(--space-2xs) var(--space-xs);
     flex: 0 0 auto;
     border: 1px solid var(--warning);

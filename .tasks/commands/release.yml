@@ -8,6 +8,6 @@ tasks:
       - task: lint
       - task: test
       - task: artifacts
-      - cp {{.TAURI_DIR}}/target/release/skills-installer {{.DIST_DIR}}/skills-installer
+      - cp {{.TAURI_DIR}}/target/release/skills-control-deck {{.DIST_DIR}}/skills-control-deck
       - echo "Release artifacts:"
       - ls -la {{.DIST_DIR}}/

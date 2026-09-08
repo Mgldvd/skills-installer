@@ -63,7 +63,7 @@ fn resolve_original_cwd(owd: Option<PathBuf>, current_dir: Option<PathBuf>) -> P
 
 /// Picks the project folder the GUI opens into.
 ///
-/// Terminal-launched (`skills-installer` typed in a project directory, or
+/// Terminal-launched (`skills-control-deck` typed in a project directory, or
 /// the detached relaunch preserving that terminal's cwd) — trust `cwd`, so
 /// installing "here" installs into the project the user is actually in.
 ///
@@ -92,12 +92,12 @@ fn resolve_gui_project_root(
 /// via the `skills` launcher `install_cli_command` symlinks into
 /// `~/.local/bin`. A `.desktop` entry or file-manager double-click already
 /// has no controlling terminal to release, so this leaves those alone.
-/// `SKILLS_INSTALLER_GUI_DETACHED` marks the already-detached relaunch so
+/// `SKILLS_CONTROL_DECK_GUI_DETACHED` marks the already-detached relaunch so
 /// this doesn't loop.
 fn should_relaunch_detached() -> bool {
     should_relaunch(
         std::env::var_os("APPIMAGE").is_some(),
-        std::env::var_os("SKILLS_INSTALLER_GUI_DETACHED").is_some(),
+        std::env::var_os("SKILLS_CONTROL_DECK_GUI_DETACHED").is_some(),
         stdout_is_terminal(),
     )
 }
@@ -108,13 +108,13 @@ fn stdout_is_terminal() -> bool {
 }
 
 /// True when this launch traces back to a terminal: either stdout is a
-/// terminal right now (`skills-installer` typed directly, or any GUI build
+/// terminal right now (`skills-control-deck` typed directly, or any GUI build
 /// run directly from a shell), or this is the detached relaunch child that
 /// `relaunch_gui_detached` spawned to release that original terminal — its
-/// own stdout is redirected to `/dev/null`, so `SKILLS_INSTALLER_GUI_DETACHED`
+/// own stdout is redirected to `/dev/null`, so `SKILLS_CONTROL_DECK_GUI_DETACHED`
 /// is what still marks it as terminal-launched.
 fn launched_from_terminal() -> bool {
-    std::env::var_os("SKILLS_INSTALLER_GUI_DETACHED").is_some() || stdout_is_terminal()
+    std::env::var_os("SKILLS_CONTROL_DECK_GUI_DETACHED").is_some() || stdout_is_terminal()
 }
 
 /// Where the GUI opens when there's no real launch directory to trust (see
@@ -160,7 +160,7 @@ fn relaunch_gui_detached() -> std::io::Result<()> {
     unsafe {
         Command::new(appimage)
             .current_dir(original_cwd())
-            .env("SKILLS_INSTALLER_GUI_DETACHED", "1")
+            .env("SKILLS_CONTROL_DECK_GUI_DETACHED", "1")
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())

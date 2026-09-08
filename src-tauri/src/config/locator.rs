@@ -7,8 +7,8 @@ use crate::platform::app_config_dir;
 ///   1. `--config <path>`
 ///   2. `./skills.yaml`
 ///   3. `./skills.confg` (legacy filename)
-///   4. `$XDG_CONFIG_HOME/skills-installer/skills.yaml` (falls back to
-///      `~/.config/skills-installer/skills.yaml`)
+///   4. `$XDG_CONFIG_HOME/skills-control-deck/skills.yaml` (falls back to
+///      `~/.config/skills-control-deck/skills.yaml`)
 ///   5. embedded default configuration (compiled into the binary)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigSource {

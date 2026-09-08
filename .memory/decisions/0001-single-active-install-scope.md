@@ -1,7 +1,13 @@
-# 0001. Un solo scope de instalación activo (Project o Global), no por agente
+---
+type: Decision
+title: Un solo scope de instalación activo (Project o Global), no por agente
+description: El scope de instalación es un modo único para toda la app (InstallScope::{Project, Global}), no una selección independiente por agente.
+status: stable
+decision_status: accepted
+date: 2026-08-25
+---
 
-- Status: Accepted
-- Date: 2026-08-25
+# 0001. Un solo scope de instalación activo (Project o Global), no por agente
 
 ## Contexto
 

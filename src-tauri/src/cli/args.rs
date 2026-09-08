@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "skills-installer",
+    name = "skills-control-deck",
     version,
     about = "Discover, configure, and install agent skills"
 )]

@@ -51,16 +51,17 @@ impl DependencyResolver {
 
     /// Resolves the Skills CLI, then guards against the case a `skills` on
     /// PATH is actually *this app* under another name (e.g. a symlink named
-    /// `skills` that points at a `skills-installer` binary/AppImage instead
-    /// of the real vercel-labs/skills CLI — observed in the wild, and not
-    /// caught by `is_application_launcher`'s path-identity check whenever
-    /// the running process isn't itself the exact same file, such as a dev
-    /// build). Confirmed by content instead of by path: this binary's own
-    /// `--version` output always starts with `skills-installer` (see
-    /// `cli::args::Cli`'s clap `name`), so any resolved executable that
-    /// echoes the same self-identifying prefix is excluded and discovery
-    /// retries the remaining candidates, falling through to aliases/npx/
-    /// the missing-dependency error exactly as if it had never been found.
+    /// `skills` that points at a `skills-control-deck` binary/AppImage
+    /// instead of the real vercel-labs/skills CLI — observed in the wild,
+    /// and not caught by `is_application_launcher`'s path-identity check
+    /// whenever the running process isn't itself the exact same file, such
+    /// as a dev build). Confirmed by content instead of by path: this
+    /// binary's own `--version` output always starts with
+    /// `skills-control-deck` (see `cli::args::Cli`'s clap `name`), so any
+    /// resolved executable that echoes the same self-identifying prefix is
+    /// excluded and discovery retries the remaining candidates, falling
+    /// through to aliases/npx/the missing-dependency error exactly as if it
+    /// had never been found.
     pub async fn resolve(&self) -> Result<ResolvedSkillsCli, AppError> {
         let search_paths = self
             .override_search_paths
@@ -70,7 +71,7 @@ impl DependencyResolver {
         loop {
             let resolved = Self::resolve_with_paths_excluding(&search_paths, &excluded)?;
             if resolved.source == DependencySource::InstalledExecutable
-                && self_identifies_as_installer(&resolved).await
+                && self_identifies_as_this_app(&resolved).await
             {
                 excluded.push(PathBuf::from(&resolved.program));
                 continue;
@@ -162,10 +163,10 @@ fn is_application_launcher(candidate: &Path) -> bool {
     current_exe.as_ref() == Some(&candidate) || app_image.as_ref() == Some(&candidate)
 }
 
-async fn self_identifies_as_installer(resolved: &ResolvedSkillsCli) -> bool {
+async fn self_identifies_as_this_app(resolved: &ResolvedSkillsCli) -> bool {
     probe_version(resolved)
         .await
-        .is_some_and(|version| version.to_lowercase().starts_with("skills-installer"))
+        .is_some_and(|version| version.to_lowercase().starts_with("skills-control-deck"))
 }
 
 async fn probe_version(resolved: &ResolvedSkillsCli) -> Option<String> {
@@ -314,17 +315,18 @@ mod tests {
     // --- self-identification guard --------------------------------------
     //
     // Reproduces a real-world setup found on a user's machine: a `skills`
-    // executable on PATH that is actually a symlink to the skills-installer
-    // app itself (not the real vercel-labs/skills CLI). `is_application_launcher`
-    // only catches this when the candidate is byte-identical to the running
-    // process's own exe / `$APPIMAGE` target, which doesn't hold for e.g. a
-    // dev build or a stray/misdirected symlink — so `resolve()` must also
-    // reject any candidate whose own `--version` output self-identifies as
-    // `skills-installer` and keep searching instead.
+    // executable on PATH that is actually a symlink to the
+    // skills-control-deck app itself (not the real vercel-labs/skills CLI).
+    // `is_application_launcher` only catches this when the candidate is
+    // byte-identical to the running process's own exe / `$APPIMAGE` target,
+    // which doesn't hold for e.g. a dev build or a stray/misdirected
+    // symlink — so `resolve()` must also reject any candidate whose own
+    // `--version` output self-identifies as `skills-control-deck` and keep
+    // searching instead.
 
     fn make_self_identifying_skills(dir: &Path) -> PathBuf {
         let path = dir.join("skills");
-        write_executable(&path, "#!/bin/sh\necho 'skills-installer 0.1.0'\n");
+        write_executable(&path, "#!/bin/sh\necho 'skills-control-deck 0.1.0'\n");
         path
     }
 

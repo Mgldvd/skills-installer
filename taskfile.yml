@@ -15,7 +15,7 @@ vars:
   GENERATED_DIR: .generated
   DIST_DIR: .generated/dist
   TEST_DIR: .generated/smoke
-  CLI_BIN: src-tauri/target/debug/skills-installer
+  CLI_BIN: src-tauri/target/debug/skills-control-deck
   VERSION:
     sh: grep -m1 '^version' src-tauri/Cargo.toml | cut -d '"' -f2
 

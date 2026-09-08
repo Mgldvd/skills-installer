@@ -1,7 +1,13 @@
-# 0003. Todo lo generado y no versionado vive bajo `.generated/`, excepto `node_modules/` y `target/`
+---
+type: Decision
+title: "Todo lo generado y no versionado vive bajo `.generated/`, excepto `node_modules/` y `target/`"
+description: Los artefactos generados por builds/tests se consolidan bajo una sola carpeta .generated/ en la raíz, en vez de estar dispersos con nombres inconsistentes.
+status: stable
+decision_status: accepted
+date: 2026-09-05
+---
 
-- Status: Accepted
-- Date: 2026-09-05
+# 0003. Todo lo generado y no versionado vive bajo `.generated/`, excepto `node_modules/` y `target/`
 
 ## Contexto
 

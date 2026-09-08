@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Skills Installer",
+  "productName": "Skills Control Deck",
   "version": "0.1.0",
-  "identifier": "com.example.skills-installer",
+  "identifier": "com.example.skills-control-deck",
   "build": {
     "beforeDevCommand": "npm run dev --prefix ../frontend",
     "beforeBuildCommand": "npm run build --prefix ../frontend",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Skills Installer",
+        "title": "Skills Control Deck",
         "width": 1280,
         "height": 860,
         "minWidth": 760,
@@ -30,11 +30,11 @@
   "bundle": {
     "active": true,
     "targets": ["appimage", "deb"],
-    "publisher": "Skills Installer Contributors",
+    "publisher": "Skills Control Deck Contributors",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
     "category": "Development",
     "shortDescription": "Discover, configure, and install agent skills",
-    "longDescription": "Skills Installer maintains a curated remote and local Skill catalog, reusable Tags, and project or global installation targets for supported coding agents.",
+    "longDescription": "Skills Control Deck maintains a curated remote and local Skill catalog, reusable Tags, and project or global installation targets for supported coding agents.",
     "linux": {
       "deb": {
         "depends": []

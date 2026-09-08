@@ -343,7 +343,7 @@ async fn run_doctor(services: &ApplicationServices, json: bool) -> i32 {
         let _ = serde_json::to_writer_pretty(std::io::stdout(), &report);
         println!();
     } else {
-        println!("Skills Installer doctor");
+        println!("Skills Control Deck doctor");
         println!("========================");
         match &dependency_status {
             Some(status) => println!(
@@ -376,7 +376,7 @@ async fn run_doctor(services: &ApplicationServices, json: bool) -> i32 {
 }
 
 async fn run_version(services: &ApplicationServices) -> i32 {
-    println!("Skills Installer {}", env!("CARGO_PKG_VERSION"));
+    println!("Skills Control Deck {}", env!("CARGO_PKG_VERSION"));
     match services.installation.check_dependencies().await {
         Ok(status) if status.available => {
             println!(
@@ -461,14 +461,14 @@ mod tests {
 
     #[test]
     fn parses_no_subcommand_as_gui() {
-        let cli = Cli::try_parse_from(["skills-installer"]).unwrap();
+        let cli = Cli::try_parse_from(["skills-control-deck"]).unwrap();
         assert!(cli.command.is_none());
     }
 
     #[test]
     fn parses_install_with_explicit_ids_and_flags() {
         let cli = Cli::try_parse_from([
-            "skills-installer",
+            "skills-control-deck",
             "install",
             "triage",
             "tdd",
@@ -497,7 +497,8 @@ mod tests {
 
     #[test]
     fn rejects_global_and_project_flags_together() {
-        let result = Cli::try_parse_from(["skills-installer", "install", "--global", "--project"]);
+        let result =
+            Cli::try_parse_from(["skills-control-deck", "install", "--global", "--project"]);
         assert!(
             result.is_err(),
             "--global and --project must be mutually exclusive"
@@ -506,7 +507,7 @@ mod tests {
 
     #[test]
     fn accepts_global_flag_alone() {
-        let cli = Cli::try_parse_from(["skills-installer", "install", "--global"]).unwrap();
+        let cli = Cli::try_parse_from(["skills-control-deck", "install", "--global"]).unwrap();
         match cli.command {
             Some(Command::Install { global, .. }) => assert!(global),
             other => panic!("expected Install, got {other:?}"),
@@ -516,7 +517,7 @@ mod tests {
     #[test]
     fn parses_list_json_flag() {
         let cli =
-            Cli::try_parse_from(["skills-installer", "list", "--installed", "--json"]).unwrap();
+            Cli::try_parse_from(["skills-control-deck", "list", "--installed", "--json"]).unwrap();
         match cli.command {
             Some(Command::List { installed, json }) => {
                 assert!(installed);
@@ -528,8 +529,8 @@ mod tests {
 
     #[test]
     fn parses_global_config_flag_anywhere() {
-        let cli =
-            Cli::try_parse_from(["skills-installer", "list", "--config", "/tmp/x.yaml"]).unwrap();
+        let cli = Cli::try_parse_from(["skills-control-deck", "list", "--config", "/tmp/x.yaml"])
+            .unwrap();
         assert_eq!(cli.config, Some(PathBuf::from("/tmp/x.yaml")));
     }
 

@@ -75,7 +75,7 @@
         <section class="preferences-dialog__section">
           <div class="preferences-dialog__section-heading">
             <h3>Organize</h3>
-            <p>Jump straight to the other places Skills Installer keeps things organized.</p>
+            <p>Jump straight to the other places Skills Control Deck keeps things organized.</p>
           </div>
           <div class="preferences-dialog__section-content preferences-dialog__tools">
             <div class="preferences-dialog__field preferences-dialog__tool">
@@ -108,12 +108,12 @@
               <span class="preferences-dialog__label">Linux command line</span>
               <span class="preferences-dialog__help">
                 Create
-                <code>~/.local/bin/skills-installer</code>
+                <code>~/.local/bin/skills-control-deck</code>
                 and open this app from the terminal's current folder.
               </span>
               <button type="button" class="preferences-dialog__cli-button" @click="emit('installCli')">
                 Install
-                <code>skills-installer</code>
+                <code>skills-control-deck</code>
                 command
               </button>
             </div>

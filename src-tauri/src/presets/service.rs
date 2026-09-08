@@ -8,7 +8,7 @@ use crate::error::AppError;
 use crate::platform::app_config_dir;
 
 /// Persists the user's saved Presets (see `domain::Preset`) — own JSON file
-/// at `$XDG_CONFIG_HOME/skills-installer/presets.json`, entirely separate
+/// at `$XDG_CONFIG_HOME/skills-control-deck/presets.json`, entirely separate
 /// from any one project's `skills.yaml`: the whole point is that a Preset
 /// survives independently of the directory it was saved from.
 ///

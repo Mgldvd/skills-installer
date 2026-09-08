@@ -15,12 +15,12 @@ if [ ! -f "$env_file" ]; then
   echo "No se encontró $env_file en la raíz del proyecto."
   echo "Sugerencia para instalar el AppImage automáticamente en cada build:"
   echo
-  echo "  LOCAL_APP=\"skills-installer.AppImage\""
+  echo "  LOCAL_APP=\"skills-control-deck.AppImage\""
   echo "  LOCAL_INSTALL="
   echo
   read -r -p "¿Crear $env_file con esta plantilla ahora? [s/N] " reply
   if [[ "$reply" =~ ^[sSyY] ]]; then
-    printf 'LOCAL_APP="skills-installer.AppImage"\nLOCAL_INSTALL=\n' >"$env_file"
+    printf 'LOCAL_APP="skills-control-deck.AppImage"\nLOCAL_INSTALL=\n' >"$env_file"
     echo
     echo "Creado $env_file. Completa LOCAL_INSTALL con la carpeta destino y presiona Enter para continuar…"
     read -r

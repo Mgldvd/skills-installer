@@ -1,7 +1,7 @@
 <template>
   <div class="style-guide">
     <header class="style-guide__intro">
-      <h1>Skills Installer — Style Guide</h1>
+      <h1>Skills Control Deck — Style Guide</h1>
       <p>
         A visual inventory of the components, tokens, and patterns that already exist in this codebase. Everything
         below is the real application UI — either the actual Vue components, or (where a fragment like the footer bar
