@@ -185,19 +185,33 @@ describe("useSkills", () => {
     expect(state.skills[1].id).toBe("b");
   });
 
-  it("checkForUpdates populates skillsWithUpdates from the backend and returns the ids", async () => {
-    vi.mocked(backend.checkLocalSkillUpdates).mockResolvedValue(["taskfile", "bash-scripting"]);
+  it("checkForUpdates populates skillsWithUpdates and catalog status from the backend and returns the report", async () => {
+    vi.mocked(backend.checkLocalSkillUpdates).mockResolvedValue({
+      outdatedSkillIds: ["taskfile", "bash-scripting"],
+      catalogVersioned: true,
+      catalogDirtySkillNames: ["taskfile"],
+    });
 
     const { checkForUpdates } = useSkills();
     const result = await checkForUpdates();
 
-    expect(result).toEqual(["taskfile", "bash-scripting"]);
+    expect(result).toEqual({
+      outdatedSkillIds: ["taskfile", "bash-scripting"],
+      catalogVersioned: true,
+      catalogDirtySkillNames: ["taskfile"],
+    });
     expect(state.skillsWithUpdates).toEqual(new Set(["taskfile", "bash-scripting"]));
+    expect(state.localCatalogVersioned).toBe(true);
+    expect(state.localCatalogDirtySkillNames).toEqual(["taskfile"]);
   });
 
   it("checkForUpdates replaces, rather than merges into, any previous result", async () => {
     state.skillsWithUpdates = new Set(["stale-id"]);
-    vi.mocked(backend.checkLocalSkillUpdates).mockResolvedValue([]);
+    vi.mocked(backend.checkLocalSkillUpdates).mockResolvedValue({
+      outdatedSkillIds: [],
+      catalogVersioned: null,
+      catalogDirtySkillNames: [],
+    });
 
     const { checkForUpdates } = useSkills();
     await checkForUpdates();

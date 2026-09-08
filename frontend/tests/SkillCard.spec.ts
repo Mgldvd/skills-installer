@@ -293,6 +293,33 @@ describe("SkillCard", () => {
     expect(wrapper.emitted("toggle")).toEqual([[wrapper.props("skill").id]]);
   });
 
+  it("marks the collapsed universal icon as partial (not fully missing) when only some group members cover it", () => {
+    // Installed via `.claude/skills`'s cross-compat reading: Cursor,
+    // GitHub Copilot, Opencode, and VS Code (all universal-group members)
+    // have it, but the literal "universal" destination (`.agents/skills`)
+    // doesn't — the case this app actually hit with a Skill copied in from
+    // outside the catalog.
+    const wrapper = mount(SkillCard, {
+      props: {
+        skill: makeSkill({
+          installed: true,
+          installedAgents: ["claude-code", "cursor", "github-copilot", "opencode", "vscode"],
+        }),
+        selected: false,
+        targetAgents: ["claude-code", "universal"],
+      },
+    });
+
+    expect(wrapper.get(".skill-card__partial").text()).toBe("Missing 1 agent");
+    const universalIcon = wrapper
+      .findAll(".skill-card__agent-icon")
+      .find((icon) => icon.attributes("title")?.startsWith("Installed for:"));
+    expect(universalIcon).toBeDefined();
+    expect(universalIcon!.classes()).toContain("is-partial");
+    expect(universalIcon!.classes()).not.toContain("is-missing");
+    expect(universalIcon!.attributes("title")).toContain("not yet for: Universal (.agents)");
+  });
+
   it("disables selection once installed for every targeted agent, even if installed for extra ones too", () => {
     const wrapper = mount(SkillCard, {
       props: {

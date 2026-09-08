@@ -41,6 +41,19 @@ pub struct Skill {
     pub enabled: bool,
 }
 
+/// A skill found installed on disk whose `skill_name` matches nothing in the
+/// catalog — see `ApplicationConfig::unrecognized_skills`. Carries the
+/// on-disk directory `path` so the GUI's "copy into catalog" action
+/// (`SkillsService::copy_unrecognized_skill_into_catalog`) has something to
+/// copy without re-scanning every agent directory to find it again.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UnrecognizedSkill {
+    pub skill_name: String,
+    pub display_name: String,
+    pub path: String,
+}
+
 /// A skill actually found installed on disk (as opposed to `Skill.installed`,
 /// which is a flag on the *configured* skill). Kept separate because installed
 /// skills can exist without a matching configuration entry (installed out of

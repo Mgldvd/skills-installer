@@ -136,6 +136,26 @@ impl PresetsService {
         Ok(preset)
     }
 
+    /// Replaces a Preset's Skill list in place — keeps its `id`/`name`/
+    /// `git_url`, only `skill_names` changes — so re-syncing after
+    /// installing/removing Skills doesn't require deleting and recreating it.
+    pub fn update(&self, id: &str, skill_names: Vec<String>) -> Result<Preset, AppError> {
+        if skill_names.is_empty() {
+            return Err(AppError::Validation(
+                "select at least one installed skill to update the Preset with".into(),
+            ));
+        }
+        let mut presets = self.list()?;
+        let preset = presets
+            .iter_mut()
+            .find(|p| p.id == id)
+            .ok_or_else(|| AppError::NotFound(format!("preset \"{id}\" not found")))?;
+        preset.skill_names = skill_names;
+        let updated = preset.clone();
+        self.write_all(&presets)?;
+        Ok(updated)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), AppError> {
         let mut presets = self.list()?;
         let before = presets.len();
@@ -234,6 +254,49 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let service = PresetsService::with_path(tmp.path().join("presets.json"));
         assert!(service.save("Empty".into(), None, vec![]).is_err());
+    }
+
+    #[test]
+    fn update_replaces_skill_names_but_keeps_id_and_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = PresetsService::with_path(tmp.path().join("presets.json"));
+        let saved = service
+            .save(
+                "Atlas".into(),
+                Some("https://github.com/me/atlas".into()),
+                vec!["triage".into()],
+            )
+            .unwrap();
+
+        let updated = service
+            .update(&saved.id, vec!["triage".into(), "docs".into()])
+            .unwrap();
+
+        assert_eq!(updated.id, saved.id);
+        assert_eq!(updated.name, "Atlas");
+        assert_eq!(
+            updated.git_url.as_deref(),
+            Some("https://github.com/me/atlas")
+        );
+        assert_eq!(updated.skill_names, vec!["triage", "docs"]);
+
+        let reloaded = service.list().unwrap();
+        assert_eq!(reloaded[0].skill_names, vec!["triage", "docs"]);
+    }
+
+    #[test]
+    fn update_rejects_an_empty_skill_list() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = PresetsService::with_path(tmp.path().join("presets.json"));
+        let saved = service.save("A".into(), None, vec!["x".into()]).unwrap();
+        assert!(service.update(&saved.id, vec![]).is_err());
+    }
+
+    #[test]
+    fn update_errors_on_an_unknown_id() {
+        let tmp = tempfile::tempdir().unwrap();
+        let service = PresetsService::with_path(tmp.path().join("presets.json"));
+        assert!(service.update("nope", vec!["x".into()]).is_err());
     }
 
     #[test]

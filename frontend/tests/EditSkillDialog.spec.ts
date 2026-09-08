@@ -32,7 +32,7 @@ describe("EditSkillDialog", () => {
     expect(payload.tags).toEqual(["workflow", "testing"]);
   });
 
-  it("opens as an informative preview with editing visible", async () => {
+  it("opens as an informative preview with editing collapsed behind a toggle, after the Packs", async () => {
     const wrapper = mount(EditSkillDialog, {
       props: {
         open: true,
@@ -54,7 +54,15 @@ describe("EditSkillDialog", () => {
         .findAll("button")
         .map((button) => button.text()),
     ).toEqual(["Delete Skill", "Cancel", "Save Changes"]);
-    expect(wrapper.find(".edit-skill-dialog__details-toggle").exists()).toBe(false);
+    expect(wrapper.get(".edit-skill-dialog__details-toggle").exists()).toBe(true);
+    expect(wrapper.get(".edit-skill-dialog__edit-fields").attributes("open")).toBeUndefined();
+    expect(wrapper.get(".edit-skill-dialog__fields").isVisible()).toBe(false);
+
+    const detailsIndex = wrapper.findAll(".edit-skill-dialog__details > *").findIndex((el) => el.element.tagName === "DETAILS");
+    const packsIndex = wrapper.findAll(".edit-skill-dialog__details > *").findIndex((el) => el.classes().includes("edit-skill-dialog__packs"));
+    expect(detailsIndex).toBeGreaterThan(packsIndex);
+
+    await wrapper.get(".edit-skill-dialog__details-toggle").trigger("click");
     expect(wrapper.get(".edit-skill-dialog__fields").isVisible()).toBe(true);
   });
 

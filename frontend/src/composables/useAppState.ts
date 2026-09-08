@@ -9,6 +9,7 @@ import type {
   SkillGroup,
   SkillTag,
   UiPreferences,
+  UnrecognizedSkill,
 } from "../types";
 import { defaultPreferences } from "../types";
 
@@ -34,13 +35,24 @@ export interface InstallationState {
 
 interface AppState {
   skills: Skill[];
+  /** Display names of skills found installed on disk (for the active
+   * project/scope) that match no known Skill — installed by some other
+   * means and not tracked by this app's catalog. Purely informational; see
+   * `useSkills.loadAll`/`refresh`. */
+  unrecognizedSkills: UnrecognizedSkill[];
   groups: SkillGroup[];
   tags: SkillTag[];
   selectedSkillIds: Set<string>;
   /** Local-only: ids of installed Local skills whose catalog `.signature` has
-   * changed since install, populated only by an explicit "Check for Updates" —
-   * never computed on load/refresh (see `useSkills.checkForUpdates`). */
+   * changed since install — populated by `useSkills.checkForUpdates`, which
+   * runs both from the "Check for Updates" button and once automatically
+   * after the initial load (see `App.vue`). */
   skillsWithUpdates: Set<string>;
+  /** Whether the Local Skill Source catalog is a git repo, from the same
+   * check — `null` until that check has run at least once. Drives the
+   * "not versioned" / "you have uncommitted changes" nudges. */
+  localCatalogVersioned: boolean | null;
+  localCatalogDirtySkillNames: string[];
   searchQuery: string;
   skillBeingEditedId: string | null;
   groupBeingEditedId: string | null;
@@ -81,10 +93,13 @@ function freshInstallationState(): InstallationState {
  */
 const state = reactive<AppState>({
   skills: [],
+  unrecognizedSkills: [],
   groups: [],
   tags: [],
   selectedSkillIds: new Set<string>(),
   skillsWithUpdates: new Set<string>(),
+  localCatalogVersioned: null,
+  localCatalogDirtySkillNames: [],
   searchQuery: "",
   skillBeingEditedId: null,
   groupBeingEditedId: null,

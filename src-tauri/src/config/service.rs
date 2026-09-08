@@ -348,6 +348,7 @@ mod tests {
                 installed_agents: Vec::new(),
                 enabled: true,
             }],
+            unrecognized_skills: Vec::new(),
             source_path,
             is_embedded_default,
             project_root: "/tmp/project".into(),

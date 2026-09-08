@@ -127,7 +127,10 @@
     justify-content: space-between;
     gap: var(--space-sm);
     min-height: 0;
-    padding-right: 2.25rem;
+    // No right padding reserved here: that used to leave clearance for the
+    // corner ribbon, which grid/compact mode no longer renders (see
+    // `.skill-card__selection-ribbon` below) — keeping it stale left the
+    // "Missing N agents" badge sitting short of the card's right edge.
     pointer-events: none;
   }
 
@@ -339,6 +342,28 @@
         right: -0.2rem;
         width: 0.55rem;
         height: 0.55rem;
+        border: 1px solid var(--bg-card);
+        border-radius: 50%;
+        background: var(--warning);
+      }
+    }
+
+    // A collapsed group tile (e.g. "universal") where some but not all of
+    // its member agents are actually installed: the tile keeps its normal
+    // installed look (real coverage exists — see `collapsedAgentIcons`),
+    // but a small dot underneath still flags that it isn't installed for
+    // every target agent in the group. Purely absolute-positioned — no
+    // margin on the tile itself, so every icon in the row stays the same
+    // outer size and lines up regardless of which ones are partial.
+    &.is-partial {
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -0.4rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0.4rem;
+        height: 0.4rem;
         border: 1px solid var(--bg-card);
         border-radius: 50%;
         background: var(--warning);

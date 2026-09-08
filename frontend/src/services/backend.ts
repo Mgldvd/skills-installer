@@ -9,6 +9,7 @@ import type {
   InstallRequest,
   InstallResult,
   InstallScope,
+  LocalUpdatesReport,
   ParsedSkillSource,
   Preset,
   Skill,
@@ -96,6 +97,10 @@ export async function deleteSkill(skillId: string): Promise<void> {
   return call("delete_skill", { skillId });
 }
 
+export async function copyUnrecognizedSkill(path: string): Promise<void> {
+  return call("copy_unrecognized_skill", { path });
+}
+
 export async function createTag(name: string, color: string): Promise<SkillTag> {
   return call("create_tag", { args: { name, color } });
 }
@@ -134,6 +139,9 @@ export async function getPresets(): Promise<Preset[]> {
 }
 export async function savePreset(args: SavePresetArgs): Promise<Preset> {
   return call("save_preset", { args });
+}
+export async function updatePreset(presetId: string, skillNames: string[]): Promise<Preset> {
+  return call("update_preset", { presetId, skillNames });
 }
 export async function deletePreset(presetId: string): Promise<void> {
   return call("delete_preset", { presetId });
@@ -185,8 +193,8 @@ export async function refresh(projectPath?: string, scope?: InstallScope): Promi
   return call("refresh", { projectPath, scope });
 }
 
-/** Local-only, on-demand check — returns the ids of installed Local skills whose `.signature` no longer matches the Local Skill Source catalog. */
-export async function checkLocalSkillUpdates(projectPath?: string): Promise<string[]> {
+/** Local-only check: outdated installed Local skills, plus whether the Local Skill Source catalog is a versioned (git) folder — cheap enough to call automatically on load, not just from "Check for Updates". */
+export async function checkLocalSkillUpdates(projectPath?: string): Promise<LocalUpdatesReport> {
   return call("check_local_skill_updates", { projectPath });
 }
 

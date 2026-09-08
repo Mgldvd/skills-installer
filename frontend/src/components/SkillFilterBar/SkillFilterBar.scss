@@ -2,6 +2,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  // Same WebKitGTK fix as `.skill-toolbar`: once this row wraps (see the
+  // `flex-wrap: wrap` below), it must not shrink back to a single-line
+  // height inside the height-constrained `overflow-y: auto` main column.
+  flex-shrink: 0;
   gap: var(--space-sm);
   min-height: 3.5rem;
   padding: calc(var(--space-xs) + 4.5px) var(--space-sm);
@@ -51,6 +55,10 @@
       pointer-events: none;
     }
 
+    &:has(input:not(:placeholder-shown)) svg {
+      stroke: var(--accent);
+    }
+
     input {
       width: 100%;
       min-height: 2.15rem;
@@ -64,6 +72,14 @@
 
       &::placeholder {
         color: var(--text-muted);
+      }
+
+      // A non-empty search is an active filter that's silently narrowing
+      // the grid below — highlight the box itself so that's visible even
+      // when the input isn't focused, not just while typing.
+      &:not(:placeholder-shown) {
+        border-color: var(--accent);
+        background: var(--accent-soft);
       }
 
       body.is-keyboard-navigation &:focus-visible {

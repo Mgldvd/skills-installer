@@ -24,6 +24,7 @@ export function useSkills() {
   async function loadAll() {
     const config = await backend.getApplicationState();
     state.skills = config.skills;
+    state.unrecognizedSkills = config.unrecognizedSkills ?? [];
     state.groups = config.groups;
     state.tags = config.tags ?? [];
     state.sourcePath = config.sourcePath;
@@ -39,6 +40,7 @@ export function useSkills() {
   async function refresh() {
     const config = await backend.refresh(state.projectRoot, state.preferences.lastScope);
     state.skills = config.skills;
+    state.unrecognizedSkills = config.unrecognizedSkills ?? [];
     state.groups = config.groups;
     state.tags = config.tags ?? [];
     // An installed skill can't be selected (see toggleSelected) — this is
@@ -104,14 +106,17 @@ export function useSkills() {
     return updated;
   }
 
-  /** Local-only: explicit, on-demand check — populates `skillsWithUpdates`
-   * from the backend's `.signature` comparison. Never runs automatically
-   * (see `AppState.skillsWithUpdates`); the GUI's "Check for Updates"
-   * button is the only caller. */
+  /** Local-only: populates `skillsWithUpdates` and the catalog
+   * versioned/dirty status from the backend's `.signature` comparison.
+   * Cheap when the catalog is a git repo (see `check_local_updates` on the
+   * Rust side), so unlike before it's called both from the GUI's "Check for
+   * Updates" button and once automatically after the initial load. */
   async function checkForUpdates() {
-    const outdated = await backend.checkLocalSkillUpdates(state.projectRoot);
-    state.skillsWithUpdates = new Set(outdated);
-    return outdated;
+    const report = await backend.checkLocalSkillUpdates(state.projectRoot);
+    state.skillsWithUpdates = new Set(report.outdatedSkillIds);
+    state.localCatalogVersioned = report.catalogVersioned;
+    state.localCatalogDirtySkillNames = report.catalogDirtySkillNames;
+    return report;
   }
 
   async function deleteSkill(skillId: string) {
@@ -122,6 +127,16 @@ export function useSkills() {
       next.delete(skillId);
       state.selectedSkillIds = next;
     }
+  }
+
+  /** Copies an "unrecognized" skill's directory into the catalog, then
+   * refreshes: unlike `addSkill`/`updateSkill`, there's no single updated
+   * record to merge in by hand — this changes both `state.skills` (a new
+   * card) and `state.unrecognizedSkills` (one entry gone) at once, so a full
+   * `refresh()` is simpler and just as correct. */
+  async function copyUnrecognizedSkill(path: string) {
+    await backend.copyUnrecognizedSkill(path);
+    await refresh();
   }
 
   return {
@@ -136,6 +151,7 @@ export function useSkills() {
     addSkill,
     updateSkill,
     deleteSkill,
+    copyUnrecognizedSkill,
     checkForUpdates,
   };
 }

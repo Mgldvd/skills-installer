@@ -1,17 +1,19 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use crate::config::migrate::dedupe_id;
 use crate::config::{validate_and_normalize_color, ConfigurationService};
 use crate::domain::{
-    slugify, validate_skill_id, ApplicationConfig, Skill, SkillGroup, SkillSource, SkillTag,
-    OTHER_GROUP_ID,
+    slugify, validate_skill_id, ApplicationConfig, LocalUpdatesReport, Skill, SkillGroup,
+    SkillSource, SkillTag, UnrecognizedSkill, OTHER_GROUP_ID,
 };
 use crate::error::AppError;
 use crate::preferences::PreferencesService;
+use crate::skills::catalog_git;
 use crate::skills::pack_import::{PackPreview, PackSkillPreview};
+use crate::skills::signature;
 use crate::skills::{
-    discover_installed_agents, discover_installed_agents_globally, discover_skills_in_directory,
+    discover_installed_skills, discover_installed_skills_globally, discover_skills_in_directory,
     SkillUrlParser, SkillsShUrlParser,
 };
 
@@ -276,23 +278,7 @@ impl SkillsService {
             skill.tags.dedup();
             skill.clone()
         } else {
-            let source = self
-                .preferences
-                .load()?
-                .local_source_path
-                .map(|path| expand_user_path(&path))
-                .or_else(|| {
-                    std::env::var("HOME")
-                        .ok()
-                        .map(|home| PathBuf::from(home).join(".control/skill"))
-                });
-            let mut local = source
-                .as_deref()
-                .map(discover_skills_in_directory)
-                .unwrap_or_default()
-                .into_iter()
-                .find(|skill| skill.id == skill_id)
-                .ok_or_else(|| AppError::NotFound(format!("skill \"{skill_id}\" not found")))?;
+            let mut local = self.find_local_catalog_skill(skill_id)?;
             let tag_ids = config
                 .local_skill_tags
                 .entry(skill_id.to_string())
@@ -316,6 +302,48 @@ impl SkillsService {
         self.config_service.save(&config)?;
         Ok(result)
     }
+
+    /// Looks up `skill_id` in the user's Local Skill Source catalog (or the
+    /// `~/.control/skill` fallback) — for a skill `load_state_for` merged
+    /// into the in-memory `config.skills` view (see its `local_skills` merge
+    /// loop) but that was never itself persisted into `config.skills`, so a
+    /// fresh `config_service.load()` inside a mutation doesn't have it.
+    /// Shared by `set_tag_assignment` and `update_skill`, the two mutations
+    /// reachable against such a skill (assigning it a Pack from its card,
+    /// and editing it from its details dialog).
+    ///
+    /// `discover_skills_in_directory` marks everything it finds `installed:
+    /// true` — correct when it's scanning a real install destination, but
+    /// this is the Local Skill Source *catalog*, never one (see its own doc
+    /// comment). Neither caller here re-derives real per-agent install
+    /// status the way `load_state_for` does, so this resets both fields to
+    /// "not installed" rather than hand back a stale, misleading `true`
+    /// paired with an empty `installed_agents` list — the caller's mutation
+    /// (a Pack toggle, an edit) doesn't itself install anything, and the
+    /// next `load_state_for` refresh fills in the real answer.
+    fn find_local_catalog_skill(&self, skill_id: &str) -> Result<Skill, AppError> {
+        let source = self
+            .preferences
+            .load()?
+            .local_source_path
+            .map(|path| expand_user_path(&path))
+            .or_else(|| {
+                std::env::var("HOME")
+                    .ok()
+                    .map(|home| PathBuf::from(home).join(".control/skill"))
+            });
+        let mut skill = source
+            .as_deref()
+            .map(discover_skills_in_directory)
+            .unwrap_or_default()
+            .into_iter()
+            .find(|skill| skill.id == skill_id)
+            .ok_or_else(|| AppError::NotFound(format!("skill \"{skill_id}\" not found")))?;
+        skill.installed = false;
+        skill.installed_agents = Vec::new();
+        Ok(skill)
+    }
+
     pub fn new(
         config_service: ConfigurationService,
         project_root: PathBuf,
@@ -384,21 +412,25 @@ impl SkillsService {
         scope: crate::domain::InstallScope,
     ) -> Result<ApplicationConfig, AppError> {
         let mut config = self.config_service.load()?;
-        let installed_agents = match scope {
-            crate::domain::InstallScope::Project => discover_installed_agents(project_root),
+        let installed_skills = match scope {
+            crate::domain::InstallScope::Project => discover_installed_skills(project_root),
             crate::domain::InstallScope::Global => {
                 // No resolvable home (override unset and `$HOME` missing)
                 // just means no Global results — best effort, same as
-                // everywhere else `discover_installed_agents_globally` gets
+                // everywhere else `discover_installed_skills_globally` gets
                 // called.
                 let home = self
                     .home_override
                     .clone()
                     .or_else(|| std::env::var_os("HOME").map(PathBuf::from));
-                home.map(|home| discover_installed_agents_globally(&home))
+                home.map(|home| discover_installed_skills_globally(&home))
                     .unwrap_or_default()
             }
         };
+        let installed_agents: HashMap<String, Vec<String>> = installed_skills
+            .iter()
+            .map(|skill| (skill.skill_name.clone(), skill.installed_agents.clone()))
+            .collect();
         let local_source = self.resolve_local_source()?;
         let local_skills = local_source
             .as_deref()
@@ -431,6 +463,42 @@ impl SkillsService {
             }
         }
 
+        // Recomputed from `config.skills` *after* the local-catalog merge
+        // above, not from `configured_skill_names` — a skill the merge just
+        // pushed in from the Local Skill Source catalog counts as known too,
+        // otherwise it would show up both as a card and as "unrecognized".
+        let known_skill_names: HashSet<&str> = config
+            .skills
+            .iter()
+            .map(|s| s.skill_name.as_str())
+            .collect();
+        let mut unrecognized_skills: Vec<UnrecognizedSkill> = Vec::new();
+        for skill in installed_skills {
+            if known_skill_names.contains(skill.skill_name.as_str()) {
+                continue;
+            }
+            // `discover_installed_skills` only ever produces `Local` skills
+            // (it walks real directories, never the remote catalog), so this
+            // always matches — the `if let` is just defensive, not a case
+            // this data flow can actually hit.
+            let SkillSource::Local { path } = &skill.source else {
+                continue;
+            };
+            // `path` is the SKILL.md file itself; the "copy into catalog"
+            // action needs the skill's directory, one level up.
+            let dir_path = Path::new(path)
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|| path.clone());
+            unrecognized_skills.push(UnrecognizedSkill {
+                skill_name: skill.skill_name,
+                display_name: skill.display_name,
+                path: dir_path,
+            });
+        }
+        unrecognized_skills.sort_by_key(|skill| skill.display_name.to_lowercase());
+        config.unrecognized_skills = unrecognized_skills;
+
         config.skills.sort_by(|a, b| {
             a.display_name
                 .to_lowercase()
@@ -459,13 +527,49 @@ impl SkillsService {
             }))
     }
 
+    /// Copies an "unrecognized" skill's on-disk directory (`source_dir`, as
+    /// reported in `ApplicationConfig::unrecognized_skills[].path`) into the
+    /// user's Local Skill Source catalog directory — a real, independent
+    /// copy, never a symlink, so the two directories are free to drift apart
+    /// afterward like any other catalog entry. The next `load_state_for`
+    /// call picks it up as a normal catalog Skill and drops it from
+    /// `unrecognized_skills`, since `discover_skills_in_directory` will find
+    /// it there too.
+    pub fn copy_unrecognized_skill_into_catalog(&self, source_dir: &Path) -> Result<(), AppError> {
+        if !source_dir.is_dir() {
+            return Err(AppError::Validation(format!(
+                "\"{}\" is not a directory",
+                source_dir.display()
+            )));
+        }
+        let dir_name = source_dir.file_name().ok_or_else(|| {
+            AppError::Validation(format!(
+                "\"{}\" has no directory name",
+                source_dir.display()
+            ))
+        })?;
+        let catalog_dir = self.resolve_local_source()?.ok_or_else(|| {
+            AppError::Validation(
+                "no Local Skill Source directory configured — set one in Preferences".into(),
+            )
+        })?;
+        let destination = catalog_dir.join(dir_name);
+        if destination.exists() {
+            return Err(AppError::Validation(format!(
+                "\"{}\" already exists in your catalog",
+                dir_name.to_string_lossy()
+            )));
+        }
+        copy_dir_recursive(source_dir, &destination)
+    }
+
     /// Same resolution as `refresh`'s `project_path`: an explicit,
     /// non-blank path wins; otherwise falls back to this service's own
     /// `project_root`.
     pub fn check_local_updates_for(
         &self,
         project_root: Option<&str>,
-    ) -> Result<Vec<String>, AppError> {
+    ) -> Result<LocalUpdatesReport, AppError> {
         let project_root = project_root
             .map(str::trim)
             .filter(|s| !s.is_empty())
@@ -474,27 +578,50 @@ impl SkillsService {
         self.check_local_updates(&project_root)
     }
 
-    /// Compares each installed Local skill's `.signature` file (written by
-    /// the Skills CLI, one per skill directory) against the same file in
-    /// the Local Skill Source catalog it was installed from. A mismatch
-    /// means the catalog copy has changed since install — the skill is
-    /// out of date. Returns the (slugified) ids of skills with updates
-    /// available.
+    /// Compares each installed Local skill's `.signature` file (copied
+    /// alongside its content by the Skills CLI at install time, one per
+    /// skill directory) against the same file in the Local Skill Source
+    /// catalog it was installed from. A mismatch means the catalog copy has
+    /// changed since install — the skill is out of date.
     ///
-    /// Deliberately not folded into `load_state`/`load_state_for`: reading
-    /// two files per installed local skill on every load would add cost
-    /// proportional to however many are installed, for a check that only
-    /// matters occasionally. Callers trigger this explicitly (the
-    /// `check_local_skill_updates` command, "Check for Updates" in the
-    /// GUI) instead of paying for it on every refresh.
-    pub fn check_local_updates(&self, project_root: &Path) -> Result<Vec<String>, AppError> {
+    /// Before comparing, catalog skills are (re)signed via
+    /// `skills::signature::sign_folder` — this is also, incidentally, what
+    /// makes sure every catalog skill *is* signed at all, without depending
+    /// on the user separately running the standalone `sign-folder` script
+    /// (not guaranteed to be installed) against their catalog. Which
+    /// skills need that depends on whether the catalog is a git repo (see
+    /// `skills::catalog_git`):
+    /// - Versioned: only skills `git status` reports as changed, plus any
+    ///   still missing a `.signature` outright — cheap enough to run on
+    ///   every check, or even automatically when a project opens.
+    /// - Not versioned: there's no cheap way to know what changed, so
+    ///   every catalog skill is re-signed, same as before git-awareness
+    ///   existed. `catalog_versioned: Some(false)` in the result tells the
+    ///   GUI to suggest `git init`-ing the catalog instead of relying on
+    ///   this full-rehash fallback forever (`None` instead means there's no
+    ///   catalog directory there at all to suggest that for).
+    ///
+    /// `catalog_dirty_skill_names` (only ever populated when versioned) is
+    /// read again after signing, so it also covers catalog skills that
+    /// were previously clean but had no `.signature` yet — the GUI uses it
+    /// to suggest a commit.
+    pub fn check_local_updates(&self, project_root: &Path) -> Result<LocalUpdatesReport, AppError> {
         let Some(local_source) = self.resolve_local_source()? else {
-            return Ok(Vec::new());
+            return Ok(LocalUpdatesReport::default());
         };
         let installed_dir = project_root.join(".agents").join("skills");
 
         let Ok(entries) = std::fs::read_dir(&local_source) else {
-            return Ok(Vec::new());
+            return Ok(LocalUpdatesReport::default());
+        };
+
+        let versioned = catalog_git::is_versioned(&local_source);
+        let dirty_before: std::collections::HashSet<String> = if versioned {
+            catalog_git::dirty_skill_names(&local_source)
+                .into_iter()
+                .collect()
+        } else {
+            std::collections::HashSet::new()
         };
 
         let mut outdated = Vec::new();
@@ -506,11 +633,23 @@ impl SkillsService {
             let Some(dir_name) = source_dir.file_name().and_then(|n| n.to_str()) else {
                 continue;
             };
+            let has_signature = source_dir.join(".signature").is_file();
+            let needs_signing = !versioned || !has_signature || dirty_before.contains(dir_name);
+            if needs_signing {
+                // Best-effort: an unreadable/unsignable catalog folder (bad
+                // permissions, a broken symlink inside it) shouldn't blank
+                // out the check for every other skill — it just falls
+                // through to comparing whatever `.signature` (if any) is
+                // already there.
+                let _ = signature::sign_folder(&source_dir);
+            }
+
             let installed_signature =
                 std::fs::read(installed_dir.join(dir_name).join(".signature"));
             let source_signature = std::fs::read(source_dir.join(".signature"));
-            // Missing on either side (not installed, or no signature file
-            // at all) means there's nothing to compare — never flagged.
+            // Missing on either side (not installed, or signing above still
+            // couldn't produce a signature) means there's nothing to
+            // compare — never flagged.
             let (Ok(installed_signature), Ok(source_signature)) =
                 (installed_signature, source_signature)
             else {
@@ -520,7 +659,18 @@ impl SkillsService {
                 outdated.push(slugify(dir_name));
             }
         }
-        Ok(outdated)
+
+        let catalog_dirty_skill_names = if versioned {
+            catalog_git::dirty_skill_names(&local_source)
+        } else {
+            Vec::new()
+        };
+
+        Ok(LocalUpdatesReport {
+            outdated_skill_ids: outdated,
+            catalog_versioned: Some(versioned),
+            catalog_dirty_skill_names,
+        })
     }
 
     pub fn add_skill(&self, input: NewSkillInput) -> Result<Skill, AppError> {
@@ -579,11 +729,37 @@ impl SkillsService {
     pub fn update_skill(&self, skill_id: &str, input: SkillUpdateInput) -> Result<Skill, AppError> {
         validate_skill_id(skill_id)?;
         let mut config = self.config_service.load()?;
-        let index = config
-            .skills
-            .iter()
-            .position(|s| s.id == skill_id)
-            .ok_or_else(|| AppError::NotFound(format!("skill \"{skill_id}\" not found")))?;
+        let index = config.skills.iter().position(|s| s.id == skill_id);
+
+        // A skill discovered live from the Local Skill Source catalog (see
+        // `load_state_for`'s `local_skills` merge) but never persisted into
+        // `config.skills` itself — the Edit dialog still opens for it and
+        // sends the same full payload, but Packs (`local_skill_tags`) are
+        // the only field such a skill has anywhere to persist to; the rest
+        // (name, description, preselected, enabled…) come live from its own
+        // SKILL.md and are dropped, same as `set_tag_assignment`'s fallback.
+        let Some(index) = index else {
+            let mut local = self.find_local_catalog_skill(skill_id)?;
+            if let Some(tags) = input.tags {
+                let tag_ids = config
+                    .local_skill_tags
+                    .entry(skill_id.to_string())
+                    .or_default();
+                *tag_ids = tags;
+                tag_ids.sort();
+                tag_ids.dedup();
+                if tag_ids.is_empty() {
+                    config.local_skill_tags.remove(skill_id);
+                }
+            }
+            local.tags = config
+                .local_skill_tags
+                .get(skill_id)
+                .cloned()
+                .unwrap_or_default();
+            self.config_service.save(&config)?;
+            return Ok(local);
+        };
 
         if let Some(url) = &input.url {
             let parsed = SkillsShUrlParser.parse(url)?;
@@ -816,6 +992,27 @@ fn expand_user_path(path: &str) -> PathBuf {
     PathBuf::from(path)
 }
 
+/// Recursively copies every file and subdirectory from `src` into `dst`
+/// (created if missing) — a real, file-by-file copy, not a symlink, so the
+/// destination is independent of the source from that point on. Symlinks
+/// inside `src` are skipped rather than followed or recreated: not expected
+/// in a hand-authored or CLI-installed skill directory, and safer to ignore
+/// than to risk copying outside `src` or creating a broken link.
+fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), AppError> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        let dest_path = dst.join(entry.file_name());
+        if file_type.is_dir() {
+            copy_dir_recursive(&entry.path(), &dest_path)?;
+        } else if file_type.is_file() {
+            std::fs::copy(entry.path(), &dest_path)?;
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -973,6 +1170,52 @@ skills:
             .unwrap()
             .local_skill_tags
             .contains_key("agent-extension-pi-creator"));
+    }
+
+    #[test]
+    fn update_skill_assigns_tags_to_a_discovered_local_skill_not_in_config() {
+        // Regression test: the Edit dialog opens for a skill merged into the
+        // in-memory `load_state` view by `load_state_for`'s local-catalog
+        // merge (see `assigns_tags_to_discovered_local_skills_and_persists_them`
+        // above) but never persisted into `config.skills` — `update_skill`
+        // used to require the skill already be in `config.skills` and threw
+        // "skill not found" on Save, even though `set_tag_assignment`
+        // already handled exactly this case for the card's own tag toggles.
+        let tmp = tempfile::tempdir().unwrap();
+        let local_dir = tmp.path().join(".agents/skills/agent-extension-pi-creator");
+        std::fs::create_dir_all(&local_dir).unwrap();
+        std::fs::write(
+            local_dir.join("SKILL.md"),
+            "---\nname: agent-extension-pi-creator\n---\n",
+        )
+        .unwrap();
+        let service = service_with_curated_config(tmp.path());
+        let bash = service.create_tag("Bash".into(), "#D98B45".into()).unwrap();
+
+        let updated = service
+            .update_skill(
+                "agent-extension-pi-creator",
+                SkillUpdateInput {
+                    tags: Some(vec![bash.id.clone()]),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert!(updated.local);
+        assert_eq!(updated.tags, vec!["bash"]);
+        assert_eq!(
+            service.load_state().unwrap().local_skill_tags["agent-extension-pi-creator"],
+            vec!["bash"]
+        );
+        // Regression: this skill only exists on disk in the Local Skill
+        // Source *catalog* directory, not under any real install
+        // destination — `discover_skills_in_directory` (which this
+        // fallback uses) unconditionally marks whatever it finds
+        // `installed: true`, which used to leak straight through and make
+        // a never-installed catalog Skill's card show "Installed" with
+        // every agent reported missing right after a Pack edit.
+        assert!(!updated.installed);
+        assert!(updated.installed_agents.is_empty());
     }
 
     #[test]
@@ -1418,26 +1661,36 @@ skills:
         std::fs::create_dir_all(&project_root).unwrap();
         std::fs::create_dir_all(&catalog).unwrap();
 
-        let write_signature = |dir: &std::path::Path, contents: &str| {
-            std::fs::create_dir_all(dir).unwrap();
-            std::fs::write(dir.join(".signature"), contents).unwrap();
+        // Simulates what the real Skills CLI does on install: sign the
+        // catalog copy, then carry that exact `.signature` over alongside a
+        // fresh install of the same content.
+        let install = |name: &str, content: &[u8]| {
+            let source = catalog.join(name);
+            std::fs::create_dir_all(&source).unwrap();
+            std::fs::write(source.join("SKILL.md"), content).unwrap();
+            signature::sign_folder(&source).unwrap();
+            let installed = project_root.join(".agents/skills").join(name);
+            std::fs::create_dir_all(&installed).unwrap();
+            std::fs::copy(source.join(".signature"), installed.join(".signature")).unwrap();
         };
 
-        // Changed: installed and catalog signatures differ -> flagged.
-        write_signature(&project_root.join(".agents/skills/changed"), "sign-old");
-        write_signature(&catalog.join("changed"), "sign-new");
+        // Changed: the catalog is edited after install, so re-signing it
+        // during the check yields a different digest than what's installed.
+        install("changed", b"v1");
+        std::fs::write(catalog.join("changed").join("SKILL.md"), b"v2").unwrap();
 
-        // Unchanged: signatures match -> not flagged.
-        write_signature(&project_root.join(".agents/skills/unchanged"), "sign-same");
-        write_signature(&catalog.join("unchanged"), "sign-same");
+        // Unchanged: catalog content untouched since install -> not flagged.
+        install("unchanged", b"same");
 
         // In the catalog but never installed -> nothing to compare, not flagged.
-        write_signature(&catalog.join("not-installed"), "sign-whatever");
+        std::fs::create_dir_all(catalog.join("not-installed")).unwrap();
+        std::fs::write(catalog.join("not-installed").join("SKILL.md"), b"whatever").unwrap();
 
         // Installed but has no .signature at all (predates this feature,
         // or wasn't installed through the Skills CLI) -> not flagged.
         std::fs::create_dir_all(project_root.join(".agents/skills/no-signature")).unwrap();
-        write_signature(&catalog.join("no-signature"), "sign-whatever");
+        std::fs::create_dir_all(catalog.join("no-signature")).unwrap();
+        std::fs::write(catalog.join("no-signature").join("SKILL.md"), b"whatever").unwrap();
 
         let config_service = ConfigurationService::new(None, tmp.path().to_path_buf());
         let preferences = PreferencesService::with_path(tmp.path().join("preferences.json"));
@@ -1449,8 +1702,69 @@ skills:
             .unwrap();
         let service = SkillsService::new(config_service, project_root.clone(), preferences);
 
-        let outdated = service.check_local_updates(&project_root).unwrap();
-        assert_eq!(outdated, vec!["changed".to_string()]);
+        let report = service.check_local_updates(&project_root).unwrap();
+        assert_eq!(report.outdated_skill_ids, vec!["changed".to_string()]);
+        assert_eq!(
+            report.catalog_versioned,
+            Some(false),
+            "the catalog here is a plain directory, not a git repo"
+        );
+    }
+
+    #[test]
+    fn check_local_updates_only_resigns_dirty_skills_in_a_versioned_catalog() {
+        let tmp = tempfile::tempdir().unwrap();
+        let project_root = tmp.path().join("project");
+        let catalog = tmp.path().join("catalog");
+        std::fs::create_dir_all(&project_root).unwrap();
+        std::fs::create_dir_all(&catalog).unwrap();
+
+        let git = |args: &[&str]| {
+            let status = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&catalog)
+                .args(args)
+                .status()
+                .unwrap();
+            assert!(status.success(), "git {args:?} failed");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "test@example.com"]);
+        git(&["config", "user.name", "Test"]);
+
+        let install = |name: &str, content: &[u8]| {
+            let source = catalog.join(name);
+            std::fs::create_dir_all(&source).unwrap();
+            std::fs::write(source.join("SKILL.md"), content).unwrap();
+            signature::sign_folder(&source).unwrap();
+            let installed = project_root.join(".agents/skills").join(name);
+            std::fs::create_dir_all(&installed).unwrap();
+            std::fs::copy(source.join(".signature"), installed.join(".signature")).unwrap();
+        };
+        install("edited", b"v1");
+        install("untouched", b"same");
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "install"]);
+
+        // Edit one catalog skill without committing — the git-aware fast
+        // path should catch this via `git status`, not by re-hashing the
+        // untouched one too.
+        std::fs::write(catalog.join("edited/SKILL.md"), b"v2").unwrap();
+
+        let config_service = ConfigurationService::new(None, tmp.path().to_path_buf());
+        let preferences = PreferencesService::with_path(tmp.path().join("preferences.json"));
+        preferences
+            .save(&crate::domain::UiPreferences {
+                local_source_path: Some(catalog.display().to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        let service = SkillsService::new(config_service, project_root.clone(), preferences);
+
+        let report = service.check_local_updates(&project_root).unwrap();
+        assert_eq!(report.catalog_versioned, Some(true));
+        assert_eq!(report.outdated_skill_ids, vec!["edited".to_string()]);
+        assert_eq!(report.catalog_dirty_skill_names, vec!["edited".to_string()]);
     }
 
     #[test]
@@ -1471,7 +1785,10 @@ skills:
         // machine running the tests; either way, a nonexistent catalog
         // must resolve to no updates rather than an error.
         assert_eq!(
-            service.check_local_updates(tmp.path()).unwrap(),
+            service
+                .check_local_updates(tmp.path())
+                .unwrap()
+                .outdated_skill_ids,
             Vec::<String>::new()
         );
     }

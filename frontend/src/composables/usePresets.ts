@@ -14,10 +14,16 @@ export function usePresets() {
     return preset;
   }
 
+  async function update(presetId: string, skillNames: string[]) {
+    const preset = await backend.updatePreset(presetId, skillNames);
+    state.presets = state.presets.map((p) => (p.id === presetId ? preset : p));
+    return preset;
+  }
+
   async function remove(presetId: string) {
     await backend.deletePreset(presetId);
     state.presets = state.presets.filter((preset) => preset.id !== presetId);
   }
 
-  return { loadAll, save, remove };
+  return { loadAll, save, update, remove };
 }

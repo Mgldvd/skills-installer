@@ -40,6 +40,12 @@
     border-top: 1px solid var(--border-soft);
   }
 
+  .app-shell__footer-status-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
   .app-shell__footer-status-right {
     display: flex;
     align-items: center;
@@ -115,6 +121,12 @@
   }
   .app-shell__dependency.is-missing .app-shell__dependency-dot {
     background: var(--danger);
+  }
+  .app-shell__dependency.is-warning {
+    color: var(--warning);
+  }
+  .app-shell__dependency.is-warning .app-shell__dependency-dot {
+    background: var(--warning);
   }
 
   .app-shell__footer-left {

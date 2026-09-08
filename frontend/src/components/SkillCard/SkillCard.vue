@@ -75,7 +75,7 @@
             v-for="entry in collapsedAgentIcons"
             :key="entry.id"
             class="skill-card__agent-icon"
-            :class="{ 'is-missing': entry.missing }"
+            :class="{ 'is-missing': entry.missing, 'is-partial': entry.partial }"
             :title="entry.title"
           >
             <AgentIcon :agent-id="entry.id" />
@@ -198,25 +198,30 @@ const displayedAgents = computed(() => [
 const collapsedAgentIcons = computed(() => {
   const universalMembers = displayedAgents.value.filter((id) => isUniversalGroup(id));
   const ownFolderAgents = displayedAgents.value.filter((id) => !isUniversalGroup(id));
-  const entries: { id: string; missing: boolean; title: string }[] = [];
+  const entries: { id: string; missing: boolean; partial: boolean; title: string }[] = [];
   if (universalMembers.length) {
     const missingMembers = universalMembers.filter((id) => missingAgents.value.includes(id));
     const installedMembers = universalMembers.filter((id) => !missingAgents.value.includes(id));
     // Mixed state is possible (e.g. Cursor's own cross-compat reading of
     // `.claude/skills` covers it while Gemini CLI, which doesn't read that
-    // directory, stays missing) — any real coverage reads as "installed".
+    // directory, stays missing) — any real coverage reads as "installed", so
+    // the icon keeps its normal look rather than the full `is-missing`
+    // treatment, but `is-partial` still adds a small dot: real coverage
+    // doesn't mean *every* target agent in this group actually has it.
     const isMissing = installedMembers.length === 0;
+    const isPartial = !isMissing && missingMembers.length > 0;
     const title = isMissing
       ? `Not yet installed for: ${missingMembers.map(agentLabel).join(", ")}`
       : `Installed for: ${installedMembers.map(agentLabel).join(", ")}` +
         (missingMembers.length ? ` (not yet for: ${missingMembers.map(agentLabel).join(", ")})` : "");
-    entries.push({ id: "universal", missing: isMissing, title });
+    entries.push({ id: "universal", missing: isMissing, partial: isPartial, title });
   }
   for (const id of ownFolderAgents) {
     const missing = missingAgents.value.includes(id);
     entries.push({
       id,
       missing,
+      partial: false,
       title: missing ? `Not yet installed for ${agentLabel(id)}` : `Installed for ${agentLabel(id)}`,
     });
   }

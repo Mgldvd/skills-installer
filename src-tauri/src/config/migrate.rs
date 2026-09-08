@@ -203,6 +203,7 @@ pub fn migrate(
         tags,
         skills,
         local_skill_tags: disk.local_skill_tags,
+        unrecognized_skills: Vec::new(),
         source_path,
         is_embedded_default,
         // `ConfigurationService` operates purely on file paths and has no

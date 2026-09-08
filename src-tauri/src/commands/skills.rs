@@ -127,15 +127,27 @@ pub fn delete_skill(state: State<'_, AppState>, skill_id: String) -> Result<(), 
     state.services.skills.delete_skill(&skill_id)
 }
 
-/// Local-only, on-demand check (see `SkillsService::check_local_updates`):
-/// never runs as part of the normal load/refresh path, only when the GUI's
-/// "Check for Updates" is clicked. `project_path` follows the same
-/// resolution as `refresh`'s.
+/// `path` is one of `ApplicationConfig.unrecognizedSkills[].path`, exactly as
+/// last reported by `get_application_state`/`refresh` — the GUI never lets
+/// the user type this path by hand.
+#[tauri::command]
+pub fn copy_unrecognized_skill(state: State<'_, AppState>, path: String) -> Result<(), AppError> {
+    state
+        .services
+        .skills
+        .copy_unrecognized_skill_into_catalog(std::path::Path::new(&path))
+}
+
+/// Local-only check (see `SkillsService::check_local_updates`): cheap when
+/// the catalog is a git repo (only re-signs what `git status` shows as
+/// changed), so unlike before it's safe for the GUI to run both on the
+/// "Check for Updates" click and automatically when a project opens.
+/// `project_path` follows the same resolution as `refresh`'s.
 #[tauri::command]
 pub fn check_local_skill_updates(
     state: State<'_, AppState>,
     project_path: Option<String>,
-) -> Result<Vec<String>, AppError> {
+) -> Result<crate::domain::LocalUpdatesReport, AppError> {
     state
         .services
         .skills

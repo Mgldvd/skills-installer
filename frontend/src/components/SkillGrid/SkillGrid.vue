@@ -1,6 +1,11 @@
 <template>
   <div class="skill-grid-sections">
-    <p v-if="skills.length === 0" class="skill-grid__empty">No skills match the current search and filter.</p>
+    <p
+      v-if="skills.length === 0 && unrecognizedSkills.length === 0"
+      class="skill-grid__empty"
+    >
+      No skills match the current search and filter.
+    </p>
     <template v-else>
       <section
         v-for="group in groups"
@@ -41,6 +46,39 @@
           </div>
         </TransitionGroup>
       </section>
+
+      <section
+        v-show="unrecognizedSkills.length"
+        class="skill-grid__section"
+        aria-labelledby="skill-grid-section-unrecognized"
+      >
+        <h2 id="skill-grid-section-unrecognized" class="skill-grid__section-header">
+          <span class="skill-grid__section-label">Installed but not in your catalog</span>
+          <span class="skill-grid__section-count">{{ unrecognizedSkills.length }}</span>
+        </h2>
+        <ul class="skill-grid__unrecognized-list">
+          <li
+            v-for="skill in unrecognizedSkills"
+            :key="skill.path"
+            class="skill-grid__unrecognized-item"
+          >
+            <span class="skill-grid__unrecognized-name">{{ skill.displayName }}</span>
+            <button
+              type="button"
+              class="skill-grid__unrecognized-copy"
+              :disabled="copyingPath === skill.path"
+              :aria-label="`Copy ${skill.displayName} into your catalog`"
+              title="Copy into your catalog"
+              @click="emit('copy-to-catalog', skill)"
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <rect x="6" y="6" width="8" height="8" rx="1" />
+                <path d="M4 10V3a1 1 0 0 1 1-1h7" />
+              </svg>
+            </button>
+          </li>
+        </ul>
+      </section>
     </template>
   </div>
 </template>
@@ -48,12 +86,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import type { Skill, SkillTag } from "../../types";
+import type { Skill, SkillTag, UnrecognizedSkill } from "../../types";
 import SkillCard from "../SkillCard/SkillCard.vue";
 
 const props = withDefaults(
   defineProps<{
     skills: Skill[];
+    /** Skills found installed on disk that match no known Skill — rendered
+     * as plain names with a "copy into catalog" action, deliberately not as
+     * `SkillCard`s (see App.vue's `state.unrecognizedSkills`). */
+    unrecognizedSkills?: UnrecognizedSkill[];
+    /** The `path` of whichever unrecognized skill is currently being copied
+     * (see App.vue's `copyingUnrecognizedPath`) — disables just that one
+     * button so a slow copy can't be double-submitted. */
+    copyingPath?: string | null;
     tags: SkillTag[];
     selectedIds: Set<string>;
     compact?: boolean;
@@ -67,6 +113,8 @@ const props = withDefaults(
   }>(),
   {
     installingSkillId: null,
+    unrecognizedSkills: () => [],
+    copyingPath: null,
     skillsWithUpdates: () => new Set<string>(),
     agentOrder: () => [],
     view: "grid",
@@ -80,6 +128,7 @@ const emit = defineEmits<{
   edit: [skillId: string];
   update: [skillId: string];
   "toggle-delete": [skillId: string];
+  "copy-to-catalog": [skill: UnrecognizedSkill];
 }>();
 
 // `props.skills` arrives already sorted (see App.vue's `displayedSkills`,

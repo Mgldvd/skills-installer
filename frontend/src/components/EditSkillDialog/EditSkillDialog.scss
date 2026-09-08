@@ -247,6 +247,43 @@
     gap: var(--space-xs);
   }
 
+  .edit-skill-dialog__edit-fields {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm);
+
+    &[open] {
+      padding-bottom: var(--space-md);
+    }
+
+    .edit-skill-dialog__details-toggle {
+      padding: 0 var(--space-2xs);
+      font-size: var(--font-size-sm);
+      font-weight: 650;
+      cursor: pointer;
+      list-style: none;
+
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      &::before {
+        content: "▸";
+        display: inline-block;
+        width: 1em;
+        color: var(--text-muted);
+      }
+    }
+
+    &[open] .edit-skill-dialog__details-toggle::before {
+      content: "▾";
+    }
+
+    .edit-skill-dialog__fields {
+      margin-top: var(--space-md);
+    }
+  }
+
   .edit-skill-dialog__actions {
     @include dialog.actions-row;
     z-index: 3;

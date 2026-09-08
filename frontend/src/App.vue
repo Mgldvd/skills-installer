@@ -39,6 +39,8 @@
 
       <SkillGrid
         :skills="displayedSkills"
+        :unrecognized-skills="state.unrecognizedSkills"
+        :copying-path="copyingUnrecognizedPath"
         :tags="state.tags"
         :selected-ids="state.selectedSkillIds"
         :compact="state.preferences.compactCards"
@@ -53,6 +55,7 @@
         @edit="openEditDialog"
         @update="handleUpdateSkill"
         @toggle-delete="toggleDeleteSelected"
+        @copy-to-catalog="handleCopyUnrecognizedSkill"
       />
 
       <InstallProgressPanel
@@ -139,10 +142,20 @@
         </div>
       </div>
       <div class="app-shell__footer-status">
-        <span class="app-shell__dependency" :class="dependencyClass">
-          <span class="app-shell__dependency-dot" aria-hidden="true" />
-          Skills CLI {{ dependencyLabel }}
-        </span>
+        <div class="app-shell__footer-status-left">
+          <span class="app-shell__dependency" :class="dependencyClass">
+            <span class="app-shell__dependency-dot" aria-hidden="true" />
+            Skills CLI {{ dependencyLabel }}
+          </span>
+          <span
+            v-if="unrecognizedSkillsCount"
+            class="app-shell__dependency is-warning"
+            :title="unrecognizedSkillsTitle"
+          >
+            <span class="app-shell__dependency-dot" aria-hidden="true" />
+            ● {{ unrecognizedSkillsCount }} not in catalog
+          </span>
+        </div>
         <div class="app-shell__footer-status-right">
           <button
             type="button"
@@ -254,6 +267,7 @@
       :error="presetsError"
       @save="handleSavePreset"
       @load="handleLoadPreset"
+      @update="handleUpdatePreset"
       @delete="handleDeletePreset"
     />
 
@@ -286,7 +300,7 @@ import { usePreferences } from "./composables/usePreferences";
 import { useSkills } from "./composables/useSkills";
 import { useToasts } from "./composables/useToasts";
 import * as backend from "./services/backend";
-import type { InstallRequest, InstallScope, Skill } from "./types";
+import type { InstallRequest, InstallScope, LocalUpdatesReport, Skill, UnrecognizedSkill } from "./types";
 import { formatAgents, resolveAgentOrder } from "./utils/agents";
 import { agentsNeedingInstall } from "./utils/skillInstall";
 
@@ -300,6 +314,7 @@ const {
   addSkill,
   updateSkill,
   deleteSkill,
+  copyUnrecognizedSkill,
   checkForUpdates,
 } = useSkills();
 const tags = useTags();
@@ -456,6 +471,33 @@ const dependencyLabel = computed(() => {
   return state.dependencyStatus.available ? "● Ready" : "● Not found";
 });
 
+// Surfaces the same "Installed but not in your catalog" list SkillGrid
+// renders (see state.unrecognizedSkills) as a warning pill in the footer
+// status row, so it's visible even when that section is scrolled out of view.
+const unrecognizedSkillsCount = computed(() => state.unrecognizedSkills.length);
+const unrecognizedSkillsTitle = computed(() =>
+  state.unrecognizedSkills.length
+    ? `Installed but not in your catalog: ${state.unrecognizedSkills.map((s) => s.displayName).join(", ")}`
+    : "",
+);
+
+// Tracks the single unrecognized skill currently being copied (by its
+// `path`, which is unique per entry) so SkillGrid can disable just that
+// one button — see SkillGrid's `copyingPath` prop.
+const copyingUnrecognizedPath = ref<string | null>(null);
+
+async function handleCopyUnrecognizedSkill(skill: UnrecognizedSkill) {
+  copyingUnrecognizedPath.value = skill.path;
+  try {
+    await copyUnrecognizedSkill(skill.path);
+    pushToast(`Copied "${skill.displayName}" into your catalog`, "success");
+  } catch (error) {
+    pushToast(`Could not copy "${skill.displayName}". ${describeError(error)}`, "error");
+  } finally {
+    copyingUnrecognizedPath.value = null;
+  }
+}
+
 // Skills install one at a time (see the backend's sequential install loop),
 // so at most one card is ever "currently installing".
 const installingSkillId = computed(() =>
@@ -545,6 +587,17 @@ onMounted(async () => {
   }
   try {
     await checkDependencies();
+  } catch (error) {
+    pushToast(describeError(error), "error");
+  }
+  // Cheap when the catalog is a git repo (see `checkForUpdates`), so unlike
+  // before this can run on every app open, not just the manual button —
+  // silently skips the "up to date"/"N available" summary toast here (that
+  // would fire on every launch); the versioning/commit nudge still shows,
+  // since that's a standing, actionable state worth surfacing once.
+  try {
+    const report = await checkForUpdates();
+    notifyCatalogGitStatus(report);
   } catch (error) {
     pushToast(describeError(error), "error");
   }
@@ -688,6 +741,17 @@ function handleLoadPreset(presetId: string) {
     );
   } else {
     pushToast(`Selected ${ids.length} Skills from "${preset.name}".`, "success");
+  }
+}
+
+async function handleUpdatePreset(presetId: string) {
+  const preset = state.presets.find((p) => p.id === presetId);
+  try {
+    await presets.update(presetId, installedSkillNames.value);
+    presetsError.value = null;
+    if (preset) pushToast(`Preset "${preset.name}" updated.`, "success");
+  } catch (error) {
+    presetsError.value = describeError(error);
   }
 }
 
@@ -882,15 +946,36 @@ function handleCancelInstall() {
   cancel().catch((error) => pushToast(describeError(error), "error"));
 }
 
+// Shared between the manual "Check for Updates" click and the automatic
+// pass on app open (see `onMounted`): a Local Skill Source catalog that
+// isn't a git repo gets no cheap way to know which skills changed, and one
+// that is but has uncommitted changes just had those changes (re)signed by
+// this same check — either way, a one-line nudge instead of silence.
+function notifyCatalogGitStatus(report: LocalUpdatesReport) {
+  if (report.catalogVersioned === false) {
+    pushToast(
+      "Your Local Skill Source folder isn't a git repository, so Skills Installer can't cheaply tell which skills changed. Run `git init` there to enable automatic Skill signing.",
+      "info",
+    );
+  } else if (report.catalogDirtySkillNames.length > 0) {
+    const names = report.catalogDirtySkillNames.join(", ");
+    pushToast(`Signed uncommitted changes in your skills folder (${names}) — commit them when ready.`, "info");
+  }
+}
+
 async function handleCheckForUpdates() {
   isCheckingForUpdates.value = true;
   try {
-    const outdated = await checkForUpdates();
-    if (outdated.length === 0) {
+    const report = await checkForUpdates();
+    if (report.outdatedSkillIds.length === 0) {
       pushToast("All installed Local skills are up to date.", "success");
     } else {
-      pushToast(`${outdated.length} Local skill${outdated.length === 1 ? "" : "s"} can be updated.`, "success");
+      pushToast(
+        `${report.outdatedSkillIds.length} Local skill${report.outdatedSkillIds.length === 1 ? "" : "s"} can be updated.`,
+        "success",
+      );
     }
+    notifyCatalogGitStatus(report);
   } catch (error) {
     pushToast(describeError(error), "error");
   } finally {

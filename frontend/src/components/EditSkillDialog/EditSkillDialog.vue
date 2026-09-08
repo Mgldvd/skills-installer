@@ -40,54 +40,6 @@
       </section>
 
       <section class="edit-skill-dialog__details">
-        <div class="edit-skill-dialog__fields">
-          <div class="edit-skill-dialog__fields-primary">
-            <label v-if="!skill.local" class="edit-skill-dialog__field">
-              <span>Skills.sh URL</span>
-              <input v-model="url" type="url" class="edit-skill-dialog__input" @input="handleUrlInput" />
-            </label>
-            <p v-if="urlError" class="edit-skill-dialog__error" role="alert">
-              {{ urlError }}
-            </p>
-            <div v-else-if="preview" class="edit-skill-dialog__preview">
-              <p>
-                Detected skill:
-                <strong>{{ preview.skillName }}</strong>
-              </p>
-              <p>
-                Repository:
-                <strong>{{ preview.owner }}/{{ preview.repository }}</strong>
-              </p>
-            </div>
-
-            <label class="edit-skill-dialog__field">
-              <span>Display Name</span>
-              <input v-model="displayName" type="text" required class="edit-skill-dialog__input" />
-            </label>
-
-            <div class="edit-skill-dialog__checkboxes">
-              <label class="edit-skill-dialog__checkbox">
-                <input v-model="preselected" type="checkbox" />
-                <span>Preselected by default</span>
-              </label>
-              <label class="edit-skill-dialog__checkbox">
-                <input v-model="enabled" type="checkbox" />
-                <span>Enabled</span>
-              </label>
-            </div>
-          </div>
-
-          <label class="edit-skill-dialog__field edit-skill-dialog__field--secondary">
-            <span>Description</span>
-            <textarea
-              v-model="description"
-              class="edit-skill-dialog__input edit-skill-dialog__textarea"
-              maxlength="320"
-            />
-            <small>Short summary displayed on the Skill card.</small>
-          </label>
-        </div>
-
         <fieldset class="edit-skill-dialog__packs">
           <legend>Packs</legend>
           <p>Assign this Skill to one or more installation packs.</p>
@@ -107,6 +59,57 @@
           </div>
           <p v-else class="edit-skill-dialog__packs-empty">No enabled packs are available.</p>
         </fieldset>
+
+        <details class="edit-skill-dialog__edit-fields">
+          <summary class="edit-skill-dialog__details-toggle">Edit details</summary>
+          <div class="edit-skill-dialog__fields">
+            <div class="edit-skill-dialog__fields-primary">
+              <label v-if="!skill.local" class="edit-skill-dialog__field">
+                <span>Skills.sh URL</span>
+                <input v-model="url" type="url" class="edit-skill-dialog__input" @input="handleUrlInput" />
+              </label>
+              <p v-if="urlError" class="edit-skill-dialog__error" role="alert">
+                {{ urlError }}
+              </p>
+              <div v-else-if="preview" class="edit-skill-dialog__preview">
+                <p>
+                  Detected skill:
+                  <strong>{{ preview.skillName }}</strong>
+                </p>
+                <p>
+                  Repository:
+                  <strong>{{ preview.owner }}/{{ preview.repository }}</strong>
+                </p>
+              </div>
+
+              <label class="edit-skill-dialog__field">
+                <span>Display Name</span>
+                <input v-model="displayName" type="text" required class="edit-skill-dialog__input" />
+              </label>
+
+              <div class="edit-skill-dialog__checkboxes">
+                <label class="edit-skill-dialog__checkbox">
+                  <input v-model="preselected" type="checkbox" />
+                  <span>Preselected by default</span>
+                </label>
+                <label class="edit-skill-dialog__checkbox">
+                  <input v-model="enabled" type="checkbox" />
+                  <span>Enabled</span>
+                </label>
+              </div>
+            </div>
+
+            <label class="edit-skill-dialog__field edit-skill-dialog__field--secondary">
+              <span>Description</span>
+              <textarea
+                v-model="description"
+                class="edit-skill-dialog__input edit-skill-dialog__textarea"
+                maxlength="320"
+              />
+              <small>Short summary displayed on the Skill card.</small>
+            </label>
+          </div>
+        </details>
       </section>
 
       <p v-if="submitError" class="edit-skill-dialog__error" role="alert">

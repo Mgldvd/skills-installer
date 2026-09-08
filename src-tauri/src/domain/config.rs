@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 
 use super::group::SkillGroup;
 use super::install::InstallScope;
-use super::skill::Skill;
+use super::skill::{Skill, UnrecognizedSkill};
 use super::tag::SkillTag;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +39,15 @@ pub struct ApplicationConfig {
     /// are merged into `Skill.tags` before state reaches the frontend.
     #[serde(default)]
     pub local_skill_tags: BTreeMap<String, Vec<String>>,
+    /// Skills found installed on disk (for whichever scope was last loaded)
+    /// whose `skill_name` matches nothing in `skills` — i.e. installed by
+    /// some other means (manually, another tool) and not tracked by this
+    /// app's catalog. Never merged into `skills` itself; see
+    /// `SkillsService::load_state_for`. Each entry's `path` is what the
+    /// GUI's "copy into catalog" action sends back to
+    /// `SkillsService::copy_unrecognized_skill_into_catalog`.
+    #[serde(default)]
+    pub unrecognized_skills: Vec<UnrecognizedSkill>,
     /// Absolute path this config was loaded from, or `None` when running on
     /// the embedded default (nothing on disk was found).
     pub source_path: Option<String>,

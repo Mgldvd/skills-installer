@@ -12,7 +12,22 @@
         <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" />
       </svg>
     </button>
-    <div v-if="orderedTags.length" class="skill-toolbar__tags">
+    <!-- Every Pack must stay on screen with no scrolling of any kind — this
+         is a desktop app, not a page — so `.skill-toolbar` is a plain
+         `flex-wrap: wrap` group and every tag slot below is a genuine
+         direct child of it (a bare `<template>` for the `v-for`, no
+         wrapper div — `display: contents` looked equivalent but is exactly
+         what broke this: WebKitGTK, the engine this app's window actually
+         renders with, does not reliably run flex-wrap layout on children
+         collapsed that way, which is what produced the overlapping,
+         out-of-order rendering seen in the field). Nothing is pinned to
+         the right with `margin-left: auto` either — that was what
+         stranded the buttons far from the last Pack with a large empty gap
+         whenever the wrapped Packs happened to end partway across a line.
+         Left to flow naturally in real DOM order, the buttons just sit
+         right after the last Pack, wrapping down with it if there isn't
+         room. -->
+    <template v-if="orderedTags.length">
       <div
         v-for="tag in orderedTags"
         :key="tag.id"
@@ -47,30 +62,32 @@
           </template>
         </PackBadge>
       </div>
-    </div>
+    </template>
     <p v-else class="skill-toolbar__empty">Create Packs from the Packs menu to build reusable selections.</p>
-    <button
-      type="button"
-      class="skill-toolbar__select-missing"
-      :disabled="needsAgentsCount === 0"
-      :title="
-        needsAgentsCount
-          ? `Add the ${needsAgentsCount} Skill${needsAgentsCount === 1 ? '' : 's'} still missing an agent to the selection`
-          : 'Every installed Skill already covers every targeted agent'
-      "
-      @click="emit('selectMissing')"
-    >
-      Select missing{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
-    </button>
-    <button
-      type="button"
-      class="skill-toolbar__clear"
-      :disabled="selectedIds.length === 0"
-      aria-label="Clear all selected Skills"
-      @click="emit('clearSelection')"
-    >
-      Clear
-    </button>
+    <div class="skill-toolbar__actions">
+      <button
+        type="button"
+        class="skill-toolbar__select-missing"
+        :disabled="needsAgentsCount === 0"
+        :title="
+          needsAgentsCount
+            ? `Add the ${needsAgentsCount} Skill${needsAgentsCount === 1 ? '' : 's'} still missing an agent to the selection`
+            : 'Every installed Skill already covers every targeted agent'
+        "
+        @click="emit('selectMissing')"
+      >
+        Select missing{{ needsAgentsCount ? ` (${needsAgentsCount})` : "" }}
+      </button>
+      <button
+        type="button"
+        class="skill-toolbar__clear"
+        :disabled="selectedIds.length === 0"
+        aria-label="Clear all selected Skills"
+        @click="emit('clearSelection')"
+      >
+        Clear
+      </button>
+    </div>
   </section>
 </template>
 

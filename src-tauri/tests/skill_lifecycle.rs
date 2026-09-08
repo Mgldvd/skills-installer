@@ -455,3 +455,168 @@ fn load_state_for_scopes_installed_status_to_whatever_folder_is_passed_in() {
         "an unrelated folder must not show a Skill installed there as installed"
     );
 }
+
+// --- "Unrecognized" installed skills — on disk, but unknown to the app -----
+
+#[test]
+fn load_state_for_lists_a_skill_installed_only_outside_the_catalog_as_unrecognized() {
+    let root = fixture_root("service-unrecognized-outside-catalog");
+    let service = service_for(&root, EMPTY_CONFIG);
+    // `.windsurf/skills` is a real install destination (windsurf) but is
+    // never the catalog's local source directory, so this Skill has no way
+    // to be already known to the app.
+    write_skill(&root, &[".windsurf", "skills"], "foo", "Foo Skill");
+
+    let state = service
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .expect("load state");
+
+    assert_eq!(state.unrecognized_skills.len(), 1);
+    let unrecognized = &state.unrecognized_skills[0];
+    assert_eq!(unrecognized.skill_name, "Foo Skill");
+    assert_eq!(unrecognized.display_name, "Foo Skill");
+    assert_eq!(
+        Path::new(&unrecognized.path),
+        root.join(".windsurf").join("skills").join("foo")
+    );
+    assert!(
+        !state.skills.iter().any(|s| s.skill_name == "Foo Skill"),
+        "an unrecognized Skill must not also show up as a card"
+    );
+}
+
+#[test]
+fn load_state_for_does_not_list_a_configured_skill_as_unrecognized() {
+    let root = fixture_root("service-unrecognized-configured");
+    let service = service_for(
+        &root,
+        r##"
+version: 1
+groups:
+  - id: testing
+    name: Testing
+    color: "#6B82D9"
+    order: 1
+    enabled: true
+skills:
+  - id: triage
+    name: Issue Triage
+    url: https://www.skills.sh/mattpocock/skills/triage
+    group: testing
+    preselected: false
+    enabled: true
+"##,
+    );
+    write_skill(&root, &[".claude", "skills"], "triage", "triage");
+
+    let state = service
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .expect("load state");
+
+    assert!(
+        state.unrecognized_skills.is_empty(),
+        "a Skill already in the configured catalog must never also show up as unrecognized"
+    );
+}
+
+#[test]
+fn load_state_for_does_not_list_a_local_catalog_skill_as_unrecognized_even_when_installed_elsewhere_too(
+) {
+    let root = fixture_root("service-unrecognized-catalog-skill");
+    // `service_for` points the Local Skill Source catalog at
+    // `root/.agents/skills`, which is itself also a real install
+    // destination — so this single write both adds "bar" to the catalog
+    // (making it a card) and marks it installed.
+    let service = service_for(&root, EMPTY_CONFIG);
+    write_skill(&root, &[".agents", "skills"], "bar", "bar");
+    // A second, distinct install destination for the same skill_name must
+    // not confuse the "already known" check — it's still one merged Skill
+    // record, known via the catalog.
+    write_skill(&root, &[".windsurf", "skills"], "bar", "bar");
+
+    let state = service
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .expect("load state");
+
+    assert!(
+        state.unrecognized_skills.is_empty(),
+        "a Skill the local-catalog merge already turned into a card must not double up as unrecognized"
+    );
+    let bar = state
+        .skills
+        .iter()
+        .find(|s| s.skill_name == "bar")
+        .expect("catalog-discovered Skill present as a card");
+    assert!(bar.installed);
+}
+
+// --- Copying an unrecognized skill into the catalog -------------------------
+
+#[test]
+fn copy_unrecognized_skill_into_catalog_makes_it_a_real_independent_copy() {
+    let root = fixture_root("service-copy-unrecognized");
+    let service = service_for(&root, EMPTY_CONFIG);
+    write_skill(&root, &[".windsurf", "skills"], "foo", "Foo Skill");
+
+    let before = service
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .expect("load state before copy");
+    let source_path = before.unrecognized_skills[0].path.clone();
+
+    service
+        .copy_unrecognized_skill_into_catalog(Path::new(&source_path))
+        .expect("copy succeeds");
+
+    // A real copy, not a symlink — the destination file exists as its own
+    // regular file with the same contents as the source.
+    let copied_skill_md = root
+        .join(".agents")
+        .join("skills")
+        .join("foo")
+        .join("SKILL.md");
+    assert!(copied_skill_md.is_file());
+    assert!(!fs::symlink_metadata(&copied_skill_md)
+        .unwrap()
+        .file_type()
+        .is_symlink());
+    assert_eq!(
+        fs::read_to_string(&copied_skill_md).unwrap(),
+        fs::read_to_string(Path::new(&source_path).join("SKILL.md")).unwrap()
+    );
+
+    // The next load treats it like any other catalog Skill: a card, marked
+    // installed, and no longer "unrecognized".
+    let after = service
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .expect("load state after copy");
+    assert!(after.unrecognized_skills.is_empty());
+    let foo = after
+        .skills
+        .iter()
+        .find(|s| s.skill_name == "Foo Skill")
+        .expect("copied Skill now present as a card");
+    assert!(foo.installed);
+}
+
+#[test]
+fn copy_unrecognized_skill_into_catalog_fails_when_the_name_already_exists_there() {
+    let root = fixture_root("service-copy-unrecognized-collision");
+    let service = service_for(&root, EMPTY_CONFIG);
+    write_skill(&root, &[".windsurf", "skills"], "foo", "Foo Skill");
+    // Something already occupies that name in the catalog directory.
+    write_skill(&root, &[".agents", "skills"], "foo", "Existing Foo");
+
+    let state = service
+        .load_state_for(&root, skills_installer_lib::domain::InstallScope::Project)
+        .expect("load state");
+    let source_path = state
+        .unrecognized_skills
+        .iter()
+        .find(|s| s.skill_name == "Foo Skill")
+        .expect("Foo Skill still unrecognized")
+        .path
+        .clone();
+
+    let result = service.copy_unrecognized_skill_into_catalog(Path::new(&source_path));
+    assert!(result.is_err());
+}

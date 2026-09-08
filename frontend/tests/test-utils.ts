@@ -15,6 +15,8 @@ export function resetState(state: AppState) {
   state.tags = [];
   state.selectedSkillIds = new Set();
   state.skillsWithUpdates = new Set();
+  state.localCatalogVersioned = null;
+  state.localCatalogDirtySkillNames = [];
   state.searchQuery = "";
   state.skillBeingEditedId = null;
   state.groupBeingEditedId = null;

@@ -1,7 +1,15 @@
 .skill-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  flex-wrap: wrap;
+  // WebKitGTK (this app's Linux webview) shrinks a wrapped flex-row item
+  // to a single-line hypothetical height when its ancestor is a
+  // height-constrained `overflow-y: auto` flex column — even though
+  // nothing needs the space back. The wrapped Packs then paint past that
+  // undersized box, over the next row. `flex-shrink: 0` stops that shrink
+  // pass so the row's real (wrapped) height is what gets laid out.
+  flex-shrink: 0;
+  gap: var(--space-xs);
   min-height: 3.5rem;
   padding: calc(var(--space-xs) + 4.5px) var(--space-sm);
   border: 1px solid var(--border-soft);
@@ -10,6 +18,7 @@
 
   .skill-toolbar__label {
     flex: 0 0 auto;
+    margin-right: var(--space-2xs);
     color: var(--text-muted);
     font-size: var(--font-size-xs);
     font-weight: 700;
@@ -44,21 +53,13 @@
     }
   }
 
-  .skill-toolbar__tags {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    min-width: 0;
-    flex-wrap: wrap;
-    flex: 1 1 auto;
-  }
-
   .skill-toolbar__count {
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
   }
   .skill-toolbar__tag-slot {
     position: relative;
+    flex: 0 0 auto;
     border-radius: var(--radius-md);
     cursor: grab;
     transition: opacity var(--transition-fast);
@@ -94,6 +95,14 @@
     font-size: var(--font-size-sm);
   }
 
+  // Grouped so "Select missing" and "Clear" always wrap together onto the
+  // same line rather than ever splitting across two.
+  .skill-toolbar__actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: var(--space-xs);
+  }
+
   .skill-toolbar__select-missing,
   .skill-toolbar__clear {
     min-height: 2rem;
@@ -111,7 +120,6 @@
   }
 
   .skill-toolbar__select-missing {
-    margin-left: auto;
     border: 1px solid var(--accent);
     background: var(--accent-soft);
     color: var(--accent-hover);
@@ -130,18 +138,6 @@
       border-color: var(--border-strong);
       background: var(--bg-muted);
       color: var(--text-primary);
-    }
-  }
-
-  @media (max-width: 680px) {
-    align-items: flex-start;
-    flex-direction: column;
-    .skill-toolbar__select-missing,
-    .skill-toolbar__clear {
-      align-self: flex-start;
-    }
-    .skill-toolbar__select-missing {
-      margin-left: 0;
     }
   }
 }

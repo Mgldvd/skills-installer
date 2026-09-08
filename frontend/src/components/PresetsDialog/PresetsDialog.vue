@@ -79,6 +79,19 @@
               <button type="button" class="button button--primary" @click="emit('load', preset.id)">Load</button>
               <button
                 type="button"
+                class="button"
+                :disabled="installedSkillNames.length === 0"
+                :title="
+                  installedSkillNames.length === 0
+                    ? 'Nothing installed here to update this Preset with'
+                    : `Replace this Preset's Skills with the ${installedSkillNames.length} currently installed`
+                "
+                @click="requestUpdate(preset)"
+              >
+                Update
+              </button>
+              <button
+                type="button"
                 class="presets-dialog__delete"
                 :aria-label="`Delete ${preset.name}`"
                 :title="`Delete ${preset.name}`"
@@ -122,6 +135,7 @@ const emit = defineEmits<{
   "update:open": [boolean];
   save: [name: string, gitUrl: string | null];
   load: [presetId: string];
+  update: [presetId: string];
   delete: [presetId: string];
 }>();
 
@@ -155,6 +169,17 @@ function handleSave() {
 // (no browser configured, sandboxed environment) isn't worth surfacing.
 function handleOpenGitUrl(url: string) {
   openUrl(url).catch(() => undefined);
+}
+
+function requestUpdate(preset: Preset) {
+  const count = props.installedSkillNames.length;
+  if (
+    window.confirm(
+      `Replace “${preset.name}”'s ${preset.skillNames.length} saved Skill${preset.skillNames.length === 1 ? "" : "s"} with the ${count} currently installed?`,
+    )
+  ) {
+    emit("update", preset.id);
+  }
 }
 
 function requestDelete(preset: Preset) {

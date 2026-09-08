@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
 
@@ -127,23 +127,30 @@ const AGENT_PROJECT_DIRS: &[(&[&str], &[&str])] = &[
     (&[".hermes", "skills"], &["hermes-agent"]),
 ];
 
-/// Maps each installed skill's directory name (`skill_name`) to the ids of
-/// the agents whose install destination under `project_root` contains it.
-pub fn discover_installed_agents(project_root: &Path) -> HashMap<String, Vec<String>> {
-    let mut agents_by_skill: HashMap<String, Vec<String>> = HashMap::new();
-    for (segments, agent_ids) in AGENT_PROJECT_DIRS {
+/// Full `Skill` records (not just names) for everything installed under
+/// `project_root`'s agent directories (`AGENT_PROJECT_DIRS`), deduped by
+/// `skill_name` — the first directory a name is found in wins the record
+/// (display name, description, etc.), but `installed_agents` still
+/// accumulates agent ids from every directory that name appears in. This is
+/// the source of truth `discover_installed_agents` derives its map from, and
+/// what `SkillsService::load_state_for` uses to find installed skills that
+/// have no matching catalog entry.
+pub fn discover_installed_skills(project_root: &Path) -> Vec<Skill> {
+    collect_installed_skills(AGENT_PROJECT_DIRS.iter().map(|(segments, agent_ids)| {
         let dir = segments
             .iter()
             .fold(project_root.to_path_buf(), |acc, part| acc.join(part));
-        for skill in discover_skills_in_directory(&dir) {
-            let entry = agents_by_skill.entry(skill.skill_name).or_default();
-            for agent_id in *agent_ids {
-                entry.push(agent_id.to_string());
-            }
-        }
-    }
-    dedupe_agent_lists(&mut agents_by_skill);
-    agents_by_skill
+        (dir, *agent_ids)
+    }))
+}
+
+/// Maps each installed skill's directory name (`skill_name`) to the ids of
+/// the agents whose install destination under `project_root` contains it.
+pub fn discover_installed_agents(project_root: &Path) -> HashMap<String, Vec<String>> {
+    discover_installed_skills(project_root)
+        .into_iter()
+        .map(|skill| (skill.skill_name, skill.installed_agents))
+        .collect()
 }
 
 /// Per-agent *global* (`$HOME`-relative) install destination — the Global
@@ -205,27 +212,51 @@ const AGENT_GLOBAL_DIRS: &[(&str, &[&str])] = &[
 /// and so callers can resolve (and fail gracefully on) a missing `$HOME`
 /// however fits their own context — see `SkillsService::load_state_for`.
 pub fn discover_installed_agents_globally(home: &Path) -> HashMap<String, Vec<String>> {
-    let mut agents_by_skill: HashMap<String, Vec<String>> = HashMap::new();
-    for (relative, agent_ids) in AGENT_GLOBAL_DIRS {
-        for skill in discover_skills_in_directory(&home.join(relative)) {
-            let entry = agents_by_skill.entry(skill.skill_name).or_default();
-            for agent_id in *agent_ids {
-                entry.push(agent_id.to_string());
+    discover_installed_skills_globally(home)
+        .into_iter()
+        .map(|skill| (skill.skill_name, skill.installed_agents))
+        .collect()
+}
+
+/// The Global-scope counterpart to `discover_installed_skills`: full `Skill`
+/// records for everything installed under `home`'s agent directories
+/// (`AGENT_GLOBAL_DIRS`), deduped by `skill_name`.
+pub fn discover_installed_skills_globally(home: &Path) -> Vec<Skill> {
+    collect_installed_skills(
+        AGENT_GLOBAL_DIRS
+            .iter()
+            .map(|(relative, agent_ids)| (home.join(relative), *agent_ids)),
+    )
+}
+
+/// Shared walk behind `discover_installed_skills`/`discover_installed_skills_globally`:
+/// scans each given directory, keeping one `Skill` record per `skill_name`
+/// (first occurrence wins) while accumulating every directory's agent ids
+/// into that record's `installed_agents` — an agent can be reachable through
+/// more than one destination (e.g. Cursor reads both `.agents/skills` and
+/// `.claude/skills`), so results are deduped and sorted for a deterministic,
+/// UI-friendly order.
+fn collect_installed_skills<'a>(
+    dirs: impl Iterator<Item = (PathBuf, &'a [&'a str])>,
+) -> Vec<Skill> {
+    let mut skills_by_name: HashMap<String, Skill> = HashMap::new();
+    for (dir, agent_ids) in dirs {
+        for skill in discover_skills_in_directory(&dir) {
+            let entry = skills_by_name
+                .entry(skill.skill_name.clone())
+                .or_insert_with(|| skill.clone());
+            for agent_id in agent_ids {
+                entry.installed_agents.push(agent_id.to_string());
             }
         }
     }
-    dedupe_agent_lists(&mut agents_by_skill);
-    agents_by_skill
-}
-
-// An agent can be reachable through more than one destination (e.g. Cursor
-// reads both `.agents/skills` and `.claude/skills`), so dedupe — and sort
-// for a deterministic, UI-friendly order.
-fn dedupe_agent_lists(agents_by_skill: &mut HashMap<String, Vec<String>>) {
-    for agents in agents_by_skill.values_mut() {
-        agents.sort();
-        agents.dedup();
+    for skill in skills_by_name.values_mut() {
+        skill.installed_agents.sort();
+        skill.installed_agents.dedup();
     }
+    let mut result: Vec<Skill> = skills_by_name.into_values().collect();
+    result.sort_by_key(|skill| skill.display_name.to_lowercase());
+    result
 }
 
 /// Scans a user-configured source catalog. The directory contains Skill
@@ -398,6 +429,21 @@ mod tests {
                 "zed",
             ]
         );
+    }
+
+    #[test]
+    fn discover_installed_skills_merges_agent_ids_across_directories_for_the_same_skill() {
+        let tmp = tempfile::tempdir().unwrap();
+        write_skill_at(&tmp.path().join(".claude").join("skills"), "triage");
+        write_skill_at(&tmp.path().join(".windsurf").join("skills"), "triage");
+
+        let skills = discover_installed_skills(tmp.path());
+        assert_eq!(skills.len(), 1);
+        assert_eq!(skills[0].skill_name, "triage");
+        assert!(skills[0]
+            .installed_agents
+            .contains(&"claude-code".to_string()));
+        assert!(skills[0].installed_agents.contains(&"windsurf".to_string()));
     }
 
     #[test]
